@@ -8,17 +8,18 @@ import org.schema.schine.graphicsengine.forms.gui.*;
 import org.schema.schine.graphicsengine.forms.gui.newgui.*;
 import org.schema.schine.input.InputState;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 
 public class ContractClaimantsScrollableList extends ScrollableTableList<StarPlayer> implements GUIActiveInterface {
 
+    private ArrayList<StarPlayer> claimants;
     private Contract contract;
-    private boolean updated;
+    public static boolean updated;
 
     public ContractClaimantsScrollableList(InputState state, float var2, float var3, GUIElement guiElement, Contract contract) {
         super(state, var2, var3, guiElement);
+        this.contract = contract;
+        claimants = new ArrayList<>();
         updated = false;
         updateClaimants();
     }
@@ -33,7 +34,7 @@ public class ContractClaimantsScrollableList extends ScrollableTableList<StarPla
             }
         });
 
-        this.addColumn("Faction", 25.0F, new Comparator<StarPlayer>() {
+        this.addColumn("Faction", 20.0F, new Comparator<StarPlayer>() {
             public int compare(StarPlayer o1, StarPlayer o2) {
                 String f1Name = "NO FACTION";
                 String f2Name = "NO FACTION";
@@ -55,24 +56,37 @@ public class ContractClaimantsScrollableList extends ScrollableTableList<StarPla
     @Override
     protected Collection<StarPlayer> getElementList() {
         if(!updated) updateClaimants();
-        return contract.getClaimants();
+        return claimants;
     }
 
     public void updateClaimants() {
-        this.contract = DataUtil.getUpdatedContract(contract);
+        Contract temp = this.contract;
+        this.contract = DataUtil.getUpdatedContract(temp);
+        this.claimants = this.contract.getClaimants();
         updated = true;
         flagDirty();
     }
 
     @Override
+    public void update(Observable observable, Object object) {
+        if(!updated) {
+            updateClaimants();
+            updated = true;
+        }
+        super.update(observable, object);
+    }
+
+    @Override
     public void updateListEntries(GUIElementList guiElementList, Set<StarPlayer> set) {
+        guiElementList.deleteObservers();
+        guiElementList.addObserver(this);
         for(StarPlayer player : set) {
             GUITextOverlayTable nameTextElement;
             (nameTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(player.getName());
             GUIClippedRow nameRowElement;
             (nameRowElement = new GUIClippedRow(this.getState())).attach(nameTextElement);
             String factionName = "NO FACTION";
-            if(player.getFaction() != null) factionName = player.getFaction().getName();
+            if(player.getPlayerState().getFactionId() != 0) factionName = player.getFaction().getName();
 
             GUITextOverlayTable factionTextElement;
             (factionTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(factionName);
@@ -95,6 +109,12 @@ public class ContractClaimantsScrollableList extends ScrollableTableList<StarPla
             this.highlightSelect = true;
             this.highlightSelectSimple = true;
             this.setAllwaysOneSelected(true);
+        }
+
+        @Override
+        public void clickedOnRow() {
+            updateClaimants();
+            super.clickedOnRow();
         }
     }
 }

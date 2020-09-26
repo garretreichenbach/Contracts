@@ -4,22 +4,22 @@ import api.common.GameClient;
 import api.entity.StarPlayer;
 import api.utils.gui.GUIUtils;
 import dovtech.contracts.contracts.Contract;
+import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.util.DataUtil;
 import org.hsqldb.lib.StringComparator;
 import org.schema.common.util.CompareTools;
+import org.schema.game.client.view.gui.catalog.newcatalog.CatalogScrollableListNew;
 import org.schema.schine.graphicsengine.core.MouseEvent;
 import org.schema.schine.graphicsengine.forms.gui.*;
 import org.schema.schine.graphicsengine.forms.gui.newgui.*;
 import org.schema.schine.input.InputState;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
+
+import java.util.*;
 
 public class PlayerContractsScrollableList extends ScrollableTableList<Contract> implements GUIActiveInterface {
 
     private ArrayList<Contract> contracts;
-    private boolean updated;
+    public static boolean updated;
 
     public PlayerContractsScrollableList(InputState state, float var2, float var3, GUIElement guiElement) {
         super(state, var2, var3, guiElement);
@@ -113,7 +113,18 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
     }
 
     @Override
+    public void update(Observable observable, Object object) {
+        if(!updated) {
+            updateContracts();
+            updated = true;
+        }
+        super.update(observable, object);
+    }
+
+    @Override
     public void updateListEntries(GUIElementList guiElementList, Set<Contract> set) {
+        guiElementList.deleteObservers();
+        guiElementList.addObserver(this);
         for (final Contract contract : set) {
             GUITextOverlayTable nameTextElement;
             (nameTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(contract.getName());
@@ -175,10 +186,21 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
                 public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                     if (mouseEvent.pressedLeftMouse()) {
                         getState().getController().queueUIAudio("0022_menu_ui - back");
-                        contract.getClaimants().remove(player);
+                        DataUtil.contracts.remove(contract);
+                        ArrayList<StarPlayer> claimants = contract.getClaimants();
+                        claimants.remove(player);
+                        contract.setClaimants(claimants);
                         DataUtil.contractWriteBuffer.add(contract);
-                        DataUtil.getPlayerData(player).getContracts().remove(contract);
-                        DataUtil.playerDataWriteBuffer.add(DataUtil.getPlayerData(player));
+                        PlayerData playerData = DataUtil.getPlayerData(player);
+                        DataUtil.players.remove(playerData);
+                        ArrayList<Contract> playerContracts = playerData.getContracts();
+                        playerContracts.remove(contract);
+                        playerData.setContracts(playerContracts);
+                        DataUtil.players.add(playerData);
+                        DataUtil.playerDataWriteBuffer.add(playerData);
+                        DataUtil.contracts.add(contract);
+                        ContractClaimantsScrollableList.updated = false;
+                        PlayerContractsScrollableList.updated = false;
                         updated = false;
                         updateContracts();
                     }
@@ -211,6 +233,12 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
             this.highlightSelect = true;
             this.highlightSelectSimple = true;
             this.setAllwaysOneSelected(true);
+        }
+
+        @Override
+        public void clickedOnRow() {
+            updateContracts();
+            super.clickedOnRow();
         }
     }
 }

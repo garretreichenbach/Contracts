@@ -10,6 +10,9 @@ import api.universe.StarUniverse;
 import api.utils.game.chat.ChatCommand;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.*;
+import dovtech.contracts.gui.contracts.ContractClaimantsScrollableList;
+import dovtech.contracts.gui.contracts.ContractsScrollableList;
+import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
 import dovtech.contracts.util.DataUtil;
 import org.schema.game.common.data.player.PlayerState;
 import java.util.Random;
@@ -18,7 +21,7 @@ import java.util.UUID;
 public class RandomContractCommand extends ChatCommand {
 
     public RandomContractCommand() {
-        super("debug_randomcontract", "/debug_randomcontract", "Generates a random contract and writes it to file.", true);
+        super("debug_randomcontract", "/debug_randomcontract", "Generates a random contract and adds it to the writebuffer.", true);
     }
 
     @Override
@@ -79,8 +82,11 @@ public class RandomContractCommand extends ChatCommand {
         }
 
         Contract randomContract = new Contract(new StarFaction(GameServer.getServerState().getFactionManager().getFaction(-2)), contractName, randomContractType, randomReward, UUID.randomUUID().toString(), contractTarget);
+        DataUtil.contracts.add(randomContract);
         DataUtil.contractWriteBuffer.add(randomContract);
-        DataUtil.writeData();
+        ContractsScrollableList.updated = false;
+        PlayerContractsScrollableList.updated = false;
+        ContractClaimantsScrollableList.updated = false;
         return true;
     }
 }

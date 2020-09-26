@@ -45,10 +45,8 @@ public class Contracts extends StarMod {
     //Server
     private final File moddataFolder = new File("moddata");
     private final File contractsDataFolder = new File("moddata/Contracts");
-    private final File contractsFolder = new File("moddata/Contracts/contract");
-    private final File playerDataFolder = new File("moddata/Contracts/player");
-    private final File factionDataFolder = new File("moddata/Contracts/faction");
-    private final File allianceDataFolder = new File("moddata/Contracts/alliance");
+    private final File contractsFolder = new File("moddata/Contracts/contractdata");
+    private final File playerDataFolder = new File("moddata/Contracts/playerdata");
 
     public Image defaultLogo;
 
@@ -81,8 +79,6 @@ public class Contracts extends StarMod {
         if (!contractsDataFolder.exists()) contractsDataFolder.mkdirs();
         if (!contractsFolder.exists()) contractsFolder.mkdirs();
         if (!playerDataFolder.exists()) playerDataFolder.mkdirs();
-        if (!factionDataFolder.exists()) factionDataFolder.mkdirs();
-        if (!allianceDataFolder.exists()) allianceDataFolder.mkdirs();
 
         initConfig();
         registerListeners();
@@ -94,12 +90,14 @@ public class Contracts extends StarMod {
             e.printStackTrace();
         }
 
-        new StarRunnable() {
-            @Override
-            public void run() {
-                DataUtil.writeData();
-            }
-        }.runTimer(writeFrequency);
+        if(writeFrequency != -1) {
+            new StarRunnable() {
+                @Override
+                public void run() {
+                    DataUtil.writeData();
+                }
+            }.runTimer(writeFrequency);
+        }
     }
 
     @Override
@@ -227,7 +225,7 @@ public class Contracts extends StarMod {
 
                     final StarPlayer player = new StarPlayer(GameClient.getClientPlayerState());
                     final InputState state = contractsTab.getState();
-                    if(player.getFaction() != null && !player.getFaction().getName().equals("NO FACTION")) {
+                    if(player.getPlayerState().getFactionId() != 0) {
                         contractsTab.setTextBoxHeightLast(1, 850);
                         contractsTab.addNewTextBox(1,32);
                         GUIAncor buttonPane = new GUIAncor(state, 300, 32);

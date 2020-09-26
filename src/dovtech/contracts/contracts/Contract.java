@@ -39,6 +39,7 @@ public class Contract {
     }
 
     public void setClaimants(ArrayList<StarPlayer> claimants) {
+        claimantNames.clear();
         for(StarPlayer claimant : claimants) {
             claimantNames.add(claimant.getName());
         }

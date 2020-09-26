@@ -5,6 +5,9 @@ import api.entity.StarPlayer;
 import com.google.gson.Gson;
 import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
+import dovtech.contracts.gui.contracts.ContractClaimantsScrollableList;
+import dovtech.contracts.gui.contracts.ContractsScrollableList;
+import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
 import dovtech.contracts.player.PlayerData;
 import java.io.*;
 import java.util.ArrayList;
@@ -13,8 +16,8 @@ public class DataUtil {
 
     private static final Contracts instance = Contracts.getInstance();
     private static final boolean debug = Contracts.getInstance().debugMode;
-    private static final File contractsFolder = new File("moddata/Contracts/contract");
-    private static final File playerDataFolder = new File("moddata/Contracts/player");
+    private static final File contractsFolder = new File("moddata/Contracts/contractdata");
+    private static final File playerDataFolder = new File("moddata/Contracts/playerdata");
 
     public static ArrayList<Contract> contracts = new ArrayList<>();
     public static ArrayList<PlayerData> players = new ArrayList<>();
@@ -32,9 +35,7 @@ public class DataUtil {
     }
 
     public static Contract getUpdatedContract(Contract contract) {
-        for(Contract c : contracts) {
-            if(c.getUid().equals(contract.getUid())) return c;
-        }
+        for(Contract c : contracts) if(c !=  null && c.getUid() != null && c.getUid().equals(contract.getUid())) return c;
         return contract;
     }
 
@@ -71,7 +72,6 @@ public class DataUtil {
                 BufferedWriter bw = new BufferedWriter(new FileWriter(contractFile));
                 bw.write(gson.toJson(contract));
                 bw.close();
-                if (!contracts.contains(contract)) contracts.add(contract);
             } catch (IOException e) {
                 e.printStackTrace();
                 DebugFile.log("[ERROR]: Something went wrong while trying to write contract " + contract.getName() + " to file!");
@@ -96,7 +96,6 @@ public class DataUtil {
                 bw.write(gson.toJson(playerData));
                 bw.close();
                 playerDataWriteBuffer.remove(playerData);
-                if (!players.contains(playerData)) players.add(playerData);
             } catch (IOException e) {
                 e.printStackTrace();
                 DebugFile.log("[ERROR]: Something went wrong while trying to write player " + playerData.getPlayerName() + " to file!");
@@ -122,7 +121,6 @@ public class DataUtil {
             p.sendMail(contract.getContractor().getName(), "Contract Cancellation",contract.getContractor().getName() + " has cancelled contract " + contract.getName() + ".");
             players.add(pData);
             playerDataWriteBuffer.add(pData);
-            contract.getClaimants().remove(p);
         }
         contracts.remove(contract);
 
@@ -132,5 +130,8 @@ public class DataUtil {
                 break;
             }
         }
+        ContractsScrollableList.updated = false;
+        PlayerContractsScrollableList.updated = false;
+        ContractClaimantsScrollableList.updated = false;
     }
 }
