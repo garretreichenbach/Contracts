@@ -1,6 +1,8 @@
 package dovtech.contracts.player;
 
-public class PlayerHistory {
+import java.io.Serializable;
+
+public class PlayerHistory implements Serializable {
 
     private String date;
     private String event;

@@ -7,29 +7,29 @@ import api.entity.StarPlayer;
 import api.listener.Listener;
 import api.listener.events.gui.GUITopBarCreateEvent;
 import api.listener.events.gui.MainWindowTabAddEvent;
+import api.listener.events.player.PlayerSpawnEvent;
 import api.mod.StarLoader;
 import api.mod.StarMod;
 import api.mod.config.FileConfiguration;
 import api.utils.StarRunnable;
 import api.utils.gui.GUIUtils;
 import dovtech.contracts.commands.RandomContractCommand;
-import dovtech.contracts.contracts.Contract;
-import dovtech.contracts.gui.contracts.ContractsScrollableList;
-import dovtech.contracts.gui.contracts.NewContractPanel;
+import dovtech.contracts.gui.contracts.ContractsTab;
 import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
+import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.util.DataUtil;
-import org.newdawn.slick.Image;
-import org.schema.game.client.controller.PlayerOkCancelInput;
 import org.schema.game.client.view.gui.newgui.GUITopBar;
 import org.schema.schine.common.language.Lng;
-import org.schema.schine.graphicsengine.core.GLFrame;
 import org.schema.schine.graphicsengine.core.MouseEvent;
-import org.schema.schine.graphicsengine.forms.gui.*;
+import org.schema.schine.graphicsengine.forms.gui.GUIActivationHighlightCallback;
+import org.schema.schine.graphicsengine.forms.gui.GUICallback;
+import org.schema.schine.graphicsengine.forms.gui.GUIElement;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIContentPane;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIMainWindow;
 import org.schema.schine.input.InputState;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Contracts extends StarMod {
 
@@ -39,27 +39,26 @@ public class Contracts extends StarMod {
         inst = this;
     }
 
-    //Resources
-    private String resourcesPath;
-
     //Server
     private final File moddataFolder = new File("moddata");
     private final File contractsDataFolder = new File("moddata/Contracts");
     private final File contractsFolder = new File("moddata/Contracts/contractdata");
     private final File playerDataFolder = new File("moddata/Contracts/playerdata");
 
-    public Image defaultLogo;
-
-    //Config
-    private FileConfiguration config;
     private String[] defaultConfig = {
             "debug-mode: false",
-            "write-frequency: 12000"
+            "write-frequency: 5000",
+            "mod-compatibility-enabled: true"
     };
 
     //Config Settings
     public boolean debugMode;
     public int writeFrequency;
+    public boolean modCompatibility;
+
+    //Mod Compatibility
+    public ArrayList<StarMod> mods;
+    public boolean betterFactionsEnabled = false; //Temp value
 
     public static void main(String[] args) {
 
@@ -70,10 +69,8 @@ public class Contracts extends StarMod {
         inst = this;
         setModName("Contracts");
         setModAuthor("Dovtech");
-        setModVersion("0.3.3");
+        setModVersion("0.3.5");
         setModDescription("Adds Contracts for trade and player interaction.");
-
-        resourcesPath = this.getClass().getResource("").getPath();
 
         if (!moddataFolder.exists()) moddataFolder.mkdirs();
         if (!contractsDataFolder.exists()) contractsDataFolder.mkdirs();
@@ -81,12 +78,13 @@ public class Contracts extends StarMod {
         if (!playerDataFolder.exists()) playerDataFolder.mkdirs();
 
         initConfig();
+        checkMods();
         registerListeners();
         registerCommands();
 
         try {
             DataUtil.readData();
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
 
@@ -111,7 +109,35 @@ public class Contracts extends StarMod {
 
     }
 
+    private void checkMods() {
+        this.mods = new ArrayList<>();
+        if(modCompatibility) {
+            for(StarMod mod : StarLoader.starMods) {
+                if(mod.isEnabled()) {
+                    switch(mod.getName()) {
+                        case "BetterFactions":
+                            mods.add(mod);
+                            betterFactionsEnabled = true;
+                    }
+                }
+            }
+        }
+    }
+
     private void registerListeners() {
+        StarLoader.registerListener(PlayerSpawnEvent.class, new Listener<PlayerSpawnEvent>() {
+            @Override
+            public void onEvent(PlayerSpawnEvent event) {
+                StarPlayer player = new StarPlayer(event.getPlayer().getOwnerState());
+                if(!DataUtil.players.containsKey(player.getName())) {
+                    PlayerData playerData = new PlayerData(player);
+                    DataUtil.players.put(player.getName(), playerData);
+                    DataUtil.playerDataWriteBuffer.add(playerData);
+                    if(debugMode) DebugFile.log("[DEBUG]: Registered PlayerData for " + player.getName() + ".", Contracts.getInstance());
+                }
+            }
+        });
+
         StarLoader.registerListener(GUITopBarCreateEvent.class, new Listener<GUITopBarCreateEvent>() {
             @Override
             public void onEvent(final GUITopBarCreateEvent guiTopBarCreateEvent) {
@@ -199,98 +225,9 @@ public class Contracts extends StarMod {
             @Override
             public void onEvent(MainWindowTabAddEvent event) {
                 if(event.getTitle().equals(Lng.ORG_SCHEMA_GAME_CLIENT_VIEW_GUI_SHOP_SHOPNEW_SHOPPANELNEW_2)) {
-
-                    GUIContentPane contractsTab = event.createTab("CONTRACTS");
-                    contractsTab.setName("CONTRACTS");
-                    contractsTab.setTextBoxHeightLast(300);
-
-                    contractsTab.addDivider(250);
-                    /* Faction/Contractor Logo
-                    contractsTab.addNewTextBox(0, 150);
-                    Sprite contractorLogo = new Sprite(new Texture(0, 0, resourcesPath + "/gui/logo/trading-guild-logo.png")); //Default Contractor
-                    GUIOverlay logoOverlay = new GUIOverlay();
-                    contractsTab.getContent(0, 0).attach(logoOverlay);
-                     */
-
-                    GUITextOverlay contractorDescOverlay = new GUITextOverlay(250, 300, contractsTab.getState());
-                    contractorDescOverlay.onInit();
-                    contractorDescOverlay.setTextSimple("Placeholder Text");
-                    contractsTab.getContent(0, 0).attach(contractorDescOverlay);
-
-                    contractsTab.addNewTextBox(0, 85);
-
-                    final ContractsScrollableList contractsScrollableList = new ContractsScrollableList(contractsTab.getState(), 500, 300, contractsTab.getContent(1, 0));
-                    contractsScrollableList.onInit();
-                    contractsTab.getContent(1, 0).attach(contractsScrollableList);
-
-                    final StarPlayer player = new StarPlayer(GameClient.getClientPlayerState());
-                    final InputState state = contractsTab.getState();
-                    if(player.getPlayerState().getFactionId() != 0) {
-                        contractsTab.setTextBoxHeightLast(1, 850);
-                        contractsTab.addNewTextBox(1,32);
-                        GUIAncor buttonPane = new GUIAncor(state, 300, 32);
-
-                        GUITextButton addContractButton = new GUITextButton(state, (int) (buttonPane.getWidth() / 2) - 4, 24, GUITextButton.ColorPalette.OK, "ADD CONTRACT", new GUICallback() {
-                            @Override
-                            public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                                if(mouseEvent.pressedLeftMouse()) {
-                                    //Todo: Open add contract menu
-                                    GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                                    NewContractPanel newContractPanel = new NewContractPanel(GameClient.getClientState(), player.getFaction());
-                                    newContractPanel.activate();
-
-                                    contractsScrollableList.updateContracts();
-                                }
-                            }
-
-                            @Override
-                            public boolean isOccluded() {
-                                return false;
-                            }
-                        });
-                        addContractButton.setPos(2, 2, 0);
-                        buttonPane.attach(addContractButton);
-
-                        GUITextButton removeContractButton = new GUITextButton(state, (int) (buttonPane.getWidth() / 2) - 4, 24, GUITextButton.ColorPalette.OK, "CANCEL CONTRACT", new GUICallback() {
-                            @Override
-                            public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                                if(mouseEvent.pressedLeftMouse()) {
-                                    if(contractsScrollableList.getSelectedRow() != null && contractsScrollableList.getSelectedRow().f != null) {
-                                        final Contract contract = contractsScrollableList.getSelectedRow().f;
-                                        if(contract.getContractor().equals(player.getFaction())) {
-                                            GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                                            PlayerOkCancelInput confirmBox = new PlayerOkCancelInput("ConfirmBox", state, "Confirm Cancellation", "Are you sure you wish to cancel this contract? You won't get a refund...") {
-                                                @Override
-                                                public void onDeactivate() {
-                                                }
-
-                                                @Override
-                                                public void pressedOK() {
-                                                    GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                                                    DataUtil.removeContract(contract);
-                                                    contractsScrollableList.updateContracts();
-                                                }
-                                            };
-                                            confirmBox.getInputPanel().onInit();
-                                            confirmBox.getInputPanel().background.setPos(470.0F, 35.0F, 0.0F);
-                                            confirmBox.getInputPanel().background.setWidth((float)(GLFrame.getWidth() - 435));
-                                            confirmBox.getInputPanel().background.setHeight((float)(GLFrame.getHeight() - 70));
-                                            confirmBox.activate();
-                                        }
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public boolean isOccluded() {
-                                return false;
-                            }
-                        });
-                        removeContractButton.setPos(2 + addContractButton.getWidth() + 2, 2, 0);
-                        buttonPane.attach(removeContractButton);
-
-                        contractsTab.getContent(1, 1).attach(buttonPane);
-                    }
+                    ContractsTab contractsTab = new ContractsTab(event.getWindow().getState(), event.getWindow());
+                    contractsTab.onInit();
+                    event.getWindow().getTabs().add(contractsTab);
                 }
             }
         });
@@ -306,22 +243,16 @@ public class Contracts extends StarMod {
     }
 
     private void initConfig() {
-        this.config = getConfig("config");
-        this.config.saveDefault(defaultConfig);
+        //Config
+        FileConfiguration config = getConfig("config");
+        config.saveDefault(defaultConfig);
 
-        this.debugMode = Boolean.parseBoolean(this.config.getString("debug-mode"));
-        this.writeFrequency = this.config.getInt("write-frequency");
+        this.debugMode = Boolean.parseBoolean(config.getString("debug-mode"));
+        this.writeFrequency = config.getInt("write-frequency");
+        this.modCompatibility = Boolean.parseBoolean(config.getString("mod-compatibility-enabled"));
     }
 
     public static Contracts getInstance() {
         return inst;
-    }
-
-    public FileConfiguration getConfig() {
-        return this.config;
-    }
-
-    public String getResourcesPath() {
-        return resourcesPath;
     }
 }

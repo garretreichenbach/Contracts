@@ -4,9 +4,11 @@ import api.entity.StarPlayer;
 import api.server.Server;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.util.DataUtil;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class PlayerData {
+public class PlayerData implements Serializable {
 
     private String playerName;
     private ArrayList<PlayerHistory> history;
@@ -19,16 +21,20 @@ public class PlayerData {
     }
 
     public ArrayList<Contract> getContracts() {
+        if(contractUIDs == null) contractUIDs = new ArrayList<>();
         ArrayList<Contract> contracts = new ArrayList<>();
-        for(Contract contract : DataUtil.contracts) {
+        for(Contract contract : DataUtil.contracts.values()) {
             if(contractUIDs.contains(contract.getUid())) contracts.add(contract);
         }
         return contracts;
     }
 
-    public void setContracts(ArrayList<Contract> contracts) {
-        contractUIDs.clear();
-        for(Contract contract : contracts) contractUIDs.add(contract.getUid());
+    public void addContract(Contract contract) {
+        this.contractUIDs.add(contract.getUid());
+    }
+
+    public void removeContract(Contract contract) {
+        this.contractUIDs.remove(contract.getUid());
     }
 
     public ArrayList<PlayerHistory> getHistory() {

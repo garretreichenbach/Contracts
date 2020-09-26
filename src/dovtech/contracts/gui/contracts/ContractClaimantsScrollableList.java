@@ -7,21 +7,15 @@ import org.hsqldb.lib.StringComparator;
 import org.schema.schine.graphicsengine.forms.gui.*;
 import org.schema.schine.graphicsengine.forms.gui.newgui.*;
 import org.schema.schine.input.InputState;
-
 import java.util.*;
 
 public class ContractClaimantsScrollableList extends ScrollableTableList<StarPlayer> implements GUIActiveInterface {
 
-    private ArrayList<StarPlayer> claimants;
     private Contract contract;
-    public static boolean updated;
 
     public ContractClaimantsScrollableList(InputState state, float var2, float var3, GUIElement guiElement, Contract contract) {
         super(state, var2, var3, guiElement);
         this.contract = contract;
-        claimants = new ArrayList<>();
-        updated = false;
-        updateClaimants();
     }
 
     @Override
@@ -55,25 +49,8 @@ public class ContractClaimantsScrollableList extends ScrollableTableList<StarPla
 
     @Override
     protected Collection<StarPlayer> getElementList() {
-        if(!updated) updateClaimants();
-        return claimants;
-    }
-
-    public void updateClaimants() {
-        Contract temp = this.contract;
-        this.contract = DataUtil.getUpdatedContract(temp);
-        this.claimants = this.contract.getClaimants();
-        updated = true;
-        flagDirty();
-    }
-
-    @Override
-    public void update(Observable observable, Object object) {
-        if(!updated) {
-            updateClaimants();
-            updated = true;
-        }
-        super.update(observable, object);
+        this.contract.setClaimants(DataUtil.contracts.get(contract.getUid()).getClaimants());
+        return this.contract.getClaimants();
     }
 
     @Override
@@ -97,7 +74,7 @@ public class ContractClaimantsScrollableList extends ScrollableTableList<StarPla
             (claimantListRow = new ClaimantListRow(this.getState(), player, nameRowElement, factionRowElement)).onInit();
 
             claimantListRow.onInit();
-            guiElementList.addWithoutUpdate(claimantListRow);
+            guiElementList.add(claimantListRow);
         }
         guiElementList.updateDim();
     }
@@ -113,8 +90,9 @@ public class ContractClaimantsScrollableList extends ScrollableTableList<StarPla
 
         @Override
         public void clickedOnRow() {
-            updateClaimants();
             super.clickedOnRow();
+            clear();
+            handleDirty();
         }
     }
 }

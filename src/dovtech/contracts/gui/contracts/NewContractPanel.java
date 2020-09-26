@@ -3,44 +3,28 @@ package dovtech.contracts.gui.contracts;
 import api.faction.StarFaction;
 import api.utils.gui.SimpleGUIHorizontalButtonPane;
 import dovtech.contracts.contracts.target.*;
+import org.schema.game.client.controller.PlayerBigOkCancelInput;
 import org.schema.game.client.controller.PlayerInput;
 import org.schema.game.client.data.GameClientState;
 import org.schema.game.client.view.gui.GUIBigInputPanel;
+import org.schema.schine.graphicsengine.core.GLFW;
 import org.schema.schine.graphicsengine.core.MouseEvent;
-import org.schema.schine.graphicsengine.forms.gui.GUICallback;
-import org.schema.schine.graphicsengine.forms.gui.GUIElement;
-import org.schema.schine.graphicsengine.forms.gui.GUITextButton;
-import org.schema.schine.graphicsengine.forms.gui.GUITextOverlay;
+import org.schema.schine.graphicsengine.forms.gui.*;
+import org.schema.schine.graphicsengine.forms.gui.newgui.GUIContentPane;
+import org.schema.schine.input.KeyEventInterface;
+import org.schema.schine.input.KeyboardMappings;
 
-public class NewContractPanel extends PlayerInput {
+public class NewContractPanel extends PlayerBigOkCancelInput {
 
-    private GUIBigInputPanel inputPanel;
     private StarFaction contractor;
     private ContractTargetSelectionPanel targetSelectionPanel;
     public ContractTarget target;
 
     public NewContractPanel(GameClientState state, StarFaction contractor) {
-        super(state);
+        super(state, "Add Contract", "");
         this.contractor = contractor;
-        this.inputPanel = createInputPanel();
-        this.inputPanel.setCallback(this);
-        this.target = null;
-        updatePanel();
-    }
-
-    @Override
-    public void onDeactivate() {
-
-    }
-
-    @Override
-    public void handleMouseEvent(MouseEvent mouseEvent) {
-
-    }
-
-    @Override
-    public GUIElement getInputPanel() {
-        return inputPanel;
+        target = null;
+        createInputPanel();
     }
 
     public StarFaction getContractor() {
@@ -53,13 +37,13 @@ public class NewContractPanel extends PlayerInput {
             if(target instanceof PlayerTarget) {
                 //Todo:
             }
+            targetSelectionPanel.setPos(0, 0, 0); //Todo
+            getInputPanel().getContent().attach(targetSelectionPanel);
         }
     }
 
-    public GUIBigInputPanel createInputPanel() {
-        GUIBigInputPanel panel = new GUIBigInputPanel(getState(), this, "Add Contract", "");
-        panel.onInit();
-        panel.setPos(470.0F, 35.0F, 0.0F);
+    public void createInputPanel() {
+        getInputPanel().setPos(470.0F, 35.0F, 0.0F);
         SimpleGUIHorizontalButtonPane buttonPane = new SimpleGUIHorizontalButtonPane(getState(), 100, 32);
 
         GUITextButton cargoButton = new GUITextButton(getState(), 100, 24, GUITextButton.ColorPalette.OK, "CARGO", new GUICallback() {
@@ -127,12 +111,31 @@ public class NewContractPanel extends PlayerInput {
         buttonPane.addButton(productionButton);
 
         buttonPane.setPos(0, 300, 0);
-        panel.attach(buttonPane);
+        getInputPanel().getContent().attach(buttonPane);
 
         GUITextOverlay targetLabel = new GUITextOverlay((int) buttonPane.getWidth(), 10, getState());
         targetLabel.setTextSimple("Target Types");
         targetLabel.setPos(40, buttonPane.getPos().y + 12, 0);
-        panel.attach(targetLabel);
-        return panel;
+        getInputPanel().getContent().attach(targetLabel);
+    }
+
+    @Override
+    public void onDeactivate() {
+
+    }
+
+    @Override
+    public void pressedOK() {
+        deactivate();
+    }
+
+    @Override
+    public boolean allowChat() {
+        return false;
+    }
+
+    @Override
+    public boolean isOccluded() {
+        return false;
     }
 }

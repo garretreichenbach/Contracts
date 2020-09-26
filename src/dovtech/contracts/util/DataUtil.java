@@ -2,15 +2,14 @@ package dovtech.contracts.util;
 
 import api.DebugFile;
 import api.entity.StarPlayer;
-import com.google.gson.Gson;
 import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
-import dovtech.contracts.gui.contracts.ContractClaimantsScrollableList;
 import dovtech.contracts.gui.contracts.ContractsScrollableList;
 import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
 import dovtech.contracts.player.PlayerData;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class DataUtil {
 
@@ -19,33 +18,20 @@ public class DataUtil {
     private static final File contractsFolder = new File("moddata/Contracts/contractdata");
     private static final File playerDataFolder = new File("moddata/Contracts/playerdata");
 
-    public static ArrayList<Contract> contracts = new ArrayList<>();
-    public static ArrayList<PlayerData> players = new ArrayList<>();
+    public static HashMap<String, Contract> contracts = new HashMap<>();
+    public static HashMap<String, PlayerData> players = new HashMap<>();
     public static ArrayList<Contract> contractWriteBuffer = new ArrayList<>();
     public static ArrayList<PlayerData> playerDataWriteBuffer = new ArrayList<>();
 
-    public static PlayerData getPlayerData(StarPlayer player) {
-        for(PlayerData playerData : players) {
-            if(playerData.getPlayerName().equals(player.getName())) return playerData;
-        }
-        PlayerData newPlayerData = new PlayerData(player);
-        players.add(newPlayerData);
-        playerDataWriteBuffer.add(newPlayerData);
-        return newPlayerData;
-    }
-
-    public static Contract getUpdatedContract(Contract contract) {
-        for(Contract c : contracts) if(c !=  null && c.getUid() != null && c.getUid().equals(contract.getUid())) return c;
-        return contract;
-    }
-
-    public static void readData() throws IOException {
-        Gson gson = new Gson();
+    public static void readData() throws IOException, ClassNotFoundException {
         if(contractsFolder.listFiles() != null) {
             for(File contractFile : contractsFolder.listFiles()) {
-                BufferedReader br = new BufferedReader(new FileReader(contractFile));
-                contracts.add(gson.fromJson(br, Contract.class));
-                br.close();
+                FileInputStream inputStream = new FileInputStream(contractFile);
+                ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+                Contract contract = (Contract) objectInputStream.readObject();
+                objectInputStream.close();
+                inputStream.close();
+                contracts.put(contract.getUid(), contract);
             }
         } else {
             if(debug) DebugFile.log("[DEBUG]: Contracts folder is empty, not reading...", instance);
@@ -53,9 +39,12 @@ public class DataUtil {
 
         if(playerDataFolder.listFiles() != null) {
             for(File playerDataFile : playerDataFolder.listFiles()) {
-                BufferedReader br = new BufferedReader(new FileReader(playerDataFile));
-                players.add(gson.fromJson(br, PlayerData.class));
-                br.close();
+                FileInputStream inputStream = new FileInputStream(playerDataFile);
+                ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+                PlayerData player = (PlayerData) objectInputStream.readObject();
+                objectInputStream.close();
+                inputStream.close();
+                players.put(player.getPlayerName(), player);
             }
         } else {
             if(debug) DebugFile.log("[DEBUG]: PlayerData folder is empty, not reading...", instance);
@@ -63,26 +52,19 @@ public class DataUtil {
     }
 
     public static void writeData() {
-        Gson gson = new Gson();
         for(Contract contract : contractWriteBuffer) {
             try {
                 File contractFile = new File(contractsFolder.getAbsolutePath() + "/" + contract.getUid() + ".smdat");
                 if(contractFile.exists()) contractFile.delete();
                 contractFile.createNewFile();
-                BufferedWriter bw = new BufferedWriter(new FileWriter(contractFile));
-                bw.write(gson.toJson(contract));
-                bw.close();
+                FileOutputStream outputStream = new FileOutputStream(contractFile);
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+                objectOutputStream.writeObject(contract);
+                objectOutputStream.close();
+                outputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 DebugFile.log("[ERROR]: Something went wrong while trying to write contract " + contract.getName() + " to file!");
-                /*
-                if(debug) {
-                    StringBuilder builder = new StringBuilder();
-                    builder.append(contract.getClaimants().get(0).getName());
-                    for(int i = 1; i < contract.getClaimants().size(); i ++) builder.append(", ").append(contract.getClaimants().get(i).getName());
-                    DebugFile.log("[DEBUG]: Error Info[contractWriteBuffer.size() = " + contractWriteBuffer.size() + ", contractUID = '" + contract.getUid() + "', contractClaimants = [" + builder.toString() + "]]");
-                }
-                 */
             }
         }
         contractWriteBuffer.clear();
@@ -92,21 +74,14 @@ public class DataUtil {
                 File playerDataFile = new File(playerDataFolder.getAbsolutePath() + "/" + playerData.getPlayerName() + ".smdat");
                 if(playerDataFile.exists()) playerDataFile.delete();
                 playerDataFile.createNewFile();
-                BufferedWriter bw = new BufferedWriter(new FileWriter(playerDataFile));
-                bw.write(gson.toJson(playerData));
-                bw.close();
-                playerDataWriteBuffer.remove(playerData);
+                FileOutputStream outputStream = new FileOutputStream(playerDataFile);
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+                objectOutputStream.writeObject(playerData);
+                objectOutputStream.close();
+                outputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 DebugFile.log("[ERROR]: Something went wrong while trying to write player " + playerData.getPlayerName() + " to file!");
-                /*
-                if(debug) {
-                    StringBuilder builder = new StringBuilder();
-                    builder.append(playerData.getContracts().get(0).getUid());
-                    for(int i = 1; i < playerData.getContracts().size(); i ++) builder.append(", ").append(playerData.getContracts().get(i).getUid()));
-                    DebugFile.log("[DEBUG]: Error Info[playerDataWriteBuffer.size() = " + playerDataWriteBuffer.size() + ", player = " + playerData.getPlayerName() + ", playerContracts = [" + builder.toString() + "]]");
-                }
-                 */
             }
         }
         playerDataWriteBuffer.clear();
@@ -115,14 +90,14 @@ public class DataUtil {
     public static void removeContract(Contract contract) {
         ArrayList<StarPlayer> claimants = contract.getClaimants();
         for(StarPlayer p : claimants) {
-            PlayerData pData = getPlayerData(p);
-            players.remove(pData);
-            pData.getContracts().remove(contract);
+            PlayerData pData = players.get(p.getName());
+            contract.removeClaimant(p);
+            pData.removeContract(contract);
             p.sendMail(contract.getContractor().getName(), "Contract Cancellation",contract.getContractor().getName() + " has cancelled contract " + contract.getName() + ".");
-            players.add(pData);
+            players.put(pData.getPlayerName(), pData);
             playerDataWriteBuffer.add(pData);
         }
-        contracts.remove(contract);
+        contracts.remove(contract.getUid());
 
         for(File contractFile : contractsFolder.listFiles()) {
             if(contractFile.getName().substring(0, contractFile.getName().indexOf(".") - 1).equals(contract.getUid())) {
@@ -130,8 +105,13 @@ public class DataUtil {
                 break;
             }
         }
-        ContractsScrollableList.updated = false;
-        PlayerContractsScrollableList.updated = false;
-        ContractClaimantsScrollableList.updated = false;
+        if(ContractsScrollableList.getInst() != null) {
+            ContractsScrollableList.getInst().clear();
+            ContractsScrollableList.getInst().handleDirty();
+        }
+        if(PlayerContractsScrollableList.getInst() != null) {
+            PlayerContractsScrollableList.getInst().clear();
+            PlayerContractsScrollableList.getInst().handleDirty();
+        }
     }
 }

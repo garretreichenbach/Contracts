@@ -1,10 +1,13 @@
 package dovtech.contracts.gui.contracts;
 
 import api.common.GameClient;
+import api.common.GameServer;
 import api.entity.StarPlayer;
 import api.utils.gui.GUIUtils;
 import api.utils.gui.SimpleGUIHorizontalButtonPane;
+import api.utils.gui.SimplePopup;
 import dovtech.contracts.contracts.Contract;
+import dovtech.contracts.contracts.target.PlayerTarget;
 import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.util.DataUtil;
 import org.hsqldb.lib.StringComparator;
@@ -13,20 +16,22 @@ import org.schema.schine.graphicsengine.core.MouseEvent;
 import org.schema.schine.graphicsengine.forms.gui.*;
 import org.schema.schine.graphicsengine.forms.gui.newgui.*;
 import org.schema.schine.input.InputState;
-
-import javax.xml.crypto.Data;
 import java.util.*;
 
 public class ContractsScrollableList extends ScrollableTableList<Contract> implements GUIActiveInterface {
 
-    public static boolean updated;
-    private ArrayList<Contract> contracts;
+    private StarPlayer player;
+    private static ContractsScrollableList inst;
+
+    public static ContractsScrollableList getInst() {
+        if(inst != null) return inst;
+        return null;
+    }
 
     public ContractsScrollableList(InputState state, float var2, float var3, GUIElement guiElement) {
         super(state, var2, var3, guiElement);
-        contracts = new ArrayList<>();
-        updated = false;
-        updateContracts();
+        this.player = new StarPlayer(GameClient.getClientPlayerState());
+        inst = this;
     }
 
     @Override
@@ -103,23 +108,110 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
 
     @Override
     protected Collection<Contract> getElementList() {
-        if (!updated) updateContracts();
-        return contracts;
+        inst = this;
+        return DataUtil.contracts.values();
     }
 
-    public void updateContracts() {
-        this.contracts = DataUtil.contracts;
-        flagDirty();
-        updated = true;
-    }
+    public SimpleGUIHorizontalButtonPane redrawButtonPane(final Contract contract) {
+        SimpleGUIHorizontalButtonPane buttonPane = new SimpleGUIHorizontalButtonPane(getState(), 300, 32, 2);
+        final PlayerData playerData = DataUtil.players.get(player.getName());
 
-    @Override
-    public void update(Observable observable, Object object) {
-        if(!updated) {
-            updateContracts();
-            updated = true;
+        if(!playerData.getContracts().contains(contract)) {
+            GUITextButton claimContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "CLAIM CONTRACT", new GUICallback() {
+                @Override
+                public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                    if (mouseEvent.pressedLeftMouse()) {
+                        boolean canClaim = true;
+                        if(contract.getContractType().equals(Contract.ContractType.BOUNTY)) {
+                            PlayerTarget target = (PlayerTarget) contract.getTarget()[0];
+                            StarPlayer targetPlayer = target.getTarget();
+                            int targetFaction = targetPlayer.getPlayerState().getFactionId();
+                            int playerFaction = player.getPlayerState().getFactionId();
+                            if(targetPlayer.getName().equals(player.getName()) || targetFaction == playerFaction || GameServer.getServerState().getFactionManager().getFaction(targetFaction).getFriends().contains(GameServer.getServerState().getFactionManager().getFaction(playerFaction))) {
+                                canClaim = false;
+                            }
+                        }
+
+                        if(canClaim) {
+                            getState().getController().queueUIAudio("0022_menu_ui - enter");
+                            contract.addClaimant(player);
+                            playerData.addContract(contract);
+                            DataUtil.players.put(player.getName(), playerData);
+                            DataUtil.contracts.put(contract.getUid(), contract);
+                            DataUtil.playerDataWriteBuffer.add(playerData);
+                            DataUtil.contractWriteBuffer.add(contract);
+                        } else {
+                            SimplePopup popup = new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim this bounty!");
+                            popup.activate();
+                        }
+                        if(PlayerContractsScrollableList.getInst() != null) {
+                            PlayerContractsScrollableList.getInst().clear();
+                            PlayerContractsScrollableList.getInst().handleDirty();
+                        }
+                        clear();
+                        handleDirty();
+                    }
+                }
+
+                @Override
+                public boolean isOccluded() {
+                    return !isActive();
+                }
+            });
+            buttonPane.addButton(claimContractButton);
+        } else {
+            GUITextButton cancelClaimButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.CANCEL, "CANCEL CLAIM", new GUICallback() {
+                @Override
+                public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                    if (mouseEvent.pressedLeftMouse()) {
+                        getState().getController().queueUIAudio("0022_menu_ui - back");
+                        contract.removeClaimant(player);
+                        playerData.removeContract(contract);
+                        DataUtil.players.put(player.getName(), playerData);
+                        DataUtil.contracts.put(contract.getUid(), contract);
+                        DataUtil.playerDataWriteBuffer.add(playerData);
+                        DataUtil.contractWriteBuffer.add(contract);
+                        if(PlayerContractsScrollableList.getInst() != null) {
+                            PlayerContractsScrollableList.getInst().clear();
+                            PlayerContractsScrollableList.getInst().handleDirty();
+                        }
+                        clear();
+                        handleDirty();
+                    }
+                }
+
+                @Override
+                public boolean isOccluded() {
+                    return !isActive();
+                }
+            });
+            buttonPane.addButton(cancelClaimButton);
         }
-        super.update(observable, object);
+
+        GUITextButton viewClaimantsButton = new GUITextButton(getState(), 100, 24, GUITextButton.ColorPalette.TUTORIAL, "VIEW CLAIMANTS", new GUICallback() {
+            @Override
+            public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                if (mouseEvent.pressedLeftMouse()) {
+                    getState().getController().queueUIAudio("0022_menu_ui - enter");
+                    GUIMainWindow guiWindow = new GUIMainWindow(GameClient.getClientState(), 1200, 650, "CLAIMANTS");
+                    guiWindow.onInit();
+
+                    GUIContentPane claimantsPane = guiWindow.addTab("CLAIMANTS");
+                    claimantsPane.setTextBoxHeightLast(300);
+                    ContractClaimantsScrollableList contractClaimantsList = new ContractClaimantsScrollableList(getState(), 500, 300, claimantsPane.getContent(0), DataUtil.contracts.get(contract.getUid()));
+                    contractClaimantsList.onInit();
+                    claimantsPane.getContent(0).attach(contractClaimantsList);
+                    GUIUtils.activateCustomGUIWindow(guiWindow);
+                }
+            }
+
+            @Override
+            public boolean isOccluded() {
+                return !isActive();
+            }
+        });
+        buttonPane.addButton(viewClaimantsButton);
+        return buttonPane;
     }
 
     @Override
@@ -127,6 +219,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
         guiElementList.deleteObservers();
         guiElementList.addObserver(this);
         for (final Contract contract : set) {
+
             GUITextOverlayTable nameTextElement;
             (nameTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(contract.getName());
             GUIClippedRow nameRowElement;
@@ -147,114 +240,16 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
             GUIClippedRow rewardRowElement;
             (rewardRowElement = new GUIClippedRow(this.getState())).attach(rewardTextElement);
 
-            final ContractListRow contractListRow;
-            (contractListRow = new ContractListRow(this.getState(), contract, nameRowElement, contractTypeRowElement, contractorRowElement, rewardRowElement)).onInit();
-
-            final StarPlayer player = new StarPlayer(GameClient.getClientPlayerState());
-
-            ArrayList<Contract> pContracts = DataUtil.getPlayerData(player).getContracts();
-
-            SimpleGUIHorizontalButtonPane buttonPane = new SimpleGUIHorizontalButtonPane(getState(), 300, 32, 2);
-
-            if(!pContracts.contains(contract)) {
-                GUITextButton claimContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "CLAIM CONTRACT", new GUICallback() {
-                    @Override
-                    public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                        if (mouseEvent.pressedLeftMouse()) {
-                            getState().getController().queueUIAudio("0022_menu_ui - enter");
-                            DataUtil.contracts.remove(contract);
-                            ArrayList<StarPlayer> claimants = contract.getClaimants();
-                            claimants.add(player);
-                            contract.setClaimants(claimants);
-                            DataUtil.contractWriteBuffer.add(contract);
-                            PlayerData playerData = DataUtil.getPlayerData(player);
-                            DataUtil.players.remove(playerData);
-                            ArrayList<Contract> playerContracts = playerData.getContracts();
-                            playerContracts.add(contract);
-                            playerData.setContracts(playerContracts);
-                            DataUtil.players.add(playerData);
-                            DataUtil.playerDataWriteBuffer.add(playerData);
-                            DataUtil.contracts.add(contract);
-                            PlayerContractsScrollableList.updated = false;
-                            ContractClaimantsScrollableList.updated = false;
-                            updated = false;
-                            updateContracts();
-                        }
-                    }
-
-                    @Override
-                    public boolean isOccluded() {
-                        return !isActive();
-                    }
-                });
-                buttonPane.addButton(claimContractButton);
-            } else {
-                GUITextButton cancelClaimButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.CANCEL, "CANCEL CLAIM", new GUICallback() {
-                    @Override
-                    public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                        if (mouseEvent.pressedLeftMouse()) {
-                            getState().getController().queueUIAudio("0022_menu_ui - back");
-                            DataUtil.contracts.remove(contract);
-                            ArrayList<StarPlayer> claimants = contract.getClaimants();
-                            claimants.remove(player);
-                            contract.setClaimants(claimants);
-                            DataUtil.contractWriteBuffer.add(contract);
-                            PlayerData playerData = DataUtil.getPlayerData(player);
-                            DataUtil.players.remove(playerData);
-                            ArrayList<Contract> playerContracts = playerData.getContracts();
-                            playerContracts.remove(contract);
-                            playerData.setContracts(playerContracts);
-                            DataUtil.players.add(playerData);
-                            DataUtil.playerDataWriteBuffer.add(playerData);
-                            DataUtil.contracts.add(contract);
-                            ContractClaimantsScrollableList.updated = false;
-                            PlayerContractsScrollableList.updated = false;
-                            updated = false;
-                            updateContracts();
-                        }
-                    }
-
-                    @Override
-                    public boolean isOccluded() {
-                        return !isActive();
-                    }
-                });
-                buttonPane.addButton(cancelClaimButton);
-            }
-
-            GUITextButton viewClaimantsButton = new GUITextButton(getState(), 100, 24, GUITextButton.ColorPalette.TUTORIAL, "VIEW CLAIMANTS", new GUICallback() {
-                @Override
-                public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                    if (mouseEvent.pressedLeftMouse()) {
-                        getState().getController().queueUIAudio("0022_menu_ui - enter");
-                        GUIMainWindow guiWindow = new GUIMainWindow(GameClient.getClientState(), 1200, 650, "CLAIMANTS");
-                        guiWindow.onInit();
-
-                        GUIContentPane claimantsPane = guiWindow.addTab("CLAIMANTS");
-                        claimantsPane.setTextBoxHeightLast(300);
-                        ContractClaimantsScrollableList contractClaimantsList = new ContractClaimantsScrollableList(getState(), 500, 300, claimantsPane.getContent(0), contract);
-                        contractClaimantsList.onInit();
-                        contractClaimantsList.updateClaimants();
-                        claimantsPane.getContent(0).attach(contractClaimantsList);
-                        GUIUtils.activateCustomGUIWindow(guiWindow);
-                    }
-                }
-
-                @Override
-                public boolean isOccluded() {
-                    return !isActive();
-                }
-            });
-            buttonPane.addButton(viewClaimantsButton);
-
+            ContractListRow contractListRow = new ContractListRow(this.getState(), contract, nameRowElement, contractTypeRowElement, contractorRowElement, rewardRowElement);
+            contractListRow.onInit();
             contractListRow.expanded = new GUIElementList(getState());
 
+            SimpleGUIHorizontalButtonPane buttonPane = redrawButtonPane(contract);
             buttonPane.setPos(contractListRow.expanded.getPos());
             contractListRow.expanded.add(new GUIListElement(buttonPane, buttonPane, getState()));
             contractListRow.expanded.attach(buttonPane);
-
             contractListRow.onInit();
-            guiElementList.addWithoutUpdate(contractListRow);
+            guiElementList.add(contractListRow);
         }
         guiElementList.updateDim();
     }
@@ -267,10 +262,12 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
             this.highlightSelectSimple = true;
             this.setAllwaysOneSelected(true);
         }
+
         @Override
         public void clickedOnRow() {
-            updateContracts();
             super.clickedOnRow();
+            clear();
+            handleDirty();
         }
     }
 }

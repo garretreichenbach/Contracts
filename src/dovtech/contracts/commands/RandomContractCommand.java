@@ -82,11 +82,12 @@ public class RandomContractCommand extends ChatCommand {
         }
 
         Contract randomContract = new Contract(new StarFaction(GameServer.getServerState().getFactionManager().getFaction(-2)), contractName, randomContractType, randomReward, UUID.randomUUID().toString(), contractTarget);
-        DataUtil.contracts.add(randomContract);
+        DataUtil.contracts.put(randomContract.getUid(), randomContract);
         DataUtil.contractWriteBuffer.add(randomContract);
-        ContractsScrollableList.updated = false;
-        PlayerContractsScrollableList.updated = false;
-        ContractClaimantsScrollableList.updated = false;
+        if(ContractsScrollableList.getInst() != null) {
+            ContractsScrollableList.getInst().clear();
+            ContractsScrollableList.getInst().handleDirty();
+        }
         return true;
     }
 }

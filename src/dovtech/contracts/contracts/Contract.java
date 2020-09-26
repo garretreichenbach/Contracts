@@ -6,9 +6,11 @@ import api.faction.StarFaction;
 import api.server.Server;
 import dovtech.contracts.contracts.target.ContractTarget;
 import dovtech.contracts.util.DataUtil;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Contract {
+public class Contract implements Serializable {
 
     private String name;
     private int contractorID;
@@ -38,11 +40,17 @@ public class Contract {
         return claimantsList;
     }
 
+    public void removeClaimant(StarPlayer claimant) {
+        this.claimantNames.remove(claimant.getName());
+    }
+
+    public void addClaimant(StarPlayer claimant) {
+        this.claimantNames.add(claimant.getName());
+    }
+
     public void setClaimants(ArrayList<StarPlayer> claimants) {
-        claimantNames.clear();
-        for(StarPlayer claimant : claimants) {
-            claimantNames.add(claimant.getName());
-        }
+        this.claimantNames = new ArrayList<>();
+        for(StarPlayer player : claimants) this.claimantNames.add(player.getName());
     }
 
     public String getName() {
@@ -50,7 +58,7 @@ public class Contract {
     }
 
     public StarFaction getContractor() {
-        if(GameServer.getServerState().getFactionManager().getFaction(contractorID) != null) {
+        if(contractorID != 0) {
             return new StarFaction(GameServer.getServerState().getFactionManager().getFaction(contractorID));
         } else {
             DataUtil.removeContract(this);
