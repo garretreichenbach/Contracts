@@ -19,12 +19,13 @@ import org.schema.schine.graphicsengine.core.settings.PrefixNotFoundException;
 import org.schema.schine.graphicsengine.forms.font.FontLibrary;
 import org.schema.schine.graphicsengine.forms.gui.*;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIActivatableTextBar;
+import org.schema.schine.graphicsengine.forms.gui.newgui.GUIActiveInterface;
 import org.schema.schine.input.InputState;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class NewContractPanel extends GUIInputPanel implements DropdownCallback, BlockTypeSearchRunnableManager.BlockTypeSearchProgressCallback {
+public class NewContractPanel extends GUIInputPanel implements BlockTypeSearchRunnableManager.BlockTypeSearchProgressCallback {
 
     private StarFaction contractor;
     private GUIAncor content;
@@ -45,12 +46,15 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
         this.contractor = contractor;
         this.content = new GUIAncor(getState(), 350, 300);
         this.guiCallback = guiCallback;
-        this.selectedBlockType = Blocks.BASTYN_CAPSULE.getInfo();
         this.curText = "";
     }
 
     public ElementInformation getSelectedBlockType() {
-        return selectedBlockType;
+        if (selectedBlockType != null) {
+            return selectedBlockType;
+        } else {
+            return Blocks.SHIP_CORE.getInfo();
+        }
     }
 
     public int getReward() {
@@ -77,16 +81,32 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
 
     public void drawMiningPanel() {
         curText = "";
-        if (dropdown != null) content.detach(dropdown);
-        if (display != null) content.detach(display);
-        if (textBar != null) content.detach(textBar);
+        if (dropdown != null) {
+            dropdown.cleanUp();
+            content.detach(dropdown);
+        }
+        if (display != null) {
+            display.cleanUp();
+            content.detach(display);
+        }
+        if (textBar != null) {
+            textBar.cleanUp();
+            content.detach(textBar);
+        }
 
         addDropdown(new DropdownResult() {
             private List<GUIElement> blockElements;
 
             @Override
             public DropdownCallback initCallback() {
-                return callback;
+                return new DropdownCallback() {
+                    @Override
+                    public void onChanged(Object value) {
+                        if (value instanceof ElementInformation) {
+                            selectedBlockType = (ElementInformation) value;
+                        }
+                    }
+                };
             }
 
             @Override
@@ -149,7 +169,11 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
 
             @Override
             public short getCurrentValue() {
-                return selectedBlockType.getId();
+                if(selectedBlockType != null) {
+                    return selectedBlockType.getId();
+                } else {
+                    return 0;
+                }
             }
 
             @Override
@@ -185,7 +209,7 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
             @Override
             public String onTextChanged(String text) {
                 String t = text.trim();
-                if(!t.equals(curText)) {
+                if (!t.equals(curText)) {
                     curText = t;
                     textChanged = true;
                 }
@@ -269,16 +293,32 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
     public void drawProductionPanel() {
 
         curText = "";
-        if (dropdown != null) content.detach(dropdown);
-        if (display != null) content.detach(display);
-        if (textBar != null) content.detach(textBar);
+        if (dropdown != null) {
+            dropdown.cleanUp();
+            content.detach(dropdown);
+        }
+        if (display != null) {
+            display.cleanUp();
+            content.detach(display);
+        }
+        if (textBar != null) {
+            textBar.cleanUp();
+            content.detach(textBar);
+        }
 
         addDropdown(new DropdownResult() {
             private List<GUIElement> blockElements;
 
             @Override
             public DropdownCallback initCallback() {
-                return callback;
+                return new DropdownCallback() {
+                    @Override
+                    public void onChanged(Object value) {
+                        if (value instanceof ElementInformation) {
+                            selectedBlockType = (ElementInformation) value;
+                        }
+                    }
+                };
             }
 
             @Override
@@ -336,12 +376,16 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
 
             @Override
             public short getDefault() {
-                return Blocks.BASTYN_CAPSULE.getId();
+                return Blocks.SHIP_CORE.getId();
             }
 
             @Override
             public short getCurrentValue() {
-                return selectedBlockType.getId();
+                if(selectedBlockType != null) {
+                    return selectedBlockType.getId();
+                } else {
+                    return 0;
+                }
             }
 
             @Override
@@ -376,7 +420,7 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
             @Override
             public String onTextChanged(String text) {
                 String t = text.trim();
-                if(!t.equals(curText)) {
+                if (!t.equals(curText)) {
                     curText = t;
                     textChanged = true;
                 }
@@ -499,9 +543,18 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
             itemInput.cleanUp();
         }
 
-        if (dropdown != null) content.detach(dropdown);
-        if (display != null) content.detach(display);
-        if (textBar != null) content.detach(textBar);
+        if (dropdown != null) {
+            dropdown.cleanUp();
+            content.detach(dropdown);
+        }
+        if (display != null) {
+            display.cleanUp();
+            content.detach(display);
+        }
+        if (textBar != null) {
+            textBar.cleanUp();
+            content.detach(textBar);
+        }
 
         if (rewardInput == null) {
             rewardInput = new GUIActivatableTextBar(getState(), FontLibrary.FontSize.MEDIUM, 10, 1, "REWARD", content, new TextCallback() {
@@ -511,7 +564,7 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
                 }
 
                 @Override
-                public String handleAutoComplete(String s, TextCallback textCallback, String s1) throws PrefixNotFoundException {
+                public String handleAutoComplete(String s, TextCallback textCallback, String s1) {
                     return null;
                 }
 
@@ -567,13 +620,6 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
     }
 
     @Override
-    public void onChanged(Object value) {
-        if (value instanceof ElementInformation) {
-            selectedBlockType = (ElementInformation) value;
-        }
-    }
-
-    @Override
     public void onDone() {
 
     }
@@ -608,20 +654,20 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
 
     private ArrayList<ElementInformation> getResourcesFilter() {
         ArrayList<ElementInformation> filter = new ArrayList<>();
-            for(ElementInformation info : ElementKeyMap.getInfoArray()) {
-                try {
-                    if(info != null && !info.isDeprecated() && !info.name.toLowerCase().contains("core") && !info.name.toLowerCase().contains("scanner") && (info.name.toLowerCase().contains("ore") || info.name.toLowerCase().contains("raw") || info.name.toLowerCase().contains("capsule"))) {
-                        if(curText.equals("")) {
-                            filter.add(info);
-                        } else {
-                            if(info.name.toLowerCase().contains(curText.toLowerCase())) filter.add(info);
-                        }
+        for (ElementInformation info : ElementKeyMap.getInfoArray()) {
+            try {
+                if (info != null && !info.isDeprecated() && (info.name.toLowerCase().contains("raw") || info.name.toLowerCase().contains("capsule"))) {
+                    if (curText.equals("")) {
+                        filter.add(info);
+                    } else {
+                        if (info.name.toLowerCase().contains(curText.toLowerCase())) filter.add(info);
                     }
-                } catch(Exception e) {
-                    e.printStackTrace();
-                    DebugFile.log("fuck you suck my dicc and bal");
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                DebugFile.log("fuck you suck my dicc and bal");
             }
+        }
         return filter;
     }
 
@@ -629,14 +675,14 @@ public class NewContractPanel extends GUIInputPanel implements DropdownCallback,
         ArrayList<ElementInformation> filter = new ArrayList<>();
         for (ElementInformation info : ElementKeyMap.getInfoArray()) {
             try {
-                if(info != null && info.isInRecipe() && !info.name.toLowerCase().contains("capsule") && !info.isDeprecated()) {
-                    if(curText.equals("")) {
+                if (info != null && info.isInRecipe() && !info.name.toLowerCase().contains("capsule") && !info.name.toLowerCase().contains("raw") && !info.isDeprecated()) {
+                    if (curText.equals("")) {
                         filter.add(info);
                     } else {
-                        if(info.name.toLowerCase().contains(curText.toLowerCase())) filter.add(info);
+                        if (info.name.toLowerCase().contains(curText.toLowerCase())) filter.add(info);
                     }
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 DebugFile.log("fuck you suck my dicc and bal");
             }
