@@ -14,6 +14,7 @@ import api.mod.config.FileConfiguration;
 import api.utils.StarRunnable;
 import api.utils.gui.GUIUtils;
 import dovtech.contracts.commands.RandomContractCommand;
+import dovtech.contracts.commands.TradeGuildTakeContractCommand;
 import dovtech.contracts.gui.contracts.ContractsTab;
 import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
 import dovtech.contracts.player.PlayerData;
@@ -69,7 +70,7 @@ public class Contracts extends StarMod {
         inst = this;
         setModName("Contracts");
         setModAuthor("Dovtech");
-        setModVersion("0.3.5");
+        setModVersion("0.3.10");
         setModDescription("Adds Contracts for trade and player interaction.");
 
         if (!moddataFolder.exists()) moddataFolder.mkdirs();
@@ -104,10 +105,11 @@ public class Contracts extends StarMod {
         DebugFile.log("Enabled", this);
     }
 
-    @Override
+    /*@Override
     public void onBlockConfigLoad(BlockConfig config) {
 
     }
+     */
 
     private void checkMods() {
         this.mods = new ArrayList<>();
@@ -238,6 +240,7 @@ public class Contracts extends StarMod {
     private void registerCommands() {
 
         StarLoader.registerCommand(new RandomContractCommand());
+        StarLoader.registerCommand(new TradeGuildTakeContractCommand());
 
         DebugFile.log("Registered Commands!", this);
     }

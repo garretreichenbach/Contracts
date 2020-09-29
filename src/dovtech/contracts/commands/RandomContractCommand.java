@@ -59,7 +59,7 @@ public class RandomContractCommand extends ChatCommand {
                 break;
             case BOUNTY:
                 contractTarget = new PlayerTarget();
-                contractTarget.setTarget(new StarPlayer(sender));
+                contractTarget.setTarget(DataUtil.players.get(sender.getName()));
                 contractName = "Kill " + sender.getName();
                 break;
             case PRODUCTION:

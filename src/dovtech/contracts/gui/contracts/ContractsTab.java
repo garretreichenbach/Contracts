@@ -6,6 +6,7 @@ import api.utils.gui.SimpleGUIHorizontalButtonPane;
 import api.utils.gui.SimplePopup;
 import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
+import dovtech.contracts.gui.contracts.newcontract.NewContractDialog;
 import dovtech.contracts.util.DataUtil;
 import org.schema.game.client.controller.PlayerOkCancelInput;
 import org.schema.schine.graphicsengine.core.GLFrame;
@@ -62,9 +63,7 @@ public class ContractsTab extends GUIContentPane {
                     if (player.getPlayerState().getFactionId() != 0) {
                         //Todo: Open add contract menu
                         GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                        NewContractPanel newContractPanel = new NewContractPanel(GameClient.getClientState(), player.getFaction());
-                        newContractPanel.updatePanel();
-                        newContractPanel.activate();
+                        (new NewContractDialog(GameClient.getClientState(), player.getFaction())).activate();
                         contractsScrollableList.clear();
                         contractsScrollableList.handleDirty();
                     } else {
@@ -86,7 +85,7 @@ public class ContractsTab extends GUIContentPane {
                 if (mouseEvent.pressedLeftMouse()) {
                     if (contractsScrollableList.getSelectedRow() != null && contractsScrollableList.getSelectedRow().f != null) {
                         final Contract contract = contractsScrollableList.getSelectedRow().f;
-                        if (player.getPlayerState().getFactionId() == contract.getContractor().getID()) {
+                        if (player.getPlayerState().getFactionId() == contract.getContractor().getID() || player.getPlayerState().isAdmin()) {
                             GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
                             PlayerOkCancelInput confirmBox = new PlayerOkCancelInput("ConfirmBox", state, "Confirm Cancellation", "Are you sure you wish to cancel this contract? You won't get a refund...") {
                                 @Override

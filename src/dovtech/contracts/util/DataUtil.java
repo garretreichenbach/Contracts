@@ -44,7 +44,7 @@ public class DataUtil {
                 PlayerData player = (PlayerData) objectInputStream.readObject();
                 objectInputStream.close();
                 inputStream.close();
-                players.put(player.getPlayerName(), player);
+                players.put(player.getName(), player);
             }
         } else {
             if(debug) DebugFile.log("[DEBUG]: PlayerData folder is empty, not reading...", instance);
@@ -71,7 +71,7 @@ public class DataUtil {
 
         for(PlayerData playerData : playerDataWriteBuffer) {
             try {
-                File playerDataFile = new File(playerDataFolder.getAbsolutePath() + "/" + playerData.getPlayerName() + ".smdat");
+                File playerDataFile = new File(playerDataFolder.getAbsolutePath() + "/" + playerData.getName() + ".smdat");
                 if(playerDataFile.exists()) playerDataFile.delete();
                 playerDataFile.createNewFile();
                 FileOutputStream outputStream = new FileOutputStream(playerDataFile);
@@ -81,7 +81,7 @@ public class DataUtil {
                 outputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
-                DebugFile.log("[ERROR]: Something went wrong while trying to write player " + playerData.getPlayerName() + " to file!");
+                DebugFile.log("[ERROR]: Something went wrong while trying to write player " + playerData.getName() + " to file!");
             }
         }
         playerDataWriteBuffer.clear();
@@ -94,7 +94,7 @@ public class DataUtil {
             contract.removeClaimant(p);
             pData.removeContract(contract);
             p.sendMail(contract.getContractor().getName(), "Contract Cancellation",contract.getContractor().getName() + " has cancelled contract " + contract.getName() + ".");
-            players.put(pData.getPlayerName(), pData);
+            players.put(pData.getName(), pData);
             playerDataWriteBuffer.add(pData);
         }
         contracts.remove(contract.getUid());

@@ -1,5 +1,6 @@
 package dovtech.contracts.contracts.target;
 
+import api.element.block.Blocks;
 import api.element.inventory.ItemStack;
 import api.universe.StarSector;
 import api.universe.StarUniverse;
@@ -26,8 +27,13 @@ public class CargoTarget implements ContractTarget {
     @Override
     public void setTarget(Object obj) {
         ItemStack itemStack = (ItemStack) obj;
-        this.target = itemStack.getId();
-        this.amount = itemStack.getAmount();
+        if(itemStack != null) {
+            this.target = itemStack.getId();
+            this.amount = itemStack.getAmount();
+        } else {
+            this.target = Blocks.BASTYN_CAPSULE.getId();
+            this.amount = 1;
+        }
     }
 
     @Override

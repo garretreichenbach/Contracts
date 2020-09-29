@@ -122,34 +122,38 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                 public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                     if (mouseEvent.pressedLeftMouse()) {
                         boolean canClaim = true;
-                        if(contract.getContractType().equals(Contract.ContractType.BOUNTY)) {
-                            PlayerTarget target = (PlayerTarget) contract.getTarget()[0];
-                            StarPlayer targetPlayer = target.getTarget();
-                            int targetFaction = targetPlayer.getPlayerState().getFactionId();
-                            int playerFaction = player.getPlayerState().getFactionId();
-                            if(targetPlayer.getName().equals(player.getName()) || targetFaction == playerFaction || GameServer.getServerState().getFactionManager().getFaction(targetFaction).getFriends().contains(GameServer.getServerState().getFactionManager().getFaction(playerFaction))) {
-                                canClaim = false;
-                            }
-                        }
-
-                        if(canClaim) {
-                            getState().getController().queueUIAudio("0022_menu_ui - enter");
-                            contract.addClaimant(player);
-                            playerData.addContract(contract);
-                            DataUtil.players.put(player.getName(), playerData);
-                            DataUtil.contracts.put(contract.getUid(), contract);
-                            DataUtil.playerDataWriteBuffer.add(playerData);
-                            DataUtil.contractWriteBuffer.add(contract);
+                        if(contract.getContractor().getID() == player.getPlayerState().getFactionId() && !player.getPlayerState().isAdmin()) {
+                            (new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim your own contract!")).activate();
                         } else {
-                            SimplePopup popup = new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim this bounty!");
-                            popup.activate();
+                            if(contract.getContractType().equals(Contract.ContractType.BOUNTY)) {
+                                PlayerTarget target = (PlayerTarget) contract.getTarget()[0];
+                                PlayerData targetPlayer = target.getTarget();
+                                int targetFaction = targetPlayer.getFactionID();
+                                int playerFaction = player.getPlayerState().getFactionId();
+                                if(targetPlayer.getName().equals(player.getName()) || targetFaction == playerFaction || GameServer.getServerState().getFactionManager().getFaction(targetFaction).getFriends().contains(GameServer.getServerState().getFactionManager().getFaction(playerFaction))) {
+                                    canClaim = false;
+                                }
+                            }
+
+                            if(canClaim) {
+                                getState().getController().queueUIAudio("0022_menu_ui - enter");
+                                contract.addClaimant(player);
+                                playerData.addContract(contract);
+                                DataUtil.players.put(player.getName(), playerData);
+                                DataUtil.contracts.put(contract.getUid(), contract);
+                                DataUtil.playerDataWriteBuffer.add(playerData);
+                                DataUtil.contractWriteBuffer.add(contract);
+                            } else {
+                                SimplePopup popup = new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim this bounty!");
+                                popup.activate();
+                            }
+                            if(PlayerContractsScrollableList.getInst() != null) {
+                                PlayerContractsScrollableList.getInst().clear();
+                                PlayerContractsScrollableList.getInst().handleDirty();
+                            }
+                            clear();
+                            handleDirty();
                         }
-                        if(PlayerContractsScrollableList.getInst() != null) {
-                            PlayerContractsScrollableList.getInst().clear();
-                            PlayerContractsScrollableList.getInst().handleDirty();
-                        }
-                        clear();
-                        handleDirty();
                     }
                 }
 

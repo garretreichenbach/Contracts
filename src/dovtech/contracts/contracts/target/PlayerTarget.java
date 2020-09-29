@@ -1,10 +1,9 @@
 package dovtech.contracts.contracts.target;
 
-import api.common.GameServer;
-import api.entity.StarPlayer;
 import api.universe.StarSector;
 import dovtech.contracts.contracts.Contract;
-import org.schema.game.server.data.PlayerNotFountException;
+import dovtech.contracts.player.PlayerData;
+import dovtech.contracts.util.DataUtil;
 
 public class PlayerTarget implements ContractTarget {
 
@@ -16,19 +15,18 @@ public class PlayerTarget implements ContractTarget {
     }
 
     @Override
-    public StarPlayer getTarget() {
-        try {
-            return new StarPlayer(GameServer.getServerState().getPlayerFromName(target));
-        } catch (PlayerNotFountException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public PlayerData getTarget() {
+        return DataUtil.players.get(target);
     }
 
     @Override
     public void setTarget(Object obj) {
-        StarPlayer player = (StarPlayer) obj;
-        this.target = player.getName();
+        PlayerData playerData = (PlayerData) obj;
+        if(playerData != null) {
+            this.target = playerData.getName();
+        } else {
+            this.target = "Nobody";
+        }
     }
 
     @Override

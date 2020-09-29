@@ -1,7 +1,6 @@
 package dovtech.contracts.player;
 
 import api.entity.StarPlayer;
-import api.server.Server;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.util.DataUtil;
 
@@ -10,14 +9,16 @@ import java.util.ArrayList;
 
 public class PlayerData implements Serializable {
 
-    private String playerName;
+    private String name;
     private ArrayList<PlayerHistory> history;
     private ArrayList<String> contractUIDs;
+    private int factionID;
 
     public PlayerData(StarPlayer player) {
-        this.playerName = player.getName();
+        this.name = player.getName();
         this.history = new ArrayList<>();
         this.contractUIDs = new ArrayList<>();
+        this.factionID = player.getPlayerState().getFactionId();
     }
 
     public ArrayList<Contract> getContracts() {
@@ -41,7 +42,11 @@ public class PlayerData implements Serializable {
         return history;
     }
 
-    public String getPlayerName() {
-        return playerName;
+    public String getName() {
+        return name;
+    }
+
+    public int getFactionID() {
+        return factionID;
     }
 }
