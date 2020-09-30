@@ -1,18 +1,14 @@
 package dovtech.contracts.commands;
 
-import api.common.GameClient;
 import api.common.GameServer;
 import api.element.block.Blocks;
 import api.element.inventory.ItemStack;
-import api.entity.StarPlayer;
 import api.faction.StarFaction;
 import api.universe.StarUniverse;
 import api.utils.game.chat.ChatCommand;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.*;
-import dovtech.contracts.gui.contracts.ContractClaimantsScrollableList;
 import dovtech.contracts.gui.contracts.ContractsScrollableList;
-import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
 import dovtech.contracts.util.DataUtil;
 import org.schema.game.common.data.player.PlayerState;
 import java.util.Random;
@@ -21,7 +17,7 @@ import java.util.UUID;
 public class RandomContractCommand extends ChatCommand {
 
     public RandomContractCommand() {
-        super("debug_randomcontract", "/debug_randomcontract", "Generates a random contract and adds it to the writebuffer.", true);
+        super("randomcontract", "/randomcontract", "Generates a random contract and adds it to the writebuffer.", true);
     }
 
     @Override
@@ -46,7 +42,7 @@ public class RandomContractCommand extends ChatCommand {
         int randomReward = (random.nextInt(1000 - 100) + 100) * 1000;
 
         ContractTarget contractTarget = new PlayerTarget();
-        contractTarget.setTarget(new StarPlayer(GameClient.getClientPlayerState()));
+        contractTarget.setTarget(DataUtil.players.get(sender.getName()));
         String contractName = "";
         switch (randomContractType) {
             case MINING:

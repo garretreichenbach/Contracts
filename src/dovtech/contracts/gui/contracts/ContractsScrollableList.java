@@ -126,7 +126,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                             (new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim your own contract!")).activate();
                         } else {
                             if(contract.getContractType().equals(Contract.ContractType.BOUNTY)) {
-                                PlayerTarget target = (PlayerTarget) contract.getTarget()[0];
+                                PlayerTarget target = (PlayerTarget) contract.getTarget();
                                 PlayerData targetPlayer = target.getTarget();
                                 int targetFaction = targetPlayer.getFactionID();
                                 int playerFaction = player.getPlayerState().getFactionId();

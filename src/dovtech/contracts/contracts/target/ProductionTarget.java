@@ -5,7 +5,9 @@ import api.element.inventory.ItemStack;
 import api.universe.StarSector;
 import dovtech.contracts.contracts.Contract;
 
-public class ProductionTarget implements ContractTarget {
+import java.io.Serializable;
+
+public class ProductionTarget implements ContractTarget, Serializable {
 
     private short id;
     private int count;

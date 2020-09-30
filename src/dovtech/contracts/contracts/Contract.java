@@ -16,11 +16,11 @@ public class Contract implements Serializable {
     private int contractorID;
     private ContractType contractType;
     private int reward;
-    private ContractTarget[] target;
+    private ContractTarget target;
     private ArrayList<String> claimantNames;
     private String uid;
 
-    public Contract(StarFaction contractor, String name, ContractType contractType, int reward, String uid, ContractTarget... target) {
+    public Contract(StarFaction contractor, String name, ContractType contractType, int reward, String uid, ContractTarget target) {
         this.name = name;
         this.contractorID = contractor.getID();
         this.contractType = contractType;
@@ -61,7 +61,7 @@ public class Contract implements Serializable {
         if(contractorID != 0) {
             return new StarFaction(GameServer.getServerState().getFactionManager().getFaction(contractorID));
         } else {
-            DataUtil.removeContract(this);
+            DataUtil.removeContract(this, true);
             return null;
         }
     }
@@ -74,7 +74,7 @@ public class Contract implements Serializable {
         return reward;
     }
 
-    public ContractTarget[] getTarget() {
+    public ContractTarget getTarget() {
         return target;
     }
 

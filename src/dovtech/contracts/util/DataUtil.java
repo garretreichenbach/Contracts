@@ -10,6 +10,7 @@ import dovtech.contracts.player.PlayerData;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class DataUtil {
 
@@ -87,19 +88,25 @@ public class DataUtil {
         playerDataWriteBuffer.clear();
     }
 
-    public static void removeContract(Contract contract) {
+    public static void removeContract(Contract contract, boolean canceled, StarPlayer... claimer) {
         ArrayList<StarPlayer> claimants = contract.getClaimants();
         for(StarPlayer p : claimants) {
             PlayerData pData = players.get(p.getName());
             contract.removeClaimant(p);
             pData.removeContract(contract);
-            p.sendMail(contract.getContractor().getName(), "Contract Cancellation",contract.getContractor().getName() + " has cancelled contract " + contract.getName() + ".");
+            if(canceled) {
+                p.sendMail(contract.getContractor().getName(), "Contract Cancellation",contract.getContractor().getName() + " has cancelled contract " + contract.getName() + ".");
+            } else if(claimer[0].equals(p)) {
+                p.sendMail(contract.getContractor().getName(), "Contract Completed", "We hear you have completed the contract and have sent the reward money to your account. It's been a pleasure doing business with you.");
+            } else {
+                p.sendMail(contract.getContractor().getName(), "Contract Ended", claimer[0].getName() + " has claimed the reward for contract " + contract.getName() + ".");
+            }
             players.put(pData.getName(), pData);
             playerDataWriteBuffer.add(pData);
         }
         contracts.remove(contract.getUid());
 
-        for(File contractFile : contractsFolder.listFiles()) {
+        for(File contractFile : Objects.requireNonNull(contractsFolder.listFiles())) {
             if(contractFile.getName().substring(0, contractFile.getName().indexOf(".") - 1).equals(contract.getUid())) {
                 contractFile.delete();
                 break;

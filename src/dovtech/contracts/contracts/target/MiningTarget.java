@@ -5,7 +5,9 @@ import api.element.inventory.ItemStack;
 import api.universe.StarSector;
 import dovtech.contracts.contracts.Contract;
 
-public class MiningTarget implements ContractTarget {
+import java.io.Serializable;
+
+public class MiningTarget implements ContractTarget, Serializable {
 
     private short target;
     private int amount;

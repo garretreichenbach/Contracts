@@ -83,8 +83,8 @@ public class ContractsTab extends GUIContentPane {
             @Override
             public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                 if (mouseEvent.pressedLeftMouse()) {
-                    if (contractsScrollableList.getSelectedRow() != null && contractsScrollableList.getSelectedRow().f != null) {
-                        final Contract contract = contractsScrollableList.getSelectedRow().f;
+                    if (contractsScrollableList.getSelectedRow() != null && contractsScrollableList.getSelectedRow().getSort() != null) {
+                        final Contract contract = contractsScrollableList.getSelectedRow().getSort();
                         if (player.getPlayerState().getFactionId() == contract.getContractor().getID() || player.getPlayerState().isAdmin()) {
                             GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
                             PlayerOkCancelInput confirmBox = new PlayerOkCancelInput("ConfirmBox", state, "Confirm Cancellation", "Are you sure you wish to cancel this contract? You won't get a refund...") {
@@ -95,7 +95,7 @@ public class ContractsTab extends GUIContentPane {
                                 @Override
                                 public void pressedOK() {
                                     GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                                    DataUtil.removeContract(contract);
+                                    DataUtil.removeContract(contract, true);
                                     contractsScrollableList.clear();
                                     contractsScrollableList.handleDirty();
                                 }

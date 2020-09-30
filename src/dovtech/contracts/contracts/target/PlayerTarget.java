@@ -5,7 +5,9 @@ import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.util.DataUtil;
 
-public class PlayerTarget implements ContractTarget {
+import java.io.Serializable;
+
+public class PlayerTarget implements ContractTarget, Serializable {
 
     private String target;
 

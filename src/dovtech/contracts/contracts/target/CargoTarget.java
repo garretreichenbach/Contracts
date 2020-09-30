@@ -6,7 +6,9 @@ import api.universe.StarSector;
 import api.universe.StarUniverse;
 import dovtech.contracts.contracts.Contract;
 
-public class CargoTarget implements ContractTarget {
+import java.io.Serializable;
+
+public class CargoTarget implements ContractTarget, Serializable {
 
     private short target;
     private int amount;

@@ -82,6 +82,7 @@ public class NewContractDialog extends PlayerInput {
                                     Contract contract = new Contract(currentPlayer.getFaction(), "Kill" + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), target);
                                     DataUtil.contracts.put(contract.getUid(), contract);
                                     DataUtil.contractWriteBuffer.add(contract);
+                                    currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                     if (ContractsScrollableList.getInst() != null) {
                                         ContractsScrollableList.getInst().clear();
                                         ContractsScrollableList.getInst().handleDirty();
@@ -102,6 +103,7 @@ public class NewContractDialog extends PlayerInput {
                                 Contract contract = new Contract(currentPlayer.getFaction(), "Mine x" + count + " " + itemStack.getName(), Contract.ContractType.MINING, panel.getReward(), UUID.randomUUID().toString(), target);
                                 DataUtil.contracts.put(contract.getUid(), contract);
                                 DataUtil.contractWriteBuffer.add(contract);
+                                currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                 if (ContractsScrollableList.getInst() != null) {
                                     ContractsScrollableList.getInst().clear();
                                     ContractsScrollableList.getInst().handleDirty();
@@ -120,6 +122,7 @@ public class NewContractDialog extends PlayerInput {
                                 Contract contract = new Contract(currentPlayer.getFaction(), "Produce x" + count + " " + itemStack.getName(), Contract.ContractType.PRODUCTION, panel.getReward(), UUID.randomUUID().toString(), target);
                                 DataUtil.contracts.put(contract.getUid(), contract);
                                 DataUtil.contractWriteBuffer.add(contract);
+                                currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                 if (ContractsScrollableList.getInst() != null) {
                                     ContractsScrollableList.getInst().clear();
                                     ContractsScrollableList.getInst().handleDirty();

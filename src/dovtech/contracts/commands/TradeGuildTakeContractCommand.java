@@ -9,7 +9,7 @@ import org.schema.game.common.data.player.PlayerState;
 public class TradeGuildTakeContractCommand extends ChatCommand {
 
     public TradeGuildTakeContractCommand() {
-        super("debug_takecontract", "/debug_takecontract <enableBounties>", "Makes the trading guild try to fulfill the first contract in the list favoring ones with the least amount of claims. However, they will avoid picking bounties unless enableBounties is true.", true);
+        super("takecontract", "/takecontract <enableBounties>", "Makes the trading guild try to fulfill the first contract in the list favoring ones with the least amount of claims. However, they will avoid picking bounties unless enableBounties is true.", true);
     }
 
     @Override
