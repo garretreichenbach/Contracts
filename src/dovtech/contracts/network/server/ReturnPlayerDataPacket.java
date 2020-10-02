@@ -7,6 +7,7 @@ package dovtech.contracts.network.server;
 import api.network.Packet;
 import api.network.PacketReadBuffer;
 import api.network.PacketWriteBuffer;
+import com.ctc.wstx.util.DataUtil;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.faction.FactionOpinion;
 import dovtech.contracts.player.PlayerData;
@@ -19,13 +20,13 @@ import java.util.ArrayList;
 public class ReturnPlayerDataPacket extends Packet {
 
     private PlayerData playerData;
-    private String playerName;
+    private String playerName = "";
     private ArrayList<PlayerHistory> playerHistory;
     private ArrayList<String> playerHistoryEvents = new ArrayList<>();
     private ArrayList<String> playerHistoryDates = new ArrayList<>();
     private ArrayList<String> contractUIDs = new ArrayList<>();
-    private int factionID;
-    private FactionOpinion[] factionOpinions;
+    private int factionID = 0;
+    private FactionOpinion[] factionOpinions = new FactionOpinion[1];
     private ArrayList<String> factionOpinionIDs = new ArrayList<>();
     private ArrayList<String> factionOpinionInts = new ArrayList<>();
 
@@ -75,13 +76,14 @@ public class ReturnPlayerDataPacket extends Packet {
         playerData.setContractUIDs(contractUIDs);
         playerData.setFactionID(factionID);
         playerData.setOpinions(factionOpinions);
+        DataUtils.addPlayerDataToLocal(playerData);
         DataUtils.playerData = playerData;
     }
 
     @Override
     public void processPacketOnServer(PlayerState playerState) {
         playerData = DataUtils.getPlayerData(playerState.getName());
-        playerName = playerData.getName();
+        playerName = playerState.getName();
         playerHistoryEvents = new ArrayList<>();
         playerHistoryDates = new ArrayList<>();
         for(PlayerHistory history : playerData.getHistory()) {

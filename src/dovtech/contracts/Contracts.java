@@ -22,6 +22,7 @@ import api.mod.StarLoader;
 import api.mod.StarMod;
 import api.mod.config.FileConfiguration;
 import api.network.Packet;
+import api.network.packets.PacketUtil;
 import api.server.Server;
 import api.universe.StarSector;
 import api.universe.StarUniverse;
@@ -38,11 +39,11 @@ import dovtech.contracts.gui.SpecialDealsTab;
 import dovtech.contracts.gui.contracts.ContractsScrollableList;
 import dovtech.contracts.gui.contracts.ContractsTab;
 import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
-import dovtech.contracts.network.client.GetAllContractsPacket;
-import dovtech.contracts.network.client.GetClientContractsPacket;
-import dovtech.contracts.network.client.GetPlayerDataPacket;
+import dovtech.contracts.network.client.*;
 import dovtech.contracts.network.server.ReturnAllContractsPacket;
 import dovtech.contracts.network.server.ReturnClientContractsPacket;
+import dovtech.contracts.network.server.ReturnFactionAlliesPacket;
+import dovtech.contracts.network.server.ReturnPlayerDataPacket;
 import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.util.ContractUtils;
 import dovtech.contracts.util.DataUtils;
@@ -67,8 +68,6 @@ import org.schema.schine.graphicsengine.forms.gui.GUIElement;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIContentPane;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIMainWindow;
 import org.schema.schine.input.InputState;
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,15 +81,8 @@ public class Contracts extends StarMod {
         inst = this;
     }
 
-    //Server
-    private final File moddataFolder = new File("moddata");
-    private final File contractsDataFolder = new File("moddata/Contracts");
-    private final File contractsFolder = new File("moddata/Contracts/contractdata");
-    private final File playerDataFolder = new File("moddata/Contracts/playerdata");
-
     private String[] defaultConfig = {
             "debug-mode: false",
-            "write-frequency: 5000",
             "mod-compatibility-enabled: true",
             "cargo-contracts-enabled: true",
             "cargo-escort-bonus: 1.3",
@@ -104,10 +96,8 @@ public class Contracts extends StarMod {
         SERVER,
         SINGLEPLAYER
     }
-    public Mode gameState;
     //Config Settings
     public boolean debugMode;
-    public int writeFrequency;
     public boolean modCompatibility;
     public boolean cargoContractsEnabled;
     public double cargoEscortBonus;
@@ -131,41 +121,9 @@ public class Contracts extends StarMod {
         setModVersion("0.5.1");
         setModDescription("Adds Contracts for trade and player interaction.");
 
-        if(GameCommon.isDedicatedServer()) {
-            gameState = Mode.SERVER;
-        } else if(GameCommon.isClientConnectedToServer()) {
-            gameState = Mode.CLIENT;
-        } else if(GameCommon.isOnSinglePlayer()) {
-            gameState = Mode.SINGLEPLAYER;
-        } else {
-            DebugFile.err("[CRITICAL]: Game State is invalid!");
-            throw new IllegalStateException();
-        }
-
-
-        if(gameState.equals(Mode.SERVER) || gameState.equals(Mode.SINGLEPLAYER)) {
-            if (!moddataFolder.exists()) moddataFolder.mkdirs();
-            if (!contractsDataFolder.exists()) contractsDataFolder.mkdirs();
-            if (!contractsFolder.exists()) contractsFolder.mkdirs();
-            if (!playerDataFolder.exists()) playerDataFolder.mkdirs();
-
+        if(getGameState().equals(Mode.SERVER) || getGameState().equals(Mode.SINGLEPLAYER)) {
             initConfig();
             checkMods();
-
-            try {
-                DataUtils.readData();
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-
-            if (writeFrequency != -1) {
-                new StarRunnable() {
-                    @Override
-                    public void run() {
-                        DataUtils.writeData();
-                    }
-                }.runTimer(writeFrequency);
-            }
         }
         registerCommands();
         registerListeners();
@@ -199,10 +157,23 @@ public class Contracts extends StarMod {
         }
     }
 
+    public Mode getGameState() {
+        if(GameCommon.isDedicatedServer()) {
+            return Mode.SERVER;
+        } else if(GameCommon.isOnSinglePlayer()) {
+            return Mode.SINGLEPLAYER;
+        } else if(GameCommon.isClientConnectedToServer()) {
+            return Mode.CLIENT;
+        } else {
+            DebugFile.err("[CRITICAL]: Game State is invalid!");
+            throw new IllegalStateException();
+        }
+    }
+
     private void registerListeners() {
 
         if (cargoContractsEnabled) {
-            if (gameState.equals(Mode.CLIENT) || gameState.equals(Mode.SINGLEPLAYER)) {
+            if (getGameState().equals(Mode.CLIENT) || getGameState().equals(Mode.SINGLEPLAYER)) {
                 StarLoader.registerListener(ControlManagerActivateEvent.class, new Listener<ControlManagerActivateEvent>() {
                     @Override
                     public void onEvent(ControlManagerActivateEvent event) {
@@ -337,7 +308,7 @@ public class Contracts extends StarMod {
                 });
             }
 
-            if (gameState.equals(Mode.SERVER) || gameState.equals(Mode.SINGLEPLAYER)) {
+            if (getGameState().equals(Mode.SERVER) || getGameState().equals(Mode.SINGLEPLAYER)) {
                 StarLoader.registerListener(BuyTradeEvent.class, new Listener<BuyTradeEvent>() {
                     @Override
                     public void onEvent(BuyTradeEvent event) {
@@ -464,6 +435,8 @@ public class Contracts extends StarMod {
                     if (DataUtils.getPlayerData(player.getName()) == null) {
                         PlayerData playerData = new PlayerData(player);
                         DataUtils.addPlayer(playerData);
+                        ReturnPlayerDataPacket returnPlayerDataPacket = new ReturnPlayerDataPacket(playerData);
+                        PacketUtil.sendPacket(player.getPlayerState(), returnPlayerDataPacket);
                         if (debugMode)
                             DebugFile.log("[DEBUG]: Registered PlayerData for " + player.getName() + ".", Contracts.getInstance());
                     }
@@ -509,7 +482,7 @@ public class Contracts extends StarMod {
                 }
             });
         }
-        if(gameState.equals(Mode.CLIENT) || gameState.equals(Mode.SINGLEPLAYER)) {
+        if(getGameState().equals(Mode.CLIENT) || getGameState().equals(Mode.SINGLEPLAYER)) {
 
             StarLoader.registerListener(GUITopBarCreateEvent.class, new Listener<GUITopBarCreateEvent>() {
                 @Override
@@ -635,9 +608,13 @@ public class Contracts extends StarMod {
         Packet.registerPacket(GetAllContractsPacket.class);
         Packet.registerPacket(GetClientContractsPacket.class);
         Packet.registerPacket(GetPlayerDataPacket.class);
-        Packet.registerPacket(ReturnAllContractsPacket.class);
+        Packet.registerPacket(ReturnPlayerDataPacket.class);
         Packet.registerPacket(ReturnClientContractsPacket.class);
         Packet.registerPacket(ReturnAllContractsPacket.class);
+        Packet.registerPacket(AddContractPacket.class);
+        Packet.registerPacket(RemoveContractPacket.class);
+        Packet.registerPacket(GetFactionAlliesPacket.class);
+        Packet.registerPacket(ReturnFactionAlliesPacket.class);
     }
 
     private void initConfig() {
@@ -646,7 +623,6 @@ public class Contracts extends StarMod {
         config.saveDefault(defaultConfig);
 
         this.debugMode = Boolean.parseBoolean(config.getString("debug-mode"));
-        this.writeFrequency = config.getInt("write-frequency");
         this.modCompatibility = Boolean.parseBoolean(config.getString("mod-compatibility-enabled"));
         this.cargoContractsEnabled = Boolean.parseBoolean(config.getString("cargo-contracts-enabled"));
         this.cargoEscortBonus = config.getDouble("cargo-escort-bonus");

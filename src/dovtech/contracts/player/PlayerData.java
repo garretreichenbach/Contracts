@@ -24,7 +24,8 @@ public class PlayerData implements Serializable {
     }
 
     public PlayerData() {
-
+        this.history = new ArrayList<>();
+        this.contractUIDs = new ArrayList<>();
     }
 
     public void setName(String name) {
@@ -84,6 +85,7 @@ public class PlayerData implements Serializable {
     }
 
     public void modOpinionScore(int factionID, int scoreToAdd) {
+        if(opinions == null) opinions = DataUtils.genOpinions();
         for(FactionOpinion opinion : opinions) {
             if(opinion.getFaction().getID() == factionID) {
                 opinion.setOpinionScore(opinion.getOpinionScore() + scoreToAdd);
@@ -93,6 +95,7 @@ public class PlayerData implements Serializable {
     }
 
     public void setOpinionScore(StarFaction faction, int score) {
+        if(opinions == null) opinions = DataUtils.genOpinions();
         for(FactionOpinion opinion : opinions) {
             if(opinion.getFaction().getID() == faction.getID()) {
                 opinion.setOpinionScore(score);

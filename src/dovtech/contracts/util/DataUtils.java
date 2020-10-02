@@ -1,69 +1,114 @@
 package dovtech.contracts.util;
 
-import api.DebugFile;
+import api.common.GameClient;
 import api.common.GameServer;
 import api.entity.StarPlayer;
 import api.faction.StarFaction;
+import api.mod.config.PersistentObjectUtil;
 import api.network.packets.PacketUtil;
 import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.faction.FactionOpinion;
 import dovtech.contracts.gui.contracts.ContractsScrollableList;
 import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
-import dovtech.contracts.network.client.GetAllContractsPacket;
-import dovtech.contracts.network.client.GetClientContractsPacket;
-import dovtech.contracts.network.client.GetPlayerDataPacket;
+import dovtech.contracts.network.client.*;
 import dovtech.contracts.player.PlayerData;
 import org.schema.game.common.data.player.faction.Faction;
-import java.io.*;
+import org.schema.game.common.data.player.faction.FactionManager;
+
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Objects;
 
 public class DataUtils {
 
     private static final Contracts instance = Contracts.getInstance();
-    private static final boolean debug = Contracts.getInstance().debugMode;
-    private static final File contractsFolder = new File("moddata/Contracts/contractdata");
-    private static final File playerDataFolder = new File("moddata/Contracts/playerdata");
 
-    public static ArrayList<Contract> localContracts = new ArrayList<>();
-    public static ArrayList<Contract> localPlayerContracts = new ArrayList<>();
     public static PlayerData playerData = new PlayerData();
-    private static HashMap<String, Contract> contracts = new HashMap<>();
-    private static HashMap<String, PlayerData> players = new HashMap<>();
-    private static ArrayList<Contract> contractWriteBuffer = new ArrayList<>();
-    private static ArrayList<PlayerData> playerDataWriteBuffer = new ArrayList<>();
+    private static ArrayList<PlayerData> localPlayers = new ArrayList<>();
+    public static ArrayList<Contract> localPlayerContracts = new ArrayList<>();
+    public static ArrayList<Contract> localContracts = new ArrayList<>();
+    public static ArrayList<Integer> localFactionAllies = new ArrayList<>();
+
+    public static ArrayList<Integer> getAllies(int playerFactionID) {
+        if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
+            ArrayList<Integer> allies = new ArrayList<>();
+            FactionManager factionManager = GameServer.getServerState().getFactionManager();
+            for(Faction faction : factionManager.getFaction(playerFactionID).getFriends()) allies.add(faction.getIdFaction());
+            return allies;
+        } else {
+            GetFactionAlliesPacket getFactionAlliesPacket = new GetFactionAlliesPacket(playerFactionID);
+            PacketUtil.sendPacketToServer(getFactionAlliesPacket);
+        }
+
+        return localFactionAllies;
+    }
 
     public static PlayerData getPlayerData(String name) {
-        if(Contracts.getInstance().gameState.equals(Contracts.Mode.SERVER) || Contracts.getInstance().gameState.equals(Contracts.Mode.SINGLEPLAYER)) {
-            return players.get(name);
-        } else {
-            return getUpdatedPlayerData();
+        if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
+            for(Object object : PersistentObjectUtil.getObjects(instance, PlayerData.class)) {
+                PlayerData pData = (PlayerData) object;
+                if(pData.getName().equals(name)) return pData;
+            }
         }
+        return getUpdatedPlayerData(name);
+    }
+
+    public static void addPlayerDataToLocal(PlayerData pData) {
+        for(PlayerData p : localPlayers) {
+            if(p.getName().equals(pData.getName())) {
+                localPlayers.remove(p);
+                localPlayers.add(pData);
+                return;
+            }
+        }
+        localPlayers.add(pData);
     }
 
     public static void addContract(Contract contract) {
-        contracts.put(contract.getUID(), contract);
-        contractWriteBuffer.add(contract);
+        if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
+            for(Object object : PersistentObjectUtil.getObjects(instance, Contract.class)) {
+                Contract c = (Contract) object;
+                if(c.getUID().equals(contract.getUID())) {
+                    PersistentObjectUtil.removeObject(instance, c);
+                    PersistentObjectUtil.addObject(instance, contract);
+                    return;
+                }
+            }
+            PersistentObjectUtil.addObject(instance, contract);
+        } else {
+            AddContractPacket addContractPacket = new AddContractPacket(contract);
+            PacketUtil.sendPacket(GameClient.getClientPlayerState(), addContractPacket);
+        }
     }
 
     public static void addPlayer(PlayerData player) {
-        players.put(player.getName(), player);
-        playerDataWriteBuffer.add(player);
+        if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
+            for (Object object : PersistentObjectUtil.getObjects(instance, PlayerData.class)) {
+                PlayerData pData = (PlayerData) object;
+                if (pData.getName().equals(player.getName())) {
+                    PersistentObjectUtil.removeObject(instance, pData);
+                    PersistentObjectUtil.addObject(instance, player);
+                    return;
+                }
+            }
+            PersistentObjectUtil.addObject(instance, player);
+        }
     }
 
-    private static PlayerData getUpdatedPlayerData() {
-        GetPlayerDataPacket getPlayerDataPacket = new GetPlayerDataPacket();
+    private static PlayerData getUpdatedPlayerData(String playerName) {
+        GetPlayerDataPacket getPlayerDataPacket = new GetPlayerDataPacket(playerName);
         PacketUtil.sendPacketToServer(getPlayerDataPacket);
-        return playerData;
+        for(PlayerData playerData : localPlayers) {
+            if(playerData.getName().equals(playerName)) return playerData;
+        }
+        return null;
     }
 
     public static ArrayList<Contract> getPlayerContracts(String name) {
-        if(Contracts.getInstance().gameState.equals(Contracts.Mode.SERVER) || Contracts.getInstance().gameState.equals(Contracts.Mode.SINGLEPLAYER)) {
+        if(Contracts.getInstance().getGameState().equals(Contracts.Mode.SERVER) || Contracts.getInstance().getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
             ArrayList<Contract> playerContracts = new ArrayList<>();
-            for(Contract contract :  contracts.values()) {
+            for(Object object : PersistentObjectUtil.getObjects(instance, Contract.class)) {
+                Contract contract = (Contract) object;
                 if(getPlayerData(name).getContractUIDs().contains(contract.getUID())) {
                     playerContracts.add(contract);
                 }
@@ -77,8 +122,12 @@ public class DataUtils {
     }
 
     public static ArrayList<Contract> getAllContracts() {
-        if (Contracts.getInstance().gameState.equals(Contracts.Mode.SERVER) || Contracts.getInstance().gameState.equals(Contracts.Mode.SINGLEPLAYER)) {
-            return (ArrayList<Contract>) contracts.values();
+        if (Contracts.getInstance().getGameState().equals(Contracts.Mode.SERVER) || Contracts.getInstance().getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
+            ArrayList<Contract> contracts = new ArrayList<>();
+            for(Object object : PersistentObjectUtil.getObjects(instance, Contract.class)) {
+                contracts.add((Contract) object);
+            }
+            return contracts;
         } else {
             GetAllContractsPacket getAllContractsPacket = new GetAllContractsPacket();
             PacketUtil.sendPacketToServer(getAllContractsPacket);
@@ -86,94 +135,34 @@ public class DataUtils {
         }
     }
 
-    public static void readData() throws IOException, ClassNotFoundException {
-        if(Contracts.getInstance().gameState.equals(Contracts.Mode.SERVER) || Contracts.getInstance().gameState.equals(Contracts.Mode.SINGLEPLAYER)) {
-            if(contractsFolder.listFiles() != null) {
-                for(File contractFile : contractsFolder.listFiles()) {
-                    FileInputStream inputStream = new FileInputStream(contractFile);
-                    ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-                    Contract contract = (Contract) objectInputStream.readObject();
-                    objectInputStream.close();
-                    inputStream.close();
-                    contracts.put(contract.getUID(), contract);
-                }
-            } else {
-                if(debug) DebugFile.log("[DEBUG]: Contracts folder is empty, not reading...", instance);
-            }
-
-            if(playerDataFolder.listFiles() != null) {
-                for(File playerDataFile : playerDataFolder.listFiles()) {
-                    FileInputStream inputStream = new FileInputStream(playerDataFile);
-                    ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-                    PlayerData player = (PlayerData) objectInputStream.readObject();
-                    objectInputStream.close();
-                    inputStream.close();
-                    players.put(player.getName(), player);
-                }
-            } else {
-                if(debug) DebugFile.log("[DEBUG]: PlayerData folder is empty, not reading...", instance);
-            }
-        }
-    }
-
-    public static void writeData() {
-        if(Contracts.getInstance().gameState.equals(Contracts.Mode.SERVER) || Contracts.getInstance().gameState.equals(Contracts.Mode.SINGLEPLAYER)) {
-
-            for (Contract contract : contractWriteBuffer) {
-                try {
-                    File contractFile = new File(contractsFolder.getAbsolutePath() + "/" + contract.getUID() + ".smdat");
-                    if (contractFile.exists()) contractFile.delete();
-                    contractFile.createNewFile();
-                    FileOutputStream outputStream = new FileOutputStream(contractFile);
-                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-                    objectOutputStream.writeObject(contract);
-                    objectOutputStream.close();
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    DebugFile.log("[ERROR]: Something went wrong while trying to write contract " + contract.getName() + " to file!");
-                }
-            }
-            contractWriteBuffer.clear();
-
-            for (PlayerData playerData : playerDataWriteBuffer) {
-                try {
-                    File playerDataFile = new File(playerDataFolder.getAbsolutePath() + "/" + playerData.getName() + ".smdat");
-                    if (playerDataFile.exists()) playerDataFile.delete();
-                    playerDataFile.createNewFile();
-                    FileOutputStream outputStream = new FileOutputStream(playerDataFile);
-                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-                    objectOutputStream.writeObject(playerData);
-                    objectOutputStream.close();
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    DebugFile.log("[ERROR]: Something went wrong while trying to write player " + playerData.getName() + " to file!");
-                }
-            }
-            playerDataWriteBuffer.clear();
-        }
-    }
-
     public static void timeoutContract(Contract contract, StarPlayer player) {
-        PlayerData pData = players.get(player.getName());
+        PlayerData pData = getPlayerData(player.getName());
         contract.removeClaimant(player);
+        assert pData != null;
         pData.removeContract(contract);
-        contracts.put(contract.getUID(), contract);
-        players.put(player.getName(), pData);
-        contractWriteBuffer.add(contract);
-        playerDataWriteBuffer.add(pData);
+        addContract(contract);
+        addPlayer(pData);
+
         player.sendMail(contract.getContractor().getName(), "Contract Cancellation", contract.getContractor().getName() + " has cancelled your contract because you took too long!");
     }
 
-    public static void removeContract(Contract contract, boolean canceled, StarPlayer... claimer) {
-        if(Contracts.getInstance().gameState.equals(Contracts.Mode.SERVER) || Contracts.getInstance().gameState.equals(Contracts.Mode.SINGLEPLAYER)) {
+    public static void cancelContract(String contractUID) {
+        for(Contract contract : getAllContracts()) {
+            if(contract.getUID().equals(contractUID)) {
+                removeContract(contract, true);
+                return;
+            }
+        }
+    }
 
+    public static void removeContract(Contract contract, boolean canceled, StarPlayer... claimer) {
+        if(Contracts.getInstance().getGameState().equals(Contracts.Mode.SERVER) || Contracts.getInstance().getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
             if (claimer != null) {
                 ArrayList<StarPlayer> claimants = contract.getClaimants();
                 for (StarPlayer p : claimants) {
-                    PlayerData pData = players.get(p.getName());
+                    PlayerData pData = getPlayerData(p.getName());
                     contract.removeClaimant(p);
+                    assert pData != null;
                     pData.removeContract(contract);
                     if (canceled) {
                         p.sendMail(contract.getContractor().getName(), "Contract Cancellation", contract.getContractor().getName() + " has cancelled contract " + contract.getName() + ".");
@@ -182,22 +171,15 @@ public class DataUtils {
                     } else {
                         p.sendMail(contract.getContractor().getName(), "Contract Ended", claimer[0].getName() + " has claimed the reward for contract " + contract.getName() + ".");
                     }
-                    players.put(pData.getName(), pData);
-                    playerDataWriteBuffer.add(pData);
+                    addPlayer(pData);
+                    addContract(contract);
                 }
             }
 
-            contracts.remove(contract.getUID());
-
-            for (File contractFile : Objects.requireNonNull(contractsFolder.listFiles())) {
-                if (contractFile.getName().substring(0, contractFile.getName().indexOf(".") - 1).equals(contract.getUID())) {
-                    contractFile.delete();
-                    break;
-                }
-            }
+            PersistentObjectUtil.removeObject(instance, contract);
         }
 
-        if(Contracts.getInstance().gameState.equals(Contracts.Mode.SINGLEPLAYER) || Contracts.getInstance().gameState.equals(Contracts.Mode.CLIENT)) {
+        if(Contracts.getInstance().getGameState().equals(Contracts.Mode.SINGLEPLAYER) || Contracts.getInstance().getGameState().equals(Contracts.Mode.CLIENT)) {
             if(ContractsScrollableList.getInst() != null) {
                 ContractsScrollableList.getInst().clear();
                 ContractsScrollableList.getInst().handleDirty();
@@ -210,7 +192,7 @@ public class DataUtils {
     }
 
     public static FactionOpinion[] genOpinions() {
-        if (Contracts.getInstance().gameState.equals(Contracts.Mode.SERVER) || Contracts.getInstance().gameState.equals(Contracts.Mode.SINGLEPLAYER)) {
+        if (Contracts.getInstance().getGameState().equals(Contracts.Mode.SERVER) || Contracts.getInstance().getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
             Collection<Faction> factions = GameServer.getServerState().getFactionManager().getFactionCollection();
             FactionOpinion[] opinions = new FactionOpinion[factions.size()];
             int i = 0;
@@ -227,7 +209,8 @@ public class DataUtils {
             }
             return opinions;
         } else {
-            return null;
+            playerData = getUpdatedPlayerData(GameClient.getClientPlayerState().getName());
+            return new FactionOpinion[] {new FactionOpinion(Contracts.getInstance().tradersFactionID, 15)};
         }
     }
 }

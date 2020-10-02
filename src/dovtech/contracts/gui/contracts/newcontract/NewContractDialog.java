@@ -20,6 +20,8 @@ import org.schema.schine.graphicsengine.core.MouseEvent;
 import org.schema.schine.graphicsengine.forms.gui.GUIElement;
 import org.schema.schine.input.KeyEventInterface;
 import org.schema.schine.input.KeyboardMappings;
+
+import java.util.Objects;
 import java.util.UUID;
 
 public class NewContractDialog extends PlayerInput {
@@ -70,16 +72,21 @@ public class NewContractDialog extends PlayerInput {
                             String name = panel.getName();
                             int bountyAmount = panel.getReward();
                             PlayerData playerData = DataUtils.getPlayerData(name);
-                            if (playerData != null) {
+                            PlayerData currentPlayerData = DataUtils.getPlayerData(currentPlayer.getName());
+                            if(playerData == null) {
+                                (new SimplePopup(getState(), "Cannot Add Bounty", "Player " + name + " does not exist!")).activate();
+                            } else {
                                 if (currentPlayer.getName().equals(name) && !currentPlayer.getPlayerState().isAdmin()) {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on yourself!")).activate();
                                 } else if (currentPlayer.getFaction().getID() == playerData.getFactionID() && !currentPlayer.getPlayerState().isAdmin()) {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on a member of your own faction!")).activate();
+                                } else if (DataUtils.getAllies(currentPlayerData.getFactionID()).contains(playerData.getFactionID())) {
+                                    (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on a member of an allied faction!")).activate();
                                 } else {
 
                                     PlayerTarget target = new PlayerTarget();
-                                    target.setTargets(playerData);
-                                    DataUtils.getPlayerData(currentPlayer.getName()).modOpinionScore(playerData.getFactionID(), -15);
+                                    target.setTargets(playerData.getName());
+                                    Objects.requireNonNull(DataUtils.getPlayerData(currentPlayer.getName())).modOpinionScore(playerData.getFactionID(), -15);
                                     Contract contract = new Contract(currentPlayer.getFaction().getID(), "Kill" + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), target);
                                     DataUtils.addContract(contract);
                                     currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
