@@ -202,7 +202,7 @@ public class DataUtils {
                     if (canceled) {
                         p.sendMail(contract.getContractor().getName(), "Contract Cancellation", contract.getContractor().getName() + " has cancelled contract " + contract.getName() + ".");
                     } else if (claimer[0].getName().equals(p.getName())) {
-                        p.sendMail(contract.getContractor().getName(), "Contract Completed", "We hear you have completed the contract and have sent the reward money to your account. It's been a pleasure doing business with you.");
+                        p.sendMail(contract.getContractor().getName(), "Contract Completed", "We hear you have completed the contract and have sent the reward money to \nyour account. It's been a pleasure doing business with you.");
                     } else {
                         p.sendMail(contract.getContractor().getName(), "Contract Ended", claimer[0].getName() + " has claimed the reward for contract " + contract.getName() + ".");
                     }
