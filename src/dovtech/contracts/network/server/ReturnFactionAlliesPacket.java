@@ -1,3 +1,6 @@
+/**
+ * Packet [Server -> Client]
+ */
 package dovtech.contracts.network.server;
 
 import api.network.Packet;

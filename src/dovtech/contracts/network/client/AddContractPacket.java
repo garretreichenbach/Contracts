@@ -21,6 +21,10 @@ public class AddContractPacket extends Packet {
     private String contractTarget;
     private String contractUID;
 
+    public AddContractPacket() {
+
+    }
+
     public AddContractPacket(Contract contract) {
         this.contract = contract;
     }

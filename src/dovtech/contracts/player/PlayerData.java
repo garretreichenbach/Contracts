@@ -81,6 +81,15 @@ public class PlayerData implements Serializable {
         for(int i = 0; i < getOpinions().length; i ++) {
             if(getOpinions()[i].getFaction().equals(faction)) return getOpinions()[i];
         }
+        DataUtils.genOpinions();
+        return null;
+    }
+
+    public FactionOpinion getOpinionFromID(int ID) {
+        for(FactionOpinion opinion : getOpinions()) {
+            if(opinion.getFaction().getID() == ID)  return opinion;
+        }
+        DataUtils.genOpinions();
         return null;
     }
 
@@ -89,9 +98,10 @@ public class PlayerData implements Serializable {
         for(FactionOpinion opinion : opinions) {
             if(opinion.getFaction().getID() == factionID) {
                 opinion.setOpinionScore(opinion.getOpinionScore() + scoreToAdd);
-                break;
+                return;
             }
         }
+        DataUtils.genOpinions();
     }
 
     public void setOpinionScore(StarFaction faction, int score) {
@@ -99,8 +109,9 @@ public class PlayerData implements Serializable {
         for(FactionOpinion opinion : opinions) {
             if(opinion.getFaction().getID() == faction.getID()) {
                 opinion.setOpinionScore(score);
-                break;
+                return;
             }
         }
+        DataUtils.genOpinions();
     }
 }

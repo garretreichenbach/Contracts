@@ -8,17 +8,93 @@ import api.universe.StarSector;
 import api.universe.StarUniverse;
 import api.utils.StarRunnable;
 import api.utils.game.PlayerUtils;
+import api.utils.game.inventory.ItemStack;
 import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
+import dovtech.contracts.contracts.target.ContractTarget;
+import dovtech.contracts.contracts.target.MiningTarget;
+import dovtech.contracts.contracts.target.ProductionTarget;
 import org.schema.common.util.linAlg.Vector3i;
+import org.schema.game.common.data.element.ElementInformation;
+import org.schema.game.common.data.element.ElementKeyMap;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.UUID;
 
 public class ContractUtils {
 
     public static HashMap<StarPlayer, StarSector> cargoSectors = new HashMap<>();
     public static HashMap<Contract, Long> tradeFleets = new HashMap<>();
+
+
+    public static ArrayList<ElementInformation> getResourcesFilter() {
+        ArrayList<ElementInformation> filter = new ArrayList<>();
+        for (ElementInformation info : ElementKeyMap.getInfoArray()) {
+            try {
+                if (info != null && !info.isDeprecated() && (info.name.toLowerCase().contains("raw") || info.name.toLowerCase().contains("capsule"))) {
+                    filter.add(info);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return filter;
+    }
+
+    public static ArrayList<ElementInformation> getProductionFilter() {
+        ArrayList<ElementInformation> filter = new ArrayList<>();
+        for (ElementInformation info : ElementKeyMap.getInfoArray()) {
+            try {
+                if (info != null && info.isInRecipe() && !info.name.toLowerCase().contains("capsule") && !info.name.toLowerCase().contains("raw") && !info.isDeprecated()) {
+                    filter.add(info);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return filter;
+    }
+
+    public static void generateRandomContract() {
+        Random random = new Random();
+        int contractTypeInt = random.nextInt(1 - 2) + 1;
+        Contract.ContractType contractType = null;
+        ArrayList<Short> possibleIDs = new ArrayList<>();
+        String contractName = "";
+        int index = random.nextInt(1 - possibleIDs.size()) + 1;
+        short id = possibleIDs.get(index);
+        int amountInt = random.nextInt(300 + 7500) + 300;
+        int basePrice = (int) ElementKeyMap.getInfo(id).getPrice(true);
+        ContractTarget target = null;
+        switch(contractTypeInt) {
+            case 1:
+                contractType = Contract.ContractType.PRODUCTION;
+                contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(id).getName() + "." ;
+                target = new ProductionTarget();
+                ItemStack productionStack = new ItemStack(id);
+                productionStack.setAmount(amountInt);
+                ItemStack[] productionStacks = new ItemStack[] {productionStack};
+                target.setTargets(productionStacks);
+                for(ElementInformation info : getProductionFilter()) possibleIDs.add(info.getId());
+                break;
+            case 2:
+                contractType = Contract.ContractType.MINING;
+                contractName = "Mine x" + amountInt + " " + ElementKeyMap.getInfo(id).getName()+ "." ;
+                target = new MiningTarget();
+                ItemStack miningStack = new ItemStack(id);
+                miningStack.setAmount(amountInt);
+                ItemStack[] miningStacks = new ItemStack[] {miningStack};
+                target.setTargets(miningStacks);
+                for(ElementInformation info : getResourcesFilter()) possibleIDs.add(info.getId());
+                break;
+        }
+        int reward = (int) ((basePrice * amountInt) * Contracts.getInstance().cargoEscortBonus);
+
+        Contract randomContract = new Contract(Contracts.getInstance().tradersFactionID, contractName, contractType, reward, UUID.randomUUID().toString(), target);
+        DataUtils.addContract(randomContract);
+    }
 
     public static StarSector getNearbyRandomSector(StarSector originSector, int range) {
         Random random = new Random();

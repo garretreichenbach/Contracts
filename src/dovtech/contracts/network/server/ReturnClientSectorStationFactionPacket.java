@@ -1,42 +1,41 @@
-package dovtech.contracts.network.client;
+/**
+ * Packet [Server -> Client]
+ */
+package dovtech.contracts.network.server;
 
+import api.entity.StarPlayer;
 import api.network.Packet;
 import api.network.PacketReadBuffer;
 import api.network.PacketWriteBuffer;
-import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.util.DataUtils;
 import org.schema.game.common.data.player.PlayerState;
 import java.io.IOException;
 
-public class RemoveContractPacket extends Packet {
+public class ReturnClientSectorStationFactionPacket extends Packet {
 
-    private String contractUID;
+    int stationFactionID = 0;
 
-    public RemoveContractPacket() {
+    public ReturnClientSectorStationFactionPacket() {
 
-    }
-
-    public RemoveContractPacket(Contract contract) {
-        this.contractUID = contract.getUID();
     }
 
     @Override
     public void readPacketData(PacketReadBuffer packetReadBuffer) throws IOException {
-        contractUID = packetReadBuffer.readString();
+
     }
 
     @Override
     public void writePacketData(PacketWriteBuffer packetWriteBuffer) throws IOException {
-        packetWriteBuffer.writeString(contractUID);
+        packetWriteBuffer.writeInt(stationFactionID);
     }
 
     @Override
     public void processPacketOnClient() {
-
+        DataUtils.clientSectorStationFaction = stationFactionID;
     }
 
     @Override
     public void processPacketOnServer(PlayerState playerState) {
-        DataUtils.cancelContract(contractUID);
+        stationFactionID = DataUtils.getSectorStationFactionID(new StarPlayer(playerState));
     }
 }

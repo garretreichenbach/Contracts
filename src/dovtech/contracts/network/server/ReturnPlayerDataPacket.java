@@ -7,7 +7,6 @@ package dovtech.contracts.network.server;
 import api.network.Packet;
 import api.network.PacketReadBuffer;
 import api.network.PacketWriteBuffer;
-import com.ctc.wstx.util.DataUtil;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.faction.FactionOpinion;
 import dovtech.contracts.player.PlayerData;

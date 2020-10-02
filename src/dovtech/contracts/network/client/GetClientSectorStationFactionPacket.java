@@ -7,20 +7,14 @@ import api.network.Packet;
 import api.network.PacketReadBuffer;
 import api.network.PacketWriteBuffer;
 import api.network.packets.PacketUtil;
-import dovtech.contracts.network.server.ReturnFactionAlliesPacket;
+import dovtech.contracts.network.server.ReturnClientSectorStationFactionPacket;
 import org.schema.game.common.data.player.PlayerState;
 import java.io.IOException;
 
-public class GetFactionAlliesPacket extends Packet {
+public class GetClientSectorStationFactionPacket extends Packet {
 
-    private int playerFactionID;
+    public GetClientSectorStationFactionPacket() {
 
-    public GetFactionAlliesPacket() {
-
-    }
-
-    public GetFactionAlliesPacket(int playerFactionID) {
-        this.playerFactionID = playerFactionID;
     }
 
     @Override
@@ -40,7 +34,7 @@ public class GetFactionAlliesPacket extends Packet {
 
     @Override
     public void processPacketOnServer(PlayerState playerState) {
-        ReturnFactionAlliesPacket returnFactionAlliesPacket = new ReturnFactionAlliesPacket(playerFactionID);
-        PacketUtil.sendPacket(playerState, returnFactionAlliesPacket);
+        ReturnClientSectorStationFactionPacket returnClientSectorStationFactionPacket = new ReturnClientSectorStationFactionPacket();
+        PacketUtil.sendPacketToServer(returnClientSectorStationFactionPacket);
     }
 }

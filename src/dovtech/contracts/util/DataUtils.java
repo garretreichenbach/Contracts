@@ -3,9 +3,11 @@ package dovtech.contracts.util;
 import api.common.GameClient;
 import api.common.GameServer;
 import api.entity.StarPlayer;
+import api.entity.StarStation;
 import api.faction.StarFaction;
 import api.mod.config.PersistentObjectUtil;
 import api.network.packets.PacketUtil;
+import api.universe.StarSector;
 import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.faction.FactionOpinion;
@@ -15,19 +17,29 @@ import dovtech.contracts.network.client.*;
 import dovtech.contracts.player.PlayerData;
 import org.schema.game.common.data.player.faction.Faction;
 import org.schema.game.common.data.player.faction.FactionManager;
-
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class DataUtils {
 
     private static final Contracts instance = Contracts.getInstance();
-
     public static PlayerData playerData = new PlayerData();
     private static ArrayList<PlayerData> localPlayers = new ArrayList<>();
     public static ArrayList<Contract> localPlayerContracts = new ArrayList<>();
     public static ArrayList<Contract> localContracts = new ArrayList<>();
     public static ArrayList<Integer> localFactionAllies = new ArrayList<>();
+    public static int clientSectorStationFaction = 0;
+
+    public static int getSectorStationFactionID(StarPlayer player) {
+        if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
+            StarSector sector = player.getSector();
+            return sector.getStations().get(0).getFaction().getID();
+        } else {
+            GetClientSectorStationFactionPacket getClientSectorStationFactionPacket = new GetClientSectorStationFactionPacket();
+            PacketUtil.sendPacketToServer(getClientSectorStationFactionPacket);
+            return clientSectorStationFaction;
+        }
+    }
 
     public static ArrayList<Integer> getAllies(int playerFactionID) {
         if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
@@ -78,6 +90,10 @@ public class DataUtils {
         } else {
             AddContractPacket addContractPacket = new AddContractPacket(contract);
             PacketUtil.sendPacket(GameClient.getClientPlayerState(), addContractPacket);
+            if(ContractsScrollableList.getInst() != null) {
+                ContractsScrollableList.getInst().clear();
+                ContractsScrollableList.getInst().handleDirty();
+            }
         }
     }
 
