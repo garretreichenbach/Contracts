@@ -21,6 +21,8 @@ import api.listener.events.player.SellTradeEvent;
 import api.mod.StarLoader;
 import api.mod.StarMod;
 import api.mod.config.FileConfiguration;
+import api.network.Packet;
+import api.network.packets.PacketUtil;
 import api.server.Server;
 import api.universe.StarSector;
 import api.universe.StarUniverse;
@@ -28,7 +30,6 @@ import api.utils.StarRunnable;
 import api.utils.game.PlayerUtils;
 import api.utils.game.inventory.ItemStack;
 import api.utils.gui.GUIUtils;
-import com.ctc.wstx.util.DataUtil;
 import dovtech.contracts.commands.*;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.CargoTarget;
@@ -38,6 +39,11 @@ import dovtech.contracts.gui.SpecialDealsTab;
 import dovtech.contracts.gui.contracts.ContractsScrollableList;
 import dovtech.contracts.gui.contracts.ContractsTab;
 import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
+import dovtech.contracts.network.client.GetAllContractsPacket;
+import dovtech.contracts.network.client.GetClientContractsPacket;
+import dovtech.contracts.network.client.GetPlayerDataPacket;
+import dovtech.contracts.network.server.ReturnAllContractsPacket;
+import dovtech.contracts.network.server.ReturnClientContractsPacket;
 import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.util.ContractUtils;
 import dovtech.contracts.util.DataUtils;
@@ -146,7 +152,6 @@ public class Contracts extends StarMod {
 
             initConfig();
             checkMods();
-            registerCommands();
 
             try {
                 DataUtils.readData();
@@ -163,12 +168,14 @@ public class Contracts extends StarMod {
                 }.runTimer(writeFrequency);
             }
         }
+        registerCommands();
         registerListeners();
     }
 
     @Override
     public void onEnable() {
         super.onEnable();
+        registerPackets();
         DebugFile.log("Enabled", this);
     }
 
@@ -368,7 +375,7 @@ public class Contracts extends StarMod {
                                 ContractsScrollableList.getInst().clear();
                                 ContractsScrollableList.getInst().handleDirty();
                             }
-                            //Todo: Pause the trade progress
+                            event.setCanceled(true);
                         }
                     }
                 });
@@ -409,7 +416,7 @@ public class Contracts extends StarMod {
                                 ContractsScrollableList.getInst().clear();
                                 ContractsScrollableList.getInst().handleDirty();
                             }
-                            //Todo: Pause the trade progress
+                            event.setCanceled(true);
                         }
                     }
                 });
@@ -625,6 +632,15 @@ public class Contracts extends StarMod {
         DebugFile.log("Registered Commands!", this);
     }
 
+    private void registerPackets() {
+        Packet.registerPacket(GetAllContractsPacket.class);
+        Packet.registerPacket(GetClientContractsPacket.class);
+        Packet.registerPacket(GetPlayerDataPacket.class);
+        Packet.registerPacket(ReturnAllContractsPacket.class);
+        Packet.registerPacket(ReturnClientContractsPacket.class);
+        Packet.registerPacket(ReturnAllContractsPacket.class);
+    }
+
     private void initConfig() {
         //Config
         FileConfiguration config = getConfig("config");
@@ -638,7 +654,6 @@ public class Contracts extends StarMod {
         this.contractTimerMax = config.getInt("contract-timer-max");
         this.npcContractsEnabled = Boolean.parseBoolean(config.getString("npc-contracts-enabled"));
         this.tradersFactionID = config.getInt("traders-faction-id");
-
     }
 
     public static Contracts getInstance() {

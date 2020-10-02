@@ -27,6 +27,7 @@ public class ReturnAllContractsPacket extends Packet {
     }
 
     public ArrayList<Contract> getContracts() {
+        if(contracts == null) contracts = new ArrayList<>();
         return contracts;
     }
 

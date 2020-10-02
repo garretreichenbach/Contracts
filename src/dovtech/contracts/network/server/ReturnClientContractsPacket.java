@@ -31,6 +31,7 @@ public class ReturnClientContractsPacket extends Packet {
     }
 
     public ArrayList<Contract> getPlayerContracts() {
+        if(playerContracts == null) playerContracts = new ArrayList<>();
         return playerContracts;
     }
 
