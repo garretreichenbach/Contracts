@@ -112,6 +112,7 @@ public class ContractUtils {
                     } else {
                         contract.setTimer(0);
                     }
+                    cancel();
                 } else {
                     contract.setTimer(contract.getTimer() + 1);
                 }
@@ -129,7 +130,7 @@ public class ContractUtils {
             tradeFleet.delete();
             StarSector starSector = StarUniverse.getUniverse().getSector(new Vector3i(contract.getTarget().getLocation()[0], contract.getTarget().getLocation()[1], contract.getTarget().getLocation()[2]));
             if (starSector.getInternalSector().getFactionId() != 0) {
-                StarFaction faction = DataUtils.getFactionFromID(starSector.getInternalSector().getFactionId());
+                StarFaction faction = StarFaction.fromId(starSector.getInternalSector().getFactionId());
                 int members = faction.getActiveMembers().size();
                 int refund = (contract.getReward() / 2) / members;
                 for (StarPlayer factionMember : faction.getActiveMembers()) {
@@ -138,16 +139,14 @@ public class ContractUtils {
                 }
             }
             DataUtils.removeContract(contract, true, player);
-            contract.setFinished(true);
         } else {
 
             StarSector starSector = StarUniverse.getUniverse().getSector(new Vector3i(contract.getTarget().getLocation()[0], contract.getTarget().getLocation()[1], contract.getTarget().getLocation()[2]));
             StarSector safeSector = getNearbyRandomSector(tradeFleet.getFlagshipSector(), 5);
             tradeFleet.moveTo(safeSector);
-            tradeFleet.teleport(safeSector);
             tradeFleet.delete();
             if (starSector.getInternalSector().getFactionId() != 0) {
-                StarFaction faction = DataUtils.getFactionFromID(starSector.getInternalSector().getFactionId());
+                StarFaction faction = StarFaction.fromId(starSector.getInternalSector().getFactionId());
                 int members = faction.getActiveMembers().size();
                 int refund = (contract.getReward() / 2) / members;
                 for (StarPlayer factionMember : faction.getActiveMembers()) {
@@ -156,8 +155,8 @@ public class ContractUtils {
                 }
             }
             DataUtils.removeContract(contract, true);
-            contract.setFinished(true);
         }
+        contract.setFinished(true);
     }
 
     public static void startCargoClaimTimer(final Contract contract) {
@@ -178,6 +177,7 @@ public class ContractUtils {
                     Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(tradeFleets.get(contract)));
                     tradeFleet.moveTo(contract.getTarget().getLocation()[0], contract.getTarget().getLocation()[1], contract.getTarget().getLocation()[2]);
                     DataUtils.removeContract(contract, false);
+                    cancel();
                 }
             }
         }.runTimer(1000);
@@ -194,6 +194,7 @@ public class ContractUtils {
                     tradeFleet.moveTo(contract.getTarget().getLocation()[0], contract.getTarget().getLocation()[1], contract.getTarget().getLocation()[2]);
                     cargoSectors.remove(player);
                     DataUtils.timeoutContract(contract, player);
+                    cancel();
                 } else {
                     contract.setTimer(contract.getTimer() + 1);
                 }
@@ -207,10 +208,8 @@ public class ContractUtils {
         while (!contract.isFinished()) {
             if (player != null) {
                 if (player.getCurrentEntity() != null && player.getCurrentEntity().getSector().getCoordinates().equals(tradeFleet.getInternalFleet().getFlagShip().getSector())) {
-                    int damaged = 0;
                     boolean intercepted = false;
                     for (Ship ship : tradeFleet.getMembers()) {
-                        if (ship.getCurrentReactor().getHpPercent() <= 99.0) {
                             for (StarEntity entity : ship.getSector().getEntities()) {
                                 if ((entity.getAttachedPlayers().size() > 0 && (ship.getFaction().getPersonalEnemies().contains(entity.getPilot()) || player.getFaction().getPersonalEnemies().contains(entity.getPilot()))) || entity.getFaction().getID() == -1 || entity.getFaction().getEnemies().contains(ship.getFaction()) || entity.getFaction().getEnemies().contains(player.getFaction())) {
                                     PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: We're being intercepted! Protect us!");
@@ -220,30 +219,29 @@ public class ContractUtils {
                                 }
                             }
                             if (intercepted) break;
-                        }
-
-                        if (ship.getCurrentReactor().getHpPercent() <= 70.0) {
-                            damaged++;
-                        }
                     }
 
                     if (intercepted) {
                         new StarRunnable() {
                             @Override
                             public void run() {
-                                for (StarEntity entity : tradeFleet.getFlagshipSector().getEntities()) {
-                                    if ((entity.getAttachedPlayers().size() > 0 && (tradeFleet.getFlagship().getFaction().getPersonalEnemies().contains(entity.getPilot()) || player.getFaction().getPersonalEnemies().contains(entity.getPilot()))) || entity.getFaction().getID() == -1 || entity.getFaction().getEnemies().contains(tradeFleet.getFlagship().getFaction()) || entity.getFaction().getEnemies().contains(player.getFaction())) {
-                                        PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: Alright, we're clear. Continuing to " + contract.getTarget().getLocation()[0] + ", " + contract.getTarget().getLocation()[1] + ", " + contract.getTarget().getLocation()[2] + ".");
-                                        startCargoContract(contract, player);
-                                        return;
+                                boolean safe = true;
+                                for (Ship ship : tradeFleet.getMembers()) {
+                                    for (StarEntity entity : ship.getSector().getEntities()) {
+                                        if((entity.getAttachedPlayers().size() > 0 && (ship.getFaction().getPersonalEnemies().contains(entity.getPilot()) || player.getFaction().getPersonalEnemies().contains(entity.getPilot()))) || entity.getFaction().getID() == -1 || entity.getFaction().getEnemies().contains(ship.getFaction()) || entity.getFaction().getEnemies().contains(player.getFaction())) {
+                                            safe = false;
+                                            break;
+                                        }
                                     }
+                                    if(!safe) break;
+                                }
+                                if(safe) {
+                                    PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: Alright, we're clear. Continuing to " + contract.getTarget().getLocation()[0] + ", " + contract.getTarget().getLocation()[1] + ", " + contract.getTarget().getLocation()[2] + ".");
+                                    startCargoContract(contract, player);
+                                    cancel();
                                 }
                             }
-                        }.runTimer(1000);
-                    }
-
-                    if (damaged >= 3) {
-                        triggerFleetRetreat(player, tradeFleet, contract);
+                        }.runTimer(3000);
                     }
                 } else {
                     new StarRunnable() {
@@ -252,19 +250,44 @@ public class ContractUtils {
                             if (player.getCurrentEntity() != null && !player.getCurrentEntity().getSector().getCoordinates().equals(tradeFleet.getInternalFleet().getFlagShip().getSector())) {
                                 contract.setFinished(true);
                                 DataUtils.timeoutContract(contract, player);
+                                cancel();
                             }
                         }
                     }.runTimer(3000);
                 }
             } else {
-                int damaged = 0;
+                boolean intercepted = false;
                 for (Ship ship : tradeFleet.getMembers()) {
-                    if (ship.getCurrentReactor().getHpPercent() <= 80.0) {
-                        damaged++;
+                    for (StarEntity entity : ship.getSector().getEntities()) {
+                        if ((entity.getAttachedPlayers().size() > 0 && (ship.getFaction().getPersonalEnemies().contains(entity.getPilot()))) || entity.getFaction().getID() == -1 || entity.getFaction().getEnemies().contains(ship.getFaction())) {
+                            tradeFleet.defend(tradeFleet.getFlagshipSector());
+                            intercepted = true;
+                            break;
+                        }
                     }
+                    if (intercepted) break;
                 }
-                if (tradeFleet.getMembers().size() / 4 <= damaged) {
-                    triggerFleetRetreat(null, tradeFleet, contract);
+
+                if (intercepted) {
+                    new StarRunnable() {
+                        @Override
+                        public void run() {
+                            boolean safe = true;
+                            for (Ship ship : tradeFleet.getMembers()) {
+                                for (StarEntity entity : ship.getSector().getEntities()) {
+                                    if((entity.getAttachedPlayers().size() > 0 && (ship.getFaction().getPersonalEnemies().contains(entity.getPilot()))) || entity.getFaction().getID() == -1 || entity.getFaction().getEnemies().contains(ship.getFaction())) {
+                                        safe = false;
+                                        break;
+                                    }
+                                }
+                                if(!safe) break;
+                            }
+                            if(safe) {
+                                startCargoContract(contract, null);
+                                cancel();
+                            }
+                        }
+                    }.runTimer(3000);
                 }
             }
         }

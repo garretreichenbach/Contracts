@@ -7,10 +7,8 @@ import api.entity.StarPlayer;
 import api.utils.game.PlayerUtils;
 import api.utils.game.inventory.InventoryUtils;
 import api.utils.game.inventory.ItemStack;
-import api.utils.gui.GUIUtils;
 import api.utils.gui.SimpleGUIHorizontalButtonPane;
 import api.utils.gui.SimplePopup;
-import com.ctc.wstx.util.DataUtil;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.CargoTarget;
 import dovtech.contracts.contracts.target.MiningTarget;
@@ -25,7 +23,6 @@ import org.schema.schine.graphicsengine.core.MouseEvent;
 import org.schema.schine.graphicsengine.forms.gui.*;
 import org.schema.schine.graphicsengine.forms.gui.newgui.*;
 import org.schema.schine.input.InputState;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -166,6 +163,8 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                                         Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(ContractUtils.tradeFleets.get(contract)));
                                         player.sendMail("Trading Guild", "Cargo Escort Contract", "Head to " + tradeFleet.getFlagshipSector().getCoordinates().toString() + " to start the contract. \nIf you do not show up within 15 minutes, the contract will be cancelled automatically. \nMake sure all ships you bring are registered in a fleet.");
                                         ContractUtils.startCargoTimer(contract, player, tradeFleet.getFlagshipSector());
+                                    } else {
+                                        ContractUtils.startContractTimer(contract, player);
                                     }
                                 }
                             } else {
@@ -221,15 +220,16 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                 GUITextButton beginContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "START CONTRACT", new GUICallback() {
                     @Override
                     public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                        Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(ContractUtils.tradeFleets.get(contract)));
-                        if (tradeFleet.getFlagshipSector().equals(player.getSector())) {
-                            getState().getController().queueUIAudio("0022_menu_ui - enter");
-                            PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: Heading to " + cargoTarget.getLocation()[0] + ", " + cargoTarget.getLocation()[1] + ", " + cargoTarget.getLocation()[2] + ".");
-                            ContractUtils.startCargoContract(contract, player);
-                        } else {
-                            (new SimplePopup(getState(), "Cannot Start Contract", "You must be in the starting sector to begin this contract!")).activate();
+                        if(mouseEvent.pressedLeftMouse()) {
+                            Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(ContractUtils.tradeFleets.get(contract)));
+                            if (tradeFleet.getFlagshipSector().equals(player.getSector())) {
+                                getState().getController().queueUIAudio("0022_menu_ui - enter");
+                                PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: Heading to " + cargoTarget.getLocation()[0] + ", " + cargoTarget.getLocation()[1] + ", " + cargoTarget.getLocation()[2] + ".");
+                                ContractUtils.startCargoContract(contract, player);
+                            } else {
+                                (new SimplePopup(getState(), "Cannot Start Contract", "You must be in the starting sector to begin this contract!")).activate();
+                            }
                         }
-
                     }
 
                     @Override

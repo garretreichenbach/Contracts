@@ -32,14 +32,6 @@ public class DataUtils {
     public static ArrayList<Integer> localFactionAllies = new ArrayList<>();
     public static int clientSectorStationFaction = 0;
 
-    public static StarFaction getFactionFromID(int id) {
-        if(id != 0) {
-            return new StarFaction(StarLoader.getGameState().getFactionManager().getFaction(id));
-        } else {
-            return null;
-        }
-    }
-
     public static int getSectorStationFactionID(StarPlayer player) {
         if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
             StarSector sector = player.getSector();

@@ -152,15 +152,16 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
             GUITextButton beginContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "START CONTRACT", new GUICallback() {
                 @Override
                 public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                    Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(ContractUtils.tradeFleets.get(contract)));
-                    if (tradeFleet.getFlagshipSector().equals(player.getSector())) {
-                        getState().getController().queueUIAudio("0022_menu_ui - enter");
-                        PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: Heading to " + cargoTarget.getLocation()[0] + ", " + cargoTarget.getLocation()[1] + ", " + cargoTarget.getLocation()[2] + ".");
-                        ContractUtils.startCargoContract(contract, player);
-                    } else {
-                        (new SimplePopup(getState(), "Cannot Start Contract", "You must be in the starting sector to begin this contract!")).activate();
+                    if(mouseEvent.pressedLeftMouse()) {
+                        Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(ContractUtils.tradeFleets.get(contract)));
+                        if (tradeFleet.getFlagshipSector().equals(player.getSector())) {
+                            getState().getController().queueUIAudio("0022_menu_ui - enter");
+                            PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: Heading to " + cargoTarget.getLocation()[0] + ", " + cargoTarget.getLocation()[1] + ", " + cargoTarget.getLocation()[2] + ".");
+                            ContractUtils.startCargoContract(contract, player);
+                        } else {
+                            (new SimplePopup(getState(), "Cannot Start Contract", "You must be in the starting sector to begin this contract!")).activate();
+                        }
                     }
-
                 }
 
                 @Override
