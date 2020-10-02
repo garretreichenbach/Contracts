@@ -23,7 +23,7 @@ import java.util.Collection;
 public class DataUtils {
 
     private static final Contracts instance = Contracts.getInstance();
-    public static PlayerData playerData = new PlayerData();
+    public static PlayerData playerData;
     private static ArrayList<PlayerData> localPlayers = new ArrayList<>();
     public static ArrayList<Contract> localPlayerContracts = new ArrayList<>();
     public static ArrayList<Contract> localContracts = new ArrayList<>();
@@ -61,6 +61,7 @@ public class DataUtils {
                 PlayerData pData = (PlayerData) object;
                 if(pData.getName().equals(name)) return pData;
             }
+            return null;
         }
         return getUpdatedPlayerData(name);
     }
@@ -83,10 +84,12 @@ public class DataUtils {
                 if(c.getUID().equals(contract.getUID())) {
                     PersistentObjectUtil.removeObject(instance, c);
                     PersistentObjectUtil.addObject(instance, contract);
+                    PersistentObjectUtil.save(instance);
                     return;
                 }
             }
             PersistentObjectUtil.addObject(instance, contract);
+            PersistentObjectUtil.save(instance);
         } else {
             AddContractPacket addContractPacket = new AddContractPacket(contract);
             PacketUtil.sendPacket(GameClient.getClientPlayerState(), addContractPacket);
@@ -104,10 +107,12 @@ public class DataUtils {
                 if (pData.getName().equals(player.getName())) {
                     PersistentObjectUtil.removeObject(instance, pData);
                     PersistentObjectUtil.addObject(instance, player);
+                    PersistentObjectUtil.save(instance);
                     return;
                 }
             }
             PersistentObjectUtil.addObject(instance, player);
+            PersistentObjectUtil.save(instance);
         }
     }
 
@@ -193,6 +198,7 @@ public class DataUtils {
             }
 
             PersistentObjectUtil.removeObject(instance, contract);
+            PersistentObjectUtil.save(instance);
         }
 
         if(Contracts.getInstance().getGameState().equals(Contracts.Mode.SINGLEPLAYER) || Contracts.getInstance().getGameState().equals(Contracts.Mode.CLIENT)) {

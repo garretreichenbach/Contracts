@@ -23,9 +23,12 @@ public class PlayerData implements Serializable {
         this.factionID = player.getPlayerState().getFactionId();
     }
 
-    public PlayerData() {
-        this.history = new ArrayList<>();
-        this.contractUIDs = new ArrayList<>();
+    public PlayerData(String name, ArrayList<PlayerHistory> history, ArrayList<String> contractUIDs, int factionID, FactionOpinion[] opinions) {
+        this.name = name;
+        this.history = history;
+        this.contractUIDs = contractUIDs;
+        this.factionID = factionID;
+        this.opinions = opinions;
     }
 
     public void setName(String name) {

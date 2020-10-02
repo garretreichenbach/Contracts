@@ -59,13 +59,13 @@ public class ContractUtils {
 
     public static void generateRandomContract() {
         Random random = new Random();
-        int contractTypeInt = random.nextInt(1 - 2) + 1;
+        int contractTypeInt = random.nextInt(2 - 1) + 1;
         Contract.ContractType contractType = null;
         ArrayList<Short> possibleIDs = new ArrayList<>();
         String contractName = "";
-        int index = random.nextInt(1 - possibleIDs.size()) + 1;
+        int index = random.nextInt(possibleIDs.size() - 1) + 1;
         short id = possibleIDs.get(index);
-        int amountInt = random.nextInt(300 + 7500) + 300;
+        int amountInt = random.nextInt(7500 - 300) + 300;
         int basePrice = (int) ElementKeyMap.getInfo(id).getPrice(true);
         ContractTarget target = null;
         switch(contractTypeInt) {

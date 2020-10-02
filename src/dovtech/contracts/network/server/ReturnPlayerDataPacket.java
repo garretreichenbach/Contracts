@@ -19,13 +19,13 @@ import java.util.ArrayList;
 public class ReturnPlayerDataPacket extends Packet {
 
     private PlayerData playerData;
-    private String playerName = "";
+    private String playerName;
     private ArrayList<PlayerHistory> playerHistory;
     private ArrayList<String> playerHistoryEvents = new ArrayList<>();
     private ArrayList<String> playerHistoryDates = new ArrayList<>();
     private ArrayList<String> contractUIDs = new ArrayList<>();
     private int factionID = 0;
-    private FactionOpinion[] factionOpinions = new FactionOpinion[1];
+    private FactionOpinion[] factionOpinions;
     private ArrayList<String> factionOpinionIDs = new ArrayList<>();
     private ArrayList<String> factionOpinionInts = new ArrayList<>();
 
@@ -69,12 +69,7 @@ public class ReturnPlayerDataPacket extends Packet {
 
     @Override
     public void processPacketOnClient() {
-        playerData = new PlayerData();
-        playerData.setName(playerName);
-        playerData.setHistory(playerHistory);
-        playerData.setContractUIDs(contractUIDs);
-        playerData.setFactionID(factionID);
-        playerData.setOpinions(factionOpinions);
+        playerData = new PlayerData(playerName, playerHistory, contractUIDs, factionID, factionOpinions);
         DataUtils.addPlayerDataToLocal(playerData);
         DataUtils.playerData = playerData;
     }

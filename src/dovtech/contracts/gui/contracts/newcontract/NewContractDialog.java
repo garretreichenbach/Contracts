@@ -5,7 +5,6 @@ import api.entity.StarPlayer;
 import api.faction.StarFaction;
 import api.utils.game.inventory.ItemStack;
 import api.utils.gui.SimplePopup;
-import com.ctc.wstx.util.DataUtil;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.MiningTarget;
 import dovtech.contracts.contracts.target.PlayerTarget;
@@ -20,7 +19,6 @@ import org.schema.schine.graphicsengine.core.MouseEvent;
 import org.schema.schine.graphicsengine.forms.gui.GUIElement;
 import org.schema.schine.input.KeyEventInterface;
 import org.schema.schine.input.KeyboardMappings;
-
 import java.util.Objects;
 import java.util.UUID;
 
@@ -63,24 +61,28 @@ public class NewContractDialog extends PlayerInput {
             if (guiElement != null && guiElement.getUserPointer() != null) {
                 StarPlayer currentPlayer = new StarPlayer(GameClient.getClientPlayerState());
                 if (guiElement.getUserPointer().equals("OK")) {
+                    if (currentPlayer.getPlayerState().getFactionId() == 0) {
+                        (new SimplePopup(getState(), "Cannot Add Contract", "You must be in a faction to do this!")).activate();
+                        return;
+                    }
                     if (panel.getReward() <= 0) {
                         (new SimplePopup(getState(), "Cannot Add Bounty", "The reward must be above 0!")).activate();
                     } else if (currentPlayer.getCredits() < panel.getReward()) {
                         (new SimplePopup(getState(), "Cannot Add Bounty", "You do not have enough credits!")).activate();
                     } else {
-                        if(contractMode == 1) {
+                        if (contractMode == 1) {
                             String name = panel.getName();
                             int bountyAmount = panel.getReward();
                             PlayerData playerData = DataUtils.getPlayerData(name);
                             PlayerData currentPlayerData = DataUtils.getPlayerData(currentPlayer.getName());
-                            if(playerData == null) {
+                            if (playerData == null) {
                                 (new SimplePopup(getState(), "Cannot Add Bounty", "Player " + name + " does not exist!")).activate();
                             } else {
                                 if (currentPlayer.getName().equals(name) && !currentPlayer.getPlayerState().isAdmin()) {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on yourself!")).activate();
                                 } else if (currentPlayer.getFaction().getID() == playerData.getFactionID() && !currentPlayer.getPlayerState().isAdmin()) {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on a member of your own faction!")).activate();
-                                } else if (DataUtils.getAllies(currentPlayerData.getFactionID()).contains(playerData.getFactionID())) {
+                                } else if (DataUtils.getAllies(currentPlayerData.getFactionID()).contains(playerData.getFactionID()) && !currentPlayer.getPlayerState().isAdmin()) {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on a member of an allied faction!")).activate();
                                 } else {
 
@@ -98,10 +100,10 @@ public class NewContractDialog extends PlayerInput {
                                 }
                                 //Todo: Add checks/modifiers for non-aggression pacts, relations, trade deals, etc if BetterFactions mod is installed
                             }
-                        } else if(contractMode == 2) {
+                        } else if (contractMode == 2) {
                             MiningTarget target = new MiningTarget();
                             int count = panel.getCount();
-                            if(count <= 0) {
+                            if (count <= 0) {
                                 (new SimplePopup(getState(), "Cannot Add Contract", "The amount must be above 0!")).activate();
                             } else {
                                 ItemStack itemStack = new ItemStack(panel.getSelectedBlockType().getId());
@@ -116,10 +118,10 @@ public class NewContractDialog extends PlayerInput {
                                 }
                                 deactivate();
                             }
-                        } else if(contractMode == 3) {
+                        } else if (contractMode == 3) {
                             ProductionTarget target = new ProductionTarget();
                             int count = panel.getCount();
-                            if(count <= 0) {
+                            if (count <= 0) {
                                 (new SimplePopup(getState(), "Cannot Add Contract", "The amount must be above 0!")).activate();
                             } else {
                                 ItemStack itemStack = new ItemStack(panel.getSelectedBlockType().getId());
@@ -138,13 +140,13 @@ public class NewContractDialog extends PlayerInput {
                     }
                 } else if (guiElement.getUserPointer().equals("CANCEL") || guiElement.getUserPointer().equals("X")) {
                     deactivate();
-                } else if(guiElement.getUserPointer().equals("BOUNTY")) {
+                } else if (guiElement.getUserPointer().equals("BOUNTY")) {
                     contractMode = 1;
                     panel.drawBountyPanel();
-                } else if(guiElement.getUserPointer().equals("MINING")) {
+                } else if (guiElement.getUserPointer().equals("MINING")) {
                     contractMode = 2;
                     panel.drawMiningPanel();
-                } else if(guiElement.getUserPointer().equals("PRODUCTION")) {
+                } else if (guiElement.getUserPointer().equals("PRODUCTION")) {
                     contractMode = 3;
                     panel.drawProductionPanel();
                 }
