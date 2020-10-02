@@ -5,7 +5,7 @@ import api.entity.StarPlayer;
 import api.faction.StarFaction;
 import api.server.Server;
 import dovtech.contracts.contracts.target.ContractTarget;
-import dovtech.contracts.util.DataUtil;
+import dovtech.contracts.util.DataUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,15 +19,31 @@ public class Contract implements Serializable {
     private ContractTarget target;
     private ArrayList<String> claimantNames;
     private String uid;
+    private int timer;
+    private boolean finished;
 
-    public Contract(StarFaction contractor, String name, ContractType contractType, int reward, String uid, ContractTarget target) {
+    public Contract(int contractorID, String name, ContractType contractType, int reward, String uid, ContractTarget target) {
         this.name = name;
-        this.contractorID = contractor.getID();
+        this.contractorID = contractorID;
         this.contractType = contractType;
         this.reward = reward;
         this.target = target;
         this.claimantNames = new ArrayList<>();
         this.uid = uid;
+        this.timer = -1;
+        this.finished = false;
+    }
+
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public void setFinished(boolean finished) {
+        this.finished = finished;
+    }
+
+    public void setTarget(ContractTarget target) {
+        this.target = target;
     }
 
     public ArrayList<StarPlayer> getClaimants() {
@@ -61,9 +77,17 @@ public class Contract implements Serializable {
         if(contractorID != 0) {
             return new StarFaction(GameServer.getServerState().getFactionManager().getFaction(contractorID));
         } else {
-            DataUtil.removeContract(this, true);
+            DataUtils.removeContract(this, true);
             return null;
         }
+    }
+
+    public int getTimer() {
+        return timer;
+    }
+
+    public void setTimer(int timer) {
+        this.timer = timer;
     }
 
     public ContractType getContractType() {
@@ -78,7 +102,7 @@ public class Contract implements Serializable {
         return target;
     }
 
-    public String getUid() {
+    public String getUID() {
         return uid;
     }
 

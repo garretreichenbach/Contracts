@@ -3,7 +3,7 @@ package dovtech.contracts.contracts.target;
 import api.universe.StarSector;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.player.PlayerData;
-import dovtech.contracts.util.DataUtil;
+import dovtech.contracts.util.DataUtils;
 
 import java.io.Serializable;
 
@@ -12,22 +12,17 @@ public class PlayerTarget implements ContractTarget, Serializable {
     private String target;
 
     @Override
-    public int getAmount() {
-        return 1;
+    public String[] getTargets() {
+        return new String[] {target};
     }
 
     @Override
-    public PlayerData getTarget() {
-        return DataUtil.players.get(target);
-    }
-
-    @Override
-    public void setTarget(Object obj) {
-        PlayerData playerData = (PlayerData) obj;
-        if(playerData != null) {
-            this.target = playerData.getName();
+    public void setTargets(Object... obj) {
+        String playerName = (String) obj[0];
+        if(playerName != null) {
+            this.target = playerName;
         } else {
-            this.target = "Nobody";
+            this.target = "NULL";
         }
     }
 
@@ -37,12 +32,22 @@ public class PlayerTarget implements ContractTarget, Serializable {
     }
 
     @Override
-    public StarSector getLocation() {
+    public int[] getLocation() {
         return null;
     }
 
     @Override
     public void setLocation(StarSector sector) {
+
+    }
+
+    @Override
+    public void setTargetsFromString(String s) {
+
+    }
+
+    @Override
+    public void setLocationFromString(String s) {
 
     }
 }

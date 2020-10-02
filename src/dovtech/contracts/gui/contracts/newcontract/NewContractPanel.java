@@ -5,7 +5,7 @@ import api.common.GameClient;
 import api.element.block.Blocks;
 import api.faction.StarFaction;
 import api.utils.gui.SimpleGUIHorizontalButtonPane;
-import dovtech.contracts.util.DataUtil;
+import dovtech.contracts.util.DataUtils;
 import org.schema.game.client.data.GameClientState;
 import org.schema.game.client.view.gui.GUIBlockSprite;
 import org.schema.game.client.view.gui.GUIInputPanel;
@@ -19,7 +19,6 @@ import org.schema.schine.graphicsengine.core.settings.PrefixNotFoundException;
 import org.schema.schine.graphicsengine.forms.font.FontLibrary;
 import org.schema.schine.graphicsengine.forms.gui.*;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIActivatableTextBar;
-import org.schema.schine.graphicsengine.forms.gui.newgui.GUIActiveInterface;
 import org.schema.schine.input.InputState;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -511,9 +510,6 @@ public class NewContractPanel extends GUIInputPanel implements BlockTypeSearchRu
 
                 @Override
                 public String handleAutoComplete(String s, TextCallback textCallback, String s1) {
-                    for (String playerName : DataUtil.players.keySet()) {
-                        if (playerName.toLowerCase().contains(s.toLowerCase())) return playerName;
-                    }
                     return null;
                 }
 

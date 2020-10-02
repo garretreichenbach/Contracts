@@ -2,16 +2,18 @@ package dovtech.contracts.gui.contracts.newcontract;
 
 import api.common.GameClient;
 import api.common.GameServer;
-import api.element.inventory.ItemStack;
 import api.entity.StarPlayer;
 import api.faction.StarFaction;
+import api.utils.game.inventory.ItemStack;
 import api.utils.gui.SimplePopup;
+import com.ctc.wstx.util.DataUtil;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.MiningTarget;
 import dovtech.contracts.contracts.target.PlayerTarget;
 import dovtech.contracts.contracts.target.ProductionTarget;
 import dovtech.contracts.gui.contracts.ContractsScrollableList;
-import dovtech.contracts.util.DataUtil;
+import dovtech.contracts.player.PlayerData;
+import dovtech.contracts.util.DataUtils;
 import org.schema.game.client.controller.PlayerInput;
 import org.schema.game.client.data.GameClientState;
 import org.schema.schine.graphicsengine.core.GLFW;
@@ -68,20 +70,20 @@ public class NewContractDialog extends PlayerInput {
                         if(contractMode == 1) {
                             String name = panel.getName();
                             int bountyAmount = panel.getReward();
-                            if (DataUtil.players.containsKey(name)) {
-                                if (currentPlayer.getName().equals(name)) {
+                            PlayerData playerData = DataUtils.getPlayerData(name);
+                            if (playerData != null) {
+                                if (currentPlayer.getName().equals(name) && !currentPlayer.getPlayerState().isAdmin()) {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on yourself!")).activate();
-                                } else if (currentPlayer.getFaction().getID() == DataUtil.players.get(name).getFactionID()) {
+                                } else if (currentPlayer.getFaction().getID() == playerData.getFactionID() && !currentPlayer.getPlayerState().isAdmin()) {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on a member of your own faction!")).activate();
-                                } else if (GameServer.getServerState().getFactionManager().getFaction(currentPlayer.getPlayerState().getFactionId()).getFriends().contains(GameServer.getServerState().getFactionManager().getFaction(DataUtil.players.get(name).getFactionID()))) {
+                                } else if (!currentPlayer.getPlayerState().isAdmin() && GameServer.getServerState().getFactionManager().getFaction(currentPlayer.getPlayerState().getFactionId()).getFriends().contains(GameServer.getServerState().getFactionManager().getFaction(playerData.getFactionID()))) {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on a member of an allied faction!")).activate();
                                 } else {
 
                                     PlayerTarget target = new PlayerTarget();
-                                    target.setTarget(DataUtil.players.get(name));
-                                    Contract contract = new Contract(currentPlayer.getFaction(), "Kill" + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), target);
-                                    DataUtil.contracts.put(contract.getUid(), contract);
-                                    DataUtil.contractWriteBuffer.add(contract);
+                                    target.setTargets(playerData);
+                                    Contract contract = new Contract(currentPlayer.getFaction().getID(), "Kill" + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), target);
+                                    DataUtils.addContract(contract);
                                     currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                     if (ContractsScrollableList.getInst() != null) {
                                         ContractsScrollableList.getInst().clear();
@@ -99,10 +101,9 @@ public class NewContractDialog extends PlayerInput {
                             } else {
                                 ItemStack itemStack = new ItemStack(panel.getSelectedBlockType().getId());
                                 itemStack.setAmount(count);
-                                target.setTarget(itemStack);
-                                Contract contract = new Contract(currentPlayer.getFaction(), "Mine x" + count + " " + itemStack.getName(), Contract.ContractType.MINING, panel.getReward(), UUID.randomUUID().toString(), target);
-                                DataUtil.contracts.put(contract.getUid(), contract);
-                                DataUtil.contractWriteBuffer.add(contract);
+                                target.setTargets(itemStack);
+                                Contract contract = new Contract(currentPlayer.getFaction().getID(), "Mine x" + count + " " + itemStack.getName(), Contract.ContractType.MINING, panel.getReward(), UUID.randomUUID().toString(), target);
+                                DataUtils.addContract(contract);
                                 currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                 if (ContractsScrollableList.getInst() != null) {
                                     ContractsScrollableList.getInst().clear();
@@ -118,10 +119,9 @@ public class NewContractDialog extends PlayerInput {
                             } else {
                                 ItemStack itemStack = new ItemStack(panel.getSelectedBlockType().getId());
                                 itemStack.setAmount(count);
-                                target.setTarget(itemStack);
-                                Contract contract = new Contract(currentPlayer.getFaction(), "Produce x" + count + " " + itemStack.getName(), Contract.ContractType.PRODUCTION, panel.getReward(), UUID.randomUUID().toString(), target);
-                                DataUtil.contracts.put(contract.getUid(), contract);
-                                DataUtil.contractWriteBuffer.add(contract);
+                                target.setTargets(itemStack);
+                                Contract contract = new Contract(currentPlayer.getFaction().getID(), "Produce x" + count + " " + itemStack.getName(), Contract.ContractType.PRODUCTION, panel.getReward(), UUID.randomUUID().toString(), target);
+                                DataUtils.addContract(contract);
                                 currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                 if (ContractsScrollableList.getInst() != null) {
                                     ContractsScrollableList.getInst().clear();

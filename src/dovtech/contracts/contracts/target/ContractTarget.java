@@ -5,15 +5,17 @@ import dovtech.contracts.contracts.Contract;
 
 public interface ContractTarget {
 
-    int getAmount();
+    Object[] getTargets();
 
-    Object getTarget();
-
-    void setTarget(Object target);
+    void setTargets(Object... target);
 
     Contract.ContractType getContractType();
 
-    StarSector getLocation();
+    int[] getLocation();
 
     void setLocation(StarSector sector);
+
+    void setTargetsFromString(String s);
+
+    void setLocationFromString(String s);
 }

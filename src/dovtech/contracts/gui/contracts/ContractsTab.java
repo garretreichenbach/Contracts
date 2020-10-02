@@ -7,7 +7,7 @@ import api.utils.gui.SimplePopup;
 import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.gui.contracts.newcontract.NewContractDialog;
-import dovtech.contracts.util.DataUtil;
+import dovtech.contracts.util.DataUtils;
 import org.schema.game.client.controller.PlayerOkCancelInput;
 import org.schema.schine.graphicsengine.core.GLFrame;
 import org.schema.schine.graphicsengine.core.MouseEvent;
@@ -33,7 +33,7 @@ public class ContractsTab extends GUIContentPane {
         createTab();
     }
 
-    public void createTab() {
+    private void createTab() {
 
         /* Faction/Contractor Logo
         contractsTab.addNewTextBox(0, 150);
@@ -95,7 +95,7 @@ public class ContractsTab extends GUIContentPane {
                                 @Override
                                 public void pressedOK() {
                                     GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                                    DataUtil.removeContract(contract, true);
+                                    DataUtils.removeContract(contract, true);
                                     contractsScrollableList.clear();
                                     contractsScrollableList.handleDirty();
                                 }

@@ -2,9 +2,10 @@ package dovtech.contracts.commands;
 
 import api.entity.StarPlayer;
 import api.utils.game.chat.ChatCommand;
+import com.ctc.wstx.util.DataUtil;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.player.PlayerData;
-import dovtech.contracts.util.DataUtil;
+import dovtech.contracts.util.DataUtils;
 import org.schema.game.common.data.player.PlayerState;
 
 public class EndContractsCommand extends ChatCommand {
@@ -17,13 +18,12 @@ public class EndContractsCommand extends ChatCommand {
     public boolean onCommand(PlayerState sender, String[] args) {
         try {
             boolean claim = Boolean.parseBoolean(args[0]);
-            PlayerData playerData = DataUtil.players.get(sender.getName());
-            for (Contract contract : playerData.getContracts()) {
+            for (Contract contract : DataUtils.getPlayerContracts(sender.getName())) {
                 if (claim) {
                     sender.setCredits(sender.getCredits() + contract.getReward());
-                    DataUtil.removeContract(contract, false, new StarPlayer(sender));
+                    DataUtils.removeContract(contract, false, new StarPlayer(sender));
                 } else {
-                    DataUtil.removeContract(contract, true);
+                    DataUtils.removeContract(contract, true);
                 }
             }
             return true;
