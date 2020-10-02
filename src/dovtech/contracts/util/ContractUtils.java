@@ -69,7 +69,7 @@ public class ContractUtils {
                 for(ElementInformation info : getProductionFilter()) possibleIDs.add(info.getId());
                 int productionIndex = random.nextInt(possibleIDs.size() - 1) + 1;
                 short productionID = possibleIDs.get(productionIndex);
-                contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(productionID).getName() + "." ;
+                contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(productionID).getName();
                 target = new ProductionTarget();
                 ItemStack productionStack = new ItemStack(productionID);
                 productionStack.setAmount(amountInt);
@@ -82,7 +82,7 @@ public class ContractUtils {
                 for(ElementInformation info : getResourcesFilter()) possibleIDs.add(info.getId());
                 int miningIndex = random.nextInt(possibleIDs.size() - 1) + 1;
                 short miningID = possibleIDs.get(miningIndex);
-                contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(miningID).getName() + "." ;
+                contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(miningID).getName();
                 target = new ProductionTarget();
                 ItemStack miningStack = new ItemStack(miningID);
                 miningStack.setAmount(amountInt);
@@ -91,7 +91,7 @@ public class ContractUtils {
                 target.setTargets(miningStacks);
                 break;
         }
-        int reward = (int) ((basePrice * amountInt) * Contracts.getInstance().cargoEscortBonus);
+        int reward = (int) ((basePrice * amountInt) * 1.3);
 
         Contract randomContract = new Contract(Contracts.getInstance().tradersFactionID, contractName, contractType, reward, UUID.randomUUID().toString(), target);
         DataUtils.addContract(randomContract);

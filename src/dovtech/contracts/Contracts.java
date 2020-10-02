@@ -100,7 +100,7 @@ public class Contracts extends StarMod {
     public double cargoEscortBonus;
     public int contractTimerMax;
     public boolean npcContractsEnabled;
-    public int tradersFactionID;
+    public int tradersFactionID = -10000000;
     public int automaticContractGenerationMax;
 
     //Mod Compatibility

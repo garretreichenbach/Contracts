@@ -12,7 +12,10 @@ import api.utils.gui.SimpleGUIHorizontalButtonPane;
 import api.utils.gui.SimplePopup;
 import com.ctc.wstx.util.DataUtil;
 import dovtech.contracts.contracts.Contract;
+import dovtech.contracts.contracts.target.CargoTarget;
+import dovtech.contracts.contracts.target.MiningTarget;
 import dovtech.contracts.contracts.target.PlayerTarget;
+import dovtech.contracts.contracts.target.ProductionTarget;
 import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.util.ContractUtils;
 import dovtech.contracts.util.DataUtils;
@@ -214,13 +217,14 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
 
         if (playerContracts.contains(contract)) {
             if (contract.getContractType().equals(Contract.ContractType.CARGO_ESCORT)) {
+                final CargoTarget cargoTarget = (CargoTarget) contract.getTarget();
                 GUITextButton beginContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "START CONTRACT", new GUICallback() {
                     @Override
                     public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                         Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(ContractUtils.tradeFleets.get(contract)));
                         if (tradeFleet.getFlagshipSector().equals(player.getSector())) {
                             getState().getController().queueUIAudio("0022_menu_ui - enter");
-                            PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: Heading to " + contract.getTarget().getLocation()[0] + ", " + contract.getTarget().getLocation()[1] + ", " + contract.getTarget().getLocation()[2] + ".");
+                            PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: Heading to " + cargoTarget.getLocation()[0] + ", " + cargoTarget.getLocation()[1] + ", " + cargoTarget.getLocation()[2] + ".");
                             ContractUtils.startCargoContract(contract, player);
                         } else {
                             (new SimplePopup(getState(), "Cannot Start Contract", "You must be in the starting sector to begin this contract!")).activate();
@@ -234,15 +238,15 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                     }
                 });
                 buttonPane.addButton(beginContractButton);
-            } else if (contract.getContractType().equals(Contract.ContractType.MINING) || contract.getContractType().equals(Contract.ContractType.PRODUCTION)) {
+            } else if (contract.getContractType().equals(Contract.ContractType.MINING)) {
+                final MiningTarget miningTarget = (MiningTarget) contract.getTarget();
                 GUITextButton completeContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "COMPLETE CONTRACT", new GUICallback() {
                     @Override
                     public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                         boolean hasItems = true;
-                        for(Object requiredObject : contract.getTarget().getTargets()) {
-                            ItemStack requiredStack = (ItemStack) requiredObject;
-                            short id = requiredStack.getId();
-                            int amount = requiredStack.getAmount();
+                        for(ItemStack itemStack : miningTarget.getTargets()) {
+                            short id = itemStack.getId();
+                            int amount = itemStack.getAmount();
                             if(InventoryUtils.getItemAmount(player.getInventory().getInternalInventory(), id) < amount) {
                                 hasItems = false;
                                 break;
@@ -252,7 +256,44 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                         if (hasItems) {
                             getState().getController().queueUIAudio("0022_menu_ui - enter");
 
-                            for(Object requiredObject : contract.getTarget().getTargets()) {
+                            for(Object requiredObject : miningTarget.getTargets()) {
+                                ItemStack requiredStack = (ItemStack) requiredObject;
+                                InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), requiredStack);
+                            }
+
+                            DataUtils.removeContract(contract, false, player);
+                            player.setCredits(player.getCredits() + contract.getReward());
+                        } else {
+                            (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
+                        }
+
+                    }
+
+                    @Override
+                    public boolean isOccluded() {
+                        return !isActive();
+                    }
+                });
+                buttonPane.addButton(completeContractButton);
+            } else if (contract.getContractType().equals(Contract.ContractType.PRODUCTION)) {
+                final ProductionTarget productionTarget = (ProductionTarget) contract.getTarget();
+                GUITextButton completeContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "COMPLETE CONTRACT", new GUICallback() {
+                    @Override
+                    public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                        boolean hasItems = true;
+                        for(ItemStack itemStack : productionTarget.getTargets()) {
+                            short id = itemStack.getId();
+                            int amount = itemStack.getAmount();
+                            if(InventoryUtils.getItemAmount(player.getInventory().getInternalInventory(), id) < amount) {
+                                hasItems = false;
+                                break;
+                            }
+                        }
+
+                        if (hasItems) {
+                            getState().getController().queueUIAudio("0022_menu_ui - enter");
+
+                            for(Object requiredObject : productionTarget.getTargets()) {
                                 ItemStack requiredStack = (ItemStack) requiredObject;
                                 InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), requiredStack);
                             }
@@ -293,7 +334,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
             (contractTypeRowElement = new GUIClippedRow(this.getState())).attach(contractTypeTextElement);
 
             GUITextOverlayTable contractorTextElement;
-            (contractorTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(String.valueOf(contract.getContractor().getName()));
+            (contractorTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(contract.getContractor().getName());
             GUIClippedRow contractorRowElement;
             (contractorRowElement = new GUIClippedRow(this.getState())).attach(contractorTextElement);
 

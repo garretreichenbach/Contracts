@@ -17,6 +17,7 @@ public class ProductionTarget implements ContractTarget, Serializable {
         for(int i = 0; i < itemStacks.length; i ++) {
             ItemStack itemStack = new ItemStack(targets[i]);
             itemStack.setAmount(amounts[i]);
+            itemStacks[i] = itemStack;
         }
         return itemStacks;
     }
