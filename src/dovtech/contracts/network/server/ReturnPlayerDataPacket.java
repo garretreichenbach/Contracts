@@ -1,6 +1,5 @@
 /**
  * Packet [Server -> Client]
- * Returns the client's PlayerData
  */
 
 package dovtech.contracts.network.server;
@@ -36,10 +35,6 @@ public class ReturnPlayerDataPacket extends Packet {
 
     public ReturnPlayerDataPacket(PlayerData playerData) {
         this.playerData = playerData;
-    }
-
-    public PlayerData getPlayerData() {
-        return playerData;
     }
 
     @Override
@@ -80,6 +75,7 @@ public class ReturnPlayerDataPacket extends Packet {
         playerData.setContractUIDs(contractUIDs);
         playerData.setFactionID(factionID);
         playerData.setOpinions(factionOpinions);
+        DataUtils.playerData = playerData;
     }
 
     @Override

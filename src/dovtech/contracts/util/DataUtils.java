@@ -28,6 +28,9 @@ public class DataUtils {
     private static final File contractsFolder = new File("moddata/Contracts/contractdata");
     private static final File playerDataFolder = new File("moddata/Contracts/playerdata");
 
+    public static ArrayList<Contract> localContracts = new ArrayList<>();
+    public static ArrayList<Contract> localPlayerContracts = new ArrayList<>();
+    public static PlayerData playerData = new PlayerData();
     private static HashMap<String, Contract> contracts = new HashMap<>();
     private static HashMap<String, PlayerData> players = new HashMap<>();
     private static ArrayList<Contract> contractWriteBuffer = new ArrayList<>();
@@ -54,7 +57,7 @@ public class DataUtils {
     private static PlayerData getUpdatedPlayerData() {
         GetPlayerDataPacket getPlayerDataPacket = new GetPlayerDataPacket();
         PacketUtil.sendPacketToServer(getPlayerDataPacket);
-        return getPlayerDataPacket.getPlayerData();
+        return playerData;
     }
 
     public static ArrayList<Contract> getPlayerContracts(String name) {
@@ -69,7 +72,7 @@ public class DataUtils {
         } else {
             GetClientContractsPacket getClientContractsPacket = new GetClientContractsPacket();
             PacketUtil.sendPacketToServer(getClientContractsPacket);
-            return getClientContractsPacket.getPlayerContracts();
+            return localPlayerContracts;
         }
     }
 
@@ -79,7 +82,7 @@ public class DataUtils {
         } else {
             GetAllContractsPacket getAllContractsPacket = new GetAllContractsPacket();
             PacketUtil.sendPacketToServer(getAllContractsPacket);
-            return getAllContractsPacket.getContracts();
+            return localContracts;
         }
     }
 

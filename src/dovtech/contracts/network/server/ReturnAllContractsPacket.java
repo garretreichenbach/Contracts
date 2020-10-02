@@ -1,3 +1,6 @@
+/**
+ * Packet [Server -> Client]
+ */
 package dovtech.contracts.network.server;
 
 import api.network.Packet;
@@ -13,7 +16,6 @@ import java.util.ArrayList;
 
 public class ReturnAllContractsPacket extends Packet {
 
-    private ArrayList<Contract> contracts;
     private ArrayList<String> contractNames;
     private ArrayList<String> contractorIDs;
     private ArrayList<String> contractTypes;
@@ -22,13 +24,8 @@ public class ReturnAllContractsPacket extends Packet {
     private ArrayList<String> contractTargets;
     private ArrayList<String> contractUIDs;
 
-    public ReturnAllContractsPacket(ArrayList<Contract> contracts) {
-        this.contracts = contracts;
-    }
+    public ReturnAllContractsPacket() {
 
-    public ArrayList<Contract> getContracts() {
-        if(contracts == null) contracts = new ArrayList<>();
-        return contracts;
     }
 
     @Override
@@ -55,7 +52,7 @@ public class ReturnAllContractsPacket extends Packet {
 
     @Override
     public void processPacketOnClient() {
-        contracts = new ArrayList<>();
+        ArrayList<Contract> contracts = new ArrayList<>();
         int size = contractUIDs.size();
         for(int i = 0; i < size; i ++) {
             ContractTarget contractTarget = null;
@@ -77,6 +74,7 @@ public class ReturnAllContractsPacket extends Packet {
             Contract contract = new Contract(Integer.parseInt(contractorIDs.get(i)), contractNames.get(i), Contract.ContractType.valueOf(contractTypes.get(i)), Integer.parseInt(contractRewards.get(i)), contractUIDs.get(i), contractTarget);
             contracts.add(contract);
         }
+        DataUtils.localContracts = contracts;
     }
 
     @Override

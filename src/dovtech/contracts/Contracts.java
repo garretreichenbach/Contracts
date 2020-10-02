@@ -22,7 +22,6 @@ import api.mod.StarLoader;
 import api.mod.StarMod;
 import api.mod.config.FileConfiguration;
 import api.network.Packet;
-import api.network.packets.PacketUtil;
 import api.server.Server;
 import api.universe.StarSector;
 import api.universe.StarUniverse;

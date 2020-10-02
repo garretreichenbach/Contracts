@@ -1,3 +1,6 @@
+/**
+ * Packet [Server -> Client]
+ */
 package dovtech.contracts.network.server;
 
 import api.network.Packet;
@@ -81,6 +84,7 @@ public class ReturnClientContractsPacket extends Packet {
             Contract contract = new Contract(Integer.parseInt(contractorIDs.get(i)), contractNames.get(i), Contract.ContractType.valueOf(contractTypes.get(i)), Integer.parseInt(contractRewards.get(i)), contractUIDs.get(i), contractTarget);
             playerContracts.add(contract);
         }
+        DataUtils.localPlayerContracts = playerContracts;
     }
 
     @Override
