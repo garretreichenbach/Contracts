@@ -21,13 +21,13 @@ public class ReturnPlayerDataPacket extends Packet {
     private PlayerData playerData;
     private String playerName;
     private ArrayList<PlayerHistory> playerHistory;
-    private ArrayList<String> playerHistoryEvents;
-    private ArrayList<String> playerHistoryDates;
-    private ArrayList<String> contractUIDs;
+    private ArrayList<String> playerHistoryEvents = new ArrayList<>();
+    private ArrayList<String> playerHistoryDates = new ArrayList<>();
+    private ArrayList<String> contractUIDs = new ArrayList<>();
     private int factionID;
     private FactionOpinion[] factionOpinions;
-    private ArrayList<String> factionOpinionIDs;
-    private ArrayList<String> factionOpinionInts;
+    private ArrayList<String> factionOpinionIDs = new ArrayList<>();
+    private ArrayList<String> factionOpinionInts = new ArrayList<>();
 
     public ReturnPlayerDataPacket() {
 

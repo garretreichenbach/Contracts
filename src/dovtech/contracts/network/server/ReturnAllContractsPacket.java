@@ -16,13 +16,13 @@ import java.util.ArrayList;
 
 public class ReturnAllContractsPacket extends Packet {
 
-    private ArrayList<String> contractNames;
-    private ArrayList<String> contractorIDs;
-    private ArrayList<String> contractTypes;
-    private ArrayList<String> contractRewards;
-    private ArrayList<String> contractLocations;
-    private ArrayList<String> contractTargets;
-    private ArrayList<String> contractUIDs;
+    private ArrayList<String> contractNames = new ArrayList<>();
+    private ArrayList<String> contractorIDs = new ArrayList<>();
+    private ArrayList<String> contractTypes = new ArrayList<>();
+    private ArrayList<String> contractRewards = new ArrayList<>();
+    private ArrayList<String> contractLocations = new ArrayList<>();
+    private ArrayList<String> contractTargets = new ArrayList<>();
+    private ArrayList<String> contractUIDs = new ArrayList<>();
 
     public ReturnAllContractsPacket() {
 

@@ -35,7 +35,7 @@ public class GetClientContractsPacket extends Packet {
 
     @Override
     public void processPacketOnServer(PlayerState playerState) {
-        ReturnClientContractsPacket returnClientContractsPacket = new ReturnClientContractsPacket(DataUtils.getPlayerContracts(playerState.getName()));
+        ReturnClientContractsPacket returnClientContractsPacket = new ReturnClientContractsPacket();
         PacketUtil.sendPacket(playerState, returnClientContractsPacket);
     }
 }

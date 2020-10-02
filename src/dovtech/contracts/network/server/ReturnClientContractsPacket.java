@@ -16,26 +16,16 @@ import java.util.ArrayList;
 
 public class ReturnClientContractsPacket extends Packet {
 
-    private ArrayList<Contract> playerContracts;
-    private ArrayList<String> contractNames;
-    private ArrayList<String> contractorIDs;
-    private ArrayList<String> contractTypes;
-    private ArrayList<String> contractRewards;
-    private ArrayList<String> contractLocations;
-    private ArrayList<String> contractTargets;
-    private ArrayList<String> contractUIDs;
+    private ArrayList<String> contractNames = new ArrayList<>();
+    private ArrayList<String> contractorIDs = new ArrayList<>();
+    private ArrayList<String> contractTypes = new ArrayList<>();
+    private ArrayList<String> contractRewards = new ArrayList<>();
+    private ArrayList<String> contractLocations = new ArrayList<>();
+    private ArrayList<String> contractTargets = new ArrayList<>();
+    private ArrayList<String> contractUIDs = new ArrayList<>();
 
     public ReturnClientContractsPacket() {
 
-    }
-
-    public ReturnClientContractsPacket(ArrayList<Contract> playerContracts) {
-        this.playerContracts = playerContracts;
-    }
-
-    public ArrayList<Contract> getPlayerContracts() {
-        if(playerContracts == null) playerContracts = new ArrayList<>();
-        return playerContracts;
     }
 
     @Override
@@ -62,7 +52,7 @@ public class ReturnClientContractsPacket extends Packet {
 
     @Override
     public void processPacketOnClient() {
-        playerContracts = new ArrayList<>();
+        ArrayList<Contract> playerContracts = new ArrayList<>();
         int size = contractUIDs.size();
         for(int i = 0; i < size; i ++) {
             ContractTarget contractTarget = null;
