@@ -60,7 +60,7 @@ public class ContractUtils {
         ArrayList<Short> possibleIDs = new ArrayList<>();
         String contractName = "";
 
-        int amountInt = random.nextInt(7500 - 300) + 300;
+        int amountInt = random.nextInt(3000 - 100) + 100;
         int basePrice = 0;
         ContractTarget target = null;
         switch(contractTypeInt) {

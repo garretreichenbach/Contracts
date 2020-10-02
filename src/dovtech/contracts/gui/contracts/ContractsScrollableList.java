@@ -243,30 +243,31 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                 GUITextButton completeContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "COMPLETE CONTRACT", new GUICallback() {
                     @Override
                     public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                        boolean hasItems = true;
-                        for(ItemStack itemStack : miningTarget.getTargets()) {
-                            short id = itemStack.getId();
-                            int amount = itemStack.getAmount();
-                            if(InventoryUtils.getItemAmount(player.getInventory().getInternalInventory(), id) < amount) {
-                                hasItems = false;
-                                break;
-                            }
-                        }
-
-                        if (hasItems) {
-                            getState().getController().queueUIAudio("0022_menu_ui - enter");
-
-                            for(Object requiredObject : miningTarget.getTargets()) {
-                                ItemStack requiredStack = (ItemStack) requiredObject;
-                                InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), requiredStack);
+                        if (mouseEvent.pressedLeftMouse()) {
+                            boolean hasItems = true;
+                            for (ItemStack itemStack : miningTarget.getTargets()) {
+                                short id = itemStack.getId();
+                                int amount = itemStack.getAmount();
+                                if (InventoryUtils.getItemAmount(player.getInventory().getInternalInventory(), id) < amount) {
+                                    hasItems = false;
+                                    break;
+                                }
                             }
 
-                            DataUtils.removeContract(contract, false, player);
-                            player.setCredits(player.getCredits() + contract.getReward());
-                        } else {
-                            (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
-                        }
+                            if (hasItems || (player.getPlayerState().isUseCreativeMode() && player.getPlayerState().isAdmin())) {
+                                getState().getController().queueUIAudio("0022_menu_ui - enter");
 
+                                for (Object requiredObject : miningTarget.getTargets()) {
+                                    ItemStack requiredStack = (ItemStack) requiredObject;
+                                    InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), requiredStack);
+                                }
+
+                                DataUtils.removeContract(contract, false, player);
+                                player.setCredits(player.getCredits() + contract.getReward());
+                            } else {
+                                (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
+                            }
+                        }
                     }
 
                     @Override
@@ -280,30 +281,31 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                 GUITextButton completeContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "COMPLETE CONTRACT", new GUICallback() {
                     @Override
                     public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                        boolean hasItems = true;
-                        for(ItemStack itemStack : productionTarget.getTargets()) {
-                            short id = itemStack.getId();
-                            int amount = itemStack.getAmount();
-                            if(InventoryUtils.getItemAmount(player.getInventory().getInternalInventory(), id) < amount) {
-                                hasItems = false;
-                                break;
-                            }
-                        }
-
-                        if (hasItems) {
-                            getState().getController().queueUIAudio("0022_menu_ui - enter");
-
-                            for(Object requiredObject : productionTarget.getTargets()) {
-                                ItemStack requiredStack = (ItemStack) requiredObject;
-                                InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), requiredStack);
+                        if (mouseEvent.pressedLeftMouse()) {
+                            boolean hasItems = true;
+                            for (ItemStack itemStack : productionTarget.getTargets()) {
+                                short id = itemStack.getId();
+                                int amount = itemStack.getAmount();
+                                if (InventoryUtils.getItemAmount(player.getInventory().getInternalInventory(), id) < amount) {
+                                    hasItems = false;
+                                    break;
+                                }
                             }
 
-                            DataUtils.removeContract(contract, false, player);
-                            player.setCredits(player.getCredits() + contract.getReward());
-                        } else {
-                            (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
-                        }
+                            if (hasItems || (player.getPlayerState().isUseCreativeMode() && player.getPlayerState().isAdmin())) {
+                                getState().getController().queueUIAudio("0022_menu_ui - enter");
 
+                                for (Object requiredObject : productionTarget.getTargets()) {
+                                    ItemStack requiredStack = (ItemStack) requiredObject;
+                                    InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), requiredStack);
+                                }
+
+                                DataUtils.removeContract(contract, false, player);
+                                player.setCredits(player.getCredits() + contract.getReward());
+                            } else {
+                                (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
+                            }
+                        }
                     }
 
                     @Override
