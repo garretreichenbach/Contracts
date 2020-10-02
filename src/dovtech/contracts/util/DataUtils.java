@@ -95,6 +95,10 @@ public class DataUtils {
                     PersistentObjectUtil.removeObject(instance, c);
                     PersistentObjectUtil.addObject(instance, contract);
                     PersistentObjectUtil.save(instance);
+                    if(ContractsScrollableList.getInst() != null) {
+                        ContractsScrollableList.getInst().clear();
+                        ContractsScrollableList.getInst().handleDirty();
+                    }
                     return;
                 }
             }
@@ -103,10 +107,10 @@ public class DataUtils {
         } else {
             AddContractPacket addContractPacket = new AddContractPacket(contract);
             PacketUtil.sendPacket(GameClient.getClientPlayerState(), addContractPacket);
-            if(ContractsScrollableList.getInst() != null) {
-                ContractsScrollableList.getInst().clear();
-                ContractsScrollableList.getInst().handleDirty();
-            }
+        }
+        if(ContractsScrollableList.getInst() != null) {
+            ContractsScrollableList.getInst().clear();
+            ContractsScrollableList.getInst().handleDirty();
         }
     }
 

@@ -257,10 +257,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                             if (hasItems || (player.getPlayerState().isUseCreativeMode() && player.getPlayerState().isAdmin())) {
                                 getState().getController().queueUIAudio("0022_menu_ui - enter");
 
-                                for (Object requiredObject : miningTarget.getTargets()) {
-                                    ItemStack requiredStack = (ItemStack) requiredObject;
-                                    InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), requiredStack);
-                                }
+                                for (ItemStack itemStack : miningTarget.getTargets()) InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), itemStack);
 
                                 DataUtils.removeContract(contract, false, player);
                                 player.setCredits(player.getCredits() + contract.getReward());
@@ -295,10 +292,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                             if (hasItems || (player.getPlayerState().isUseCreativeMode() && player.getPlayerState().isAdmin())) {
                                 getState().getController().queueUIAudio("0022_menu_ui - enter");
 
-                                for (Object requiredObject : productionTarget.getTargets()) {
-                                    ItemStack requiredStack = (ItemStack) requiredObject;
-                                    InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), requiredStack);
-                                }
+                                for (ItemStack itemStack : productionTarget.getTargets()) InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), itemStack);
 
                                 DataUtils.removeContract(contract, false, player);
                                 player.setCredits(player.getCredits() + contract.getReward());
