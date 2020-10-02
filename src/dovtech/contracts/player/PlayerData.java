@@ -83,9 +83,9 @@ public class PlayerData implements Serializable {
         return null;
     }
 
-    public void modOpinionScore(StarFaction faction, int scoreToAdd) {
+    public void modOpinionScore(int factionID, int scoreToAdd) {
         for(FactionOpinion opinion : opinions) {
-            if(opinion.getFaction().getID() == faction.getID()) {
+            if(opinion.getFaction().getID() == factionID) {
                 opinion.setOpinionScore(opinion.getOpinionScore() + scoreToAdd);
                 break;
             }

@@ -440,8 +440,8 @@ public class Contracts extends StarMod {
                                                 contract.setFinished(true);
                                                 DataUtils.removeContract(contract, false, player);
                                                 PlayerData pData = DataUtils.getPlayerData((player.getName()));
-                                                pData.modOpinionScore(traders, 5);
-                                                pData.modOpinionScore(contractor, 10);
+                                                pData.modOpinionScore(traders.getID(), 5);
+                                                pData.modOpinionScore(contractor.getID(), 10);
                                                 DataUtils.addPlayer(pData);
                                             } catch (PlayerNotFountException e) {
                                                 e.printStackTrace();
@@ -499,7 +499,7 @@ public class Contracts extends StarMod {
                                 Server.broadcastMessage("[CONTRACTS]: " + attacker.getName() + " has claimed the bounty on " + target.getName() + " for a reward of " + contract.getReward() + " credits!");
                                 attacker.setCredits(attacker.getCredits() + contract.getReward());
                                 PlayerData attackerData = DataUtils.getPlayerData(attacker.getName());
-                                attackerData.modOpinionScore(contract.getContractor(), 10);
+                                attackerData.modOpinionScore(contract.getContractor().getID(), 10);
                                 DataUtils.addPlayer(attackerData);
                                 DataUtils.removeContract(contract, false, attacker);
                                 break;

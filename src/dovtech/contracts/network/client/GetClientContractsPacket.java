@@ -8,7 +8,6 @@ import api.network.PacketReadBuffer;
 import api.network.PacketWriteBuffer;
 import api.network.packets.PacketUtil;
 import dovtech.contracts.network.server.ReturnClientContractsPacket;
-import dovtech.contracts.util.DataUtils;
 import org.schema.game.common.data.player.PlayerState;
 import java.io.IOException;
 

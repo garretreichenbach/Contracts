@@ -61,7 +61,6 @@ public class ContractsTab extends GUIContentPane {
             public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                 if (mouseEvent.pressedLeftMouse()) {
                     if (player.getPlayerState().getFactionId() != 0) {
-                        //Todo: Open add contract menu
                         GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
                         (new NewContractDialog(GameClient.getClientState(), player.getFaction())).activate();
                         contractsScrollableList.clear();

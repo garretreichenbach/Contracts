@@ -1,7 +1,6 @@
 package dovtech.contracts.gui.contracts.newcontract;
 
 import api.common.GameClient;
-import api.common.GameServer;
 import api.entity.StarPlayer;
 import api.faction.StarFaction;
 import api.utils.game.inventory.ItemStack;
@@ -76,12 +75,11 @@ public class NewContractDialog extends PlayerInput {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on yourself!")).activate();
                                 } else if (currentPlayer.getFaction().getID() == playerData.getFactionID() && !currentPlayer.getPlayerState().isAdmin()) {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on a member of your own faction!")).activate();
-                                } else if (!currentPlayer.getPlayerState().isAdmin() && GameServer.getServerState().getFactionManager().getFaction(currentPlayer.getPlayerState().getFactionId()).getFriends().contains(GameServer.getServerState().getFactionManager().getFaction(playerData.getFactionID()))) {
-                                    (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on a member of an allied faction!")).activate();
                                 } else {
 
                                     PlayerTarget target = new PlayerTarget();
                                     target.setTargets(playerData);
+                                    DataUtils.getPlayerData(currentPlayer.getName()).modOpinionScore(playerData.getFactionID(), -15);
                                     Contract contract = new Contract(currentPlayer.getFaction().getID(), "Kill" + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), target);
                                     DataUtils.addContract(contract);
                                     currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
