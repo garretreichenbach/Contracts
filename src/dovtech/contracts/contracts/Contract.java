@@ -75,7 +75,7 @@ public class Contract implements Serializable {
 
     public StarFaction getContractor() {
         if(contractorID != 0) {
-            return new StarFaction(GameServer.getServerState().getFactionManager().getFaction(contractorID));
+            return DataUtils.getFactionFromID(contractorID);
         } else {
             DataUtils.removeContract(this, true);
             return null;

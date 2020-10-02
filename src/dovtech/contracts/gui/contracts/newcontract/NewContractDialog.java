@@ -89,7 +89,7 @@ public class NewContractDialog extends PlayerInput {
                                     PlayerTarget target = new PlayerTarget();
                                     target.setTargets(playerData.getName());
                                     Objects.requireNonNull(DataUtils.getPlayerData(currentPlayer.getName())).modOpinionScore(playerData.getFactionID(), -15);
-                                    Contract contract = new Contract(currentPlayer.getFaction().getID(), "Kill" + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), target);
+                                    Contract contract = new Contract(currentPlayer.getFaction().getID(), "Kill " + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), target);
                                     DataUtils.addContract(contract);
                                     currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                     if (ContractsScrollableList.getInst() != null) {

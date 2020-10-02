@@ -1,10 +1,12 @@
 package dovtech.contracts.util;
 
 import api.common.GameClient;
+import api.common.GameCommon;
 import api.common.GameServer;
 import api.entity.StarPlayer;
 import api.entity.StarStation;
 import api.faction.StarFaction;
+import api.mod.StarLoader;
 import api.mod.config.PersistentObjectUtil;
 import api.network.packets.PacketUtil;
 import api.universe.StarSector;
@@ -29,6 +31,14 @@ public class DataUtils {
     public static ArrayList<Contract> localContracts = new ArrayList<>();
     public static ArrayList<Integer> localFactionAllies = new ArrayList<>();
     public static int clientSectorStationFaction = 0;
+
+    public static StarFaction getFactionFromID(int id) {
+        if(id != 0) {
+            return new StarFaction(StarLoader.getGameState().getFactionManager().getFaction(id));
+        } else {
+            return null;
+        }
+    }
 
     public static int getSectorStationFactionID(StarPlayer player) {
         if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {

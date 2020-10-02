@@ -1,7 +1,6 @@
 package dovtech.contracts.util;
 
 import api.DebugFile;
-import api.common.GameServer;
 import api.entity.*;
 import api.faction.StarFaction;
 import api.universe.StarSector;
@@ -12,12 +11,10 @@ import api.utils.game.inventory.ItemStack;
 import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.ContractTarget;
-import dovtech.contracts.contracts.target.MiningTarget;
 import dovtech.contracts.contracts.target.ProductionTarget;
 import org.schema.common.util.linAlg.Vector3i;
 import org.schema.game.common.data.element.ElementInformation;
 import org.schema.game.common.data.element.ElementKeyMap;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -27,7 +24,6 @@ public class ContractUtils {
 
     public static HashMap<StarPlayer, StarSector> cargoSectors = new HashMap<>();
     public static HashMap<Contract, Long> tradeFleets = new HashMap<>();
-
 
     public static ArrayList<ElementInformation> getResourcesFilter() {
         ArrayList<ElementInformation> filter = new ArrayList<>();
@@ -63,31 +59,36 @@ public class ContractUtils {
         Contract.ContractType contractType = null;
         ArrayList<Short> possibleIDs = new ArrayList<>();
         String contractName = "";
-        int index = random.nextInt(possibleIDs.size() - 1) + 1;
-        short id = possibleIDs.get(index);
+
         int amountInt = random.nextInt(7500 - 300) + 300;
-        int basePrice = (int) ElementKeyMap.getInfo(id).getPrice(true);
+        int basePrice = 0;
         ContractTarget target = null;
         switch(contractTypeInt) {
             case 1:
                 contractType = Contract.ContractType.PRODUCTION;
-                contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(id).getName() + "." ;
+                for(ElementInformation info : getProductionFilter()) possibleIDs.add(info.getId());
+                int productionIndex = random.nextInt(possibleIDs.size() - 1) + 1;
+                short productionID = possibleIDs.get(productionIndex);
+                contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(productionID).getName() + "." ;
                 target = new ProductionTarget();
-                ItemStack productionStack = new ItemStack(id);
+                ItemStack productionStack = new ItemStack(productionID);
                 productionStack.setAmount(amountInt);
+                basePrice = (int) ElementKeyMap.getInfo(productionID).getPrice(true);
                 ItemStack[] productionStacks = new ItemStack[] {productionStack};
                 target.setTargets(productionStacks);
-                for(ElementInformation info : getProductionFilter()) possibleIDs.add(info.getId());
                 break;
             case 2:
                 contractType = Contract.ContractType.MINING;
-                contractName = "Mine x" + amountInt + " " + ElementKeyMap.getInfo(id).getName()+ "." ;
-                target = new MiningTarget();
-                ItemStack miningStack = new ItemStack(id);
+                for(ElementInformation info : getResourcesFilter()) possibleIDs.add(info.getId());
+                int miningIndex = random.nextInt(possibleIDs.size() - 1) + 1;
+                short miningID = possibleIDs.get(miningIndex);
+                contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(miningID).getName() + "." ;
+                target = new ProductionTarget();
+                ItemStack miningStack = new ItemStack(miningID);
                 miningStack.setAmount(amountInt);
+                basePrice = (int) ElementKeyMap.getInfo(miningID).getPrice(true);
                 ItemStack[] miningStacks = new ItemStack[] {miningStack};
                 target.setTargets(miningStacks);
-                for(ElementInformation info : getResourcesFilter()) possibleIDs.add(info.getId());
                 break;
         }
         int reward = (int) ((basePrice * amountInt) * Contracts.getInstance().cargoEscortBonus);
@@ -128,7 +129,7 @@ public class ContractUtils {
             tradeFleet.delete();
             StarSector starSector = StarUniverse.getUniverse().getSector(new Vector3i(contract.getTarget().getLocation()[0], contract.getTarget().getLocation()[1], contract.getTarget().getLocation()[2]));
             if (starSector.getInternalSector().getFactionId() != 0) {
-                StarFaction faction = new StarFaction(GameServer.getServerState().getFactionManager().getFaction(starSector.getInternalSector().getFactionId()));
+                StarFaction faction = DataUtils.getFactionFromID(starSector.getInternalSector().getFactionId());
                 int members = faction.getActiveMembers().size();
                 int refund = (contract.getReward() / 2) / members;
                 for (StarPlayer factionMember : faction.getActiveMembers()) {
@@ -146,7 +147,7 @@ public class ContractUtils {
             tradeFleet.teleport(safeSector);
             tradeFleet.delete();
             if (starSector.getInternalSector().getFactionId() != 0) {
-                StarFaction faction = new StarFaction(GameServer.getServerState().getFactionManager().getFaction(starSector.getInternalSector().getFactionId()));
+                StarFaction faction = DataUtils.getFactionFromID(starSector.getInternalSector().getFactionId());
                 int members = faction.getActiveMembers().size();
                 int refund = (contract.getReward() / 2) / members;
                 for (StarPlayer factionMember : faction.getActiveMembers()) {
