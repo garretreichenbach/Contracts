@@ -38,7 +38,11 @@ public class DataUtils {
     public static int getSectorStationFactionID(StarPlayer player) {
         if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
             StarSector sector = player.getSector();
-            return sector.getStations().get(0).getFaction().getID();
+            if(sector.getStations() == null || sector.getStations().size() == 0) {
+                return 0;
+            } else {
+                return sector.getStations().get(0).getFaction().getID();
+            }
         } else {
             GetClientSectorStationFactionPacket getClientSectorStationFactionPacket = new GetClientSectorStationFactionPacket();
             PacketUtil.sendPacketToServer(getClientSectorStationFactionPacket);

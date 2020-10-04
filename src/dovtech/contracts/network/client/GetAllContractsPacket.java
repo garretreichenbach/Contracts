@@ -22,16 +22,12 @@ public class GetAllContractsPacket extends Packet {
 
     @Override
     public void readPacketData(PacketReadBuffer packetReadBuffer) throws IOException {
-        if(gameState.equals(Contracts.Mode.SERVER)) {
-            packetReadBuffer.readInt();
-        }
+
     }
 
     @Override
     public void writePacketData(PacketWriteBuffer packetWriteBuffer) throws IOException {
-        if(gameState.equals(Contracts.Mode.CLIENT)) {
-            packetWriteBuffer.writeInt(1);
-        }
+
     }
 
     @Override

@@ -22,16 +22,12 @@ public class GetClientSectorStationFactionPacket extends Packet {
 
     @Override
     public void readPacketData(PacketReadBuffer packetReadBuffer) throws IOException {
-        if(gameState.equals(Contracts.Mode.SERVER)) {
-            packetReadBuffer.readInt();
-        }
+
     }
 
     @Override
     public void writePacketData(PacketWriteBuffer packetWriteBuffer) throws IOException {
-        if(gameState.equals(Contracts.Mode.CLIENT)) {
-            packetWriteBuffer.writeInt(1);
-        }
+
     }
 
     @Override
@@ -42,6 +38,6 @@ public class GetClientSectorStationFactionPacket extends Packet {
     @Override
     public void processPacketOnServer(PlayerState playerState) {
         ReturnClientSectorStationFactionPacket returnClientSectorStationFactionPacket = new ReturnClientSectorStationFactionPacket();
-        PacketUtil.sendPacketToServer(returnClientSectorStationFactionPacket);
+        PacketUtil.sendPacket(playerState, returnClientSectorStationFactionPacket);
     }
 }
