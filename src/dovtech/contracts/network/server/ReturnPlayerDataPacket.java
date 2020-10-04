@@ -37,15 +37,13 @@ public class ReturnPlayerDataPacket extends Packet {
 
     }
 
-    public ReturnPlayerDataPacket(PlayerData playerData) {
-        this.playerData = playerData;
+    public ReturnPlayerDataPacket(String playerName) {
+        this.playerName = playerName;
     }
 
     @Override
     public void readPacketData(PacketReadBuffer packetReadBuffer) throws IOException {
-        if(gameState.equals(Contracts.Mode.SERVER)) {
-            playerName = packetReadBuffer.readString();
-        } else if(gameState.equals(Contracts.Mode.CLIENT)) {
+       if(gameState.equals(Contracts.Mode.CLIENT)) {
             playerName = packetReadBuffer.readString();
             playerHistoryEvents = packetReadBuffer.readStringList();
             playerHistoryDates = packetReadBuffer.readStringList();

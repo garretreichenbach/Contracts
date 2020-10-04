@@ -48,12 +48,8 @@ public class GetPlayerDataPacket extends Packet {
 
     @Override
     public void processPacketOnServer(PlayerState playerState) {
-        try {
-            if(playerName == null) playerName = playerState.getName();
-            ReturnPlayerDataPacket returnPlayerDataPacket = new ReturnPlayerDataPacket(DataUtils.getPlayerData(playerName));
-            PacketUtil.sendPacket(playerState, returnPlayerDataPacket);
-        } catch (PlayerNotFountException e) {
-            e.printStackTrace();
-        }
+        if(playerName == null) playerName = playerState.getName();
+        ReturnPlayerDataPacket returnPlayerDataPacket = new ReturnPlayerDataPacket(playerName);
+        PacketUtil.sendPacket(playerState, returnPlayerDataPacket);
     }
 }
