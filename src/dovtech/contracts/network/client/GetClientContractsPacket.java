@@ -13,6 +13,7 @@ import java.io.IOException;
 
 public class GetClientContractsPacket extends Packet {
 
+
     public GetClientContractsPacket() {
 
     }

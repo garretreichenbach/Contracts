@@ -1,9 +1,13 @@
+/**
+ * Packet [Client -> Server]
+ */
 package dovtech.contracts.network.client;
 
 import api.network.Packet;
 import api.network.PacketReadBuffer;
 import api.network.PacketWriteBuffer;
 import api.utils.game.inventory.ItemStack;
+import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.*;
 import dovtech.contracts.util.DataUtils;
@@ -22,6 +26,7 @@ public class AddContractPacket extends Packet {
     private String contractLocation;
     private String contractTarget;
     private String contractUID;
+    private Contracts.Mode gameState = Contracts.getInstance().getGameState();
 
     public AddContractPacket() {
 
@@ -33,23 +38,27 @@ public class AddContractPacket extends Packet {
 
     @Override
     public void readPacketData(PacketReadBuffer packetReadBuffer) throws IOException {
-        contractName = packetReadBuffer.readString();
-        contractorID = packetReadBuffer.readString();
-        contractType = packetReadBuffer.readString();
-        contractReward = packetReadBuffer.readString();
-        contractLocation = packetReadBuffer.readString();
-        contractTarget = packetReadBuffer.readString();
-        contractUID = packetReadBuffer.readString();
+        if(gameState.equals(Contracts.Mode.SERVER)) {
+            contractName = packetReadBuffer.readString();
+            contractorID = packetReadBuffer.readString();
+            contractType = packetReadBuffer.readString();
+            contractReward = packetReadBuffer.readString();
+            contractLocation = packetReadBuffer.readString();
+            contractTarget = packetReadBuffer.readString();
+            contractUID = packetReadBuffer.readString();
+        }
     }
 
     @Override
     public void writePacketData(PacketWriteBuffer packetWriteBuffer) throws IOException {
-        packetWriteBuffer.writeString(contractName);
-        packetWriteBuffer.writeString(contractorID);
-        packetWriteBuffer.writeString(contractType);
-        packetWriteBuffer.writeString(contractReward);
-        packetWriteBuffer.writeString(contractTarget);
-        packetWriteBuffer.writeString(contractUID);
+        if(gameState.equals(Contracts.Mode.CLIENT)) {
+            packetWriteBuffer.writeString(contractName);
+            packetWriteBuffer.writeString(contractorID);
+            packetWriteBuffer.writeString(contractType);
+            packetWriteBuffer.writeString(contractReward);
+            packetWriteBuffer.writeString(contractTarget);
+            packetWriteBuffer.writeString(contractUID);
+        }
     }
 
     @Override

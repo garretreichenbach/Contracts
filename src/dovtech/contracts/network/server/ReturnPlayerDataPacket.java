@@ -7,6 +7,7 @@ package dovtech.contracts.network.server;
 import api.network.Packet;
 import api.network.PacketReadBuffer;
 import api.network.PacketWriteBuffer;
+import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.faction.FactionOpinion;
 import dovtech.contracts.player.PlayerData;
@@ -30,6 +31,7 @@ public class ReturnPlayerDataPacket extends Packet {
     private FactionOpinion[] factionOpinions;
     private ArrayList<String> factionOpinionIDs = new ArrayList<>();
     private ArrayList<String> factionOpinionInts = new ArrayList<>();
+    private Contracts.Mode gameState = Contracts.getInstance().getGameState();
 
     public ReturnPlayerDataPacket() {
 
@@ -41,37 +43,42 @@ public class ReturnPlayerDataPacket extends Packet {
 
     @Override
     public void readPacketData(PacketReadBuffer packetReadBuffer) throws IOException {
-        playerName = packetReadBuffer.readString();
-        playerHistoryEvents = packetReadBuffer.readStringList();
-        playerHistoryDates = packetReadBuffer.readStringList();
-        playerHistory = new ArrayList<>();
-        for(int h = 0; h < playerHistoryEvents.size(); h ++) {
-            playerHistory.add(new PlayerHistory(playerHistoryEvents.get(h), playerHistoryDates.get(h)));
-        }
-        contractUIDs = packetReadBuffer.readStringList();
-        factionID = packetReadBuffer.readInt();
-        factionOpinionIDs = packetReadBuffer.readStringList();
-        factionOpinionInts = packetReadBuffer.readStringList();
-        factionOpinions = new FactionOpinion[factionOpinionIDs.size()];
-        for(int o = 0; o < factionOpinions.length; o ++) {
-            factionOpinions[o] = new FactionOpinion(Integer.parseInt(factionOpinionIDs.get(o)), Integer.parseInt(factionOpinionInts.get(o)));
+        if(gameState.equals(Contracts.Mode.SERVER)) {
+            playerName = packetReadBuffer.readString();
+        } else if(gameState.equals(Contracts.Mode.CLIENT)) {
+            playerName = packetReadBuffer.readString();
+            playerHistoryEvents = packetReadBuffer.readStringList();
+            playerHistoryDates = packetReadBuffer.readStringList();
+            playerHistory = new ArrayList<>();
+            for(int h = 0; h < playerHistoryEvents.size(); h ++) {
+                playerHistory.add(new PlayerHistory(playerHistoryEvents.get(h), playerHistoryDates.get(h)));
+            }
+            contractUIDs = packetReadBuffer.readStringList();
+            factionID = packetReadBuffer.readInt();
+            factionOpinionIDs = packetReadBuffer.readStringList();
+            factionOpinionInts = packetReadBuffer.readStringList();
+            factionOpinions = new FactionOpinion[factionOpinionIDs.size()];
+            for(int o = 0; o < factionOpinions.length; o ++) {
+                factionOpinions[o] = new FactionOpinion(Integer.parseInt(factionOpinionIDs.get(o)), Integer.parseInt(factionOpinionInts.get(o)));
+            }
         }
     }
 
     @Override
     public void writePacketData(PacketWriteBuffer packetWriteBuffer) throws IOException {
-        packetWriteBuffer.writeString(playerName);
-        packetWriteBuffer.writeStringList(playerHistoryEvents);
-        packetWriteBuffer.writeStringList(playerHistoryDates);
-        packetWriteBuffer.writeStringList(contractUIDs);
-        packetWriteBuffer.writeInt(factionID);
-        packetWriteBuffer.writeStringList(factionOpinionIDs);
-        packetWriteBuffer.writeStringList(factionOpinionInts);
+        if(gameState.equals(Contracts.Mode.SERVER)) {
+            packetWriteBuffer.writeString(playerName);
+            packetWriteBuffer.writeStringList(playerHistoryEvents);
+            packetWriteBuffer.writeStringList(playerHistoryDates);
+            packetWriteBuffer.writeStringList(contractUIDs);
+            packetWriteBuffer.writeInt(factionID);
+            packetWriteBuffer.writeStringList(factionOpinionIDs);
+            packetWriteBuffer.writeStringList(factionOpinionInts);
+        }
     }
 
     @Override
     public void processPacketOnClient() {
-
         playerData = new PlayerData(playerName, playerHistory, contractUIDs, factionID, factionOpinions);
         DataUtils.addPlayerDataToLocal(playerData);
         DataUtils.playerData = playerData;
@@ -81,7 +88,6 @@ public class ReturnPlayerDataPacket extends Packet {
     public void processPacketOnServer(PlayerState playerState) {
         try {
             playerData = DataUtils.getPlayerData(playerName);
-            playerName = playerState.getName();
             playerHistoryEvents = new ArrayList<>();
             playerHistoryDates = new ArrayList<>();
             for (PlayerHistory history : playerData.getHistory()) {

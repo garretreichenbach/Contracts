@@ -7,6 +7,7 @@ import api.network.Packet;
 import api.network.PacketReadBuffer;
 import api.network.PacketWriteBuffer;
 import api.network.packets.PacketUtil;
+import dovtech.contracts.Contracts;
 import dovtech.contracts.network.server.ReturnPlayerDataPacket;
 import dovtech.contracts.util.DataUtils;
 import org.schema.game.common.data.player.PlayerState;
@@ -16,6 +17,7 @@ import java.io.IOException;
 public class GetPlayerDataPacket extends Packet {
 
     private String playerName;
+    private Contracts.Mode gameState = Contracts.getInstance().getGameState();
 
     public GetPlayerDataPacket() {
 
@@ -27,12 +29,16 @@ public class GetPlayerDataPacket extends Packet {
 
     @Override
     public void readPacketData(PacketReadBuffer packetReadBuffer) throws IOException {
-
+        if(gameState.equals(Contracts.Mode.SERVER)) {
+            playerName = packetReadBuffer.readString();
+        }
     }
 
     @Override
     public void writePacketData(PacketWriteBuffer packetWriteBuffer) throws IOException {
-
+        if(gameState.equals(Contracts.Mode.CLIENT)) {
+            packetWriteBuffer.writeString(playerName);
+        }
     }
 
     @Override

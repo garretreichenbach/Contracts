@@ -7,12 +7,12 @@ import api.network.Packet;
 import api.network.PacketReadBuffer;
 import api.network.PacketWriteBuffer;
 import api.utils.game.inventory.ItemStack;
+import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.*;
 import dovtech.contracts.util.DataUtils;
 import org.schema.game.common.data.player.PlayerState;
 import org.schema.game.server.data.PlayerNotFountException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -25,6 +25,7 @@ public class ReturnAllContractsPacket extends Packet {
     private ArrayList<String> contractLocations = new ArrayList<>();
     private ArrayList<String> contractTargets = new ArrayList<>();
     private ArrayList<String> contractUIDs = new ArrayList<>();
+    private Contracts.Mode gameState = Contracts.getInstance().getGameState();
 
     public ReturnAllContractsPacket() {
 
@@ -32,24 +33,28 @@ public class ReturnAllContractsPacket extends Packet {
 
     @Override
     public void readPacketData(PacketReadBuffer packetReadBuffer) throws IOException {
-        contractNames = packetReadBuffer.readStringList();
-        contractorIDs = packetReadBuffer.readStringList();
-        contractTypes = packetReadBuffer.readStringList();
-        contractRewards = packetReadBuffer.readStringList();
-        contractLocations = packetReadBuffer.readStringList();
-        contractTargets = packetReadBuffer.readStringList();;
-        contractUIDs = packetReadBuffer.readStringList();
+        if(gameState.equals(Contracts.Mode.CLIENT)) {
+            contractNames = packetReadBuffer.readStringList();
+            contractorIDs = packetReadBuffer.readStringList();
+            contractTypes = packetReadBuffer.readStringList();
+            contractRewards = packetReadBuffer.readStringList();
+            contractLocations = packetReadBuffer.readStringList();
+            contractTargets = packetReadBuffer.readStringList();
+            contractUIDs = packetReadBuffer.readStringList();
+        }
     }
 
     @Override
     public void writePacketData(PacketWriteBuffer packetWriteBuffer) throws IOException {
-        packetWriteBuffer.writeStringList(contractNames);
-        packetWriteBuffer.writeStringList(contractorIDs);
-        packetWriteBuffer.writeStringList(contractTypes);
-        packetWriteBuffer.writeStringList(contractRewards);
-        packetWriteBuffer.writeStringList(contractLocations);
-        packetWriteBuffer.writeStringList(contractTargets);
-        packetWriteBuffer.writeStringList(contractUIDs);
+        if(gameState.equals(Contracts.Mode.SERVER)) {
+            packetWriteBuffer.writeStringList(contractNames);
+            packetWriteBuffer.writeStringList(contractorIDs);
+            packetWriteBuffer.writeStringList(contractTypes);
+            packetWriteBuffer.writeStringList(contractRewards);
+            packetWriteBuffer.writeStringList(contractLocations);
+            packetWriteBuffer.writeStringList(contractTargets);
+            packetWriteBuffer.writeStringList(contractUIDs);
+        }
     }
 
     @Override
