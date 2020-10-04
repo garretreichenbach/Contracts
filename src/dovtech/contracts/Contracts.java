@@ -113,7 +113,7 @@ public class Contracts extends StarMod {
         inst = this;
         setModName("Contracts");
         setModAuthor("Dovtech");
-        setModVersion("0.9.5");
+        setModVersion("0.9.6");
         setModSMVersion("0.202.101");
         setModDescription("Adds Contracts for trade and player interaction.");
     }

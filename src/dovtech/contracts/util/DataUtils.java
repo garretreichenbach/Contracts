@@ -38,7 +38,7 @@ public class DataUtils {
     public static int getSectorStationFactionID(StarPlayer player) {
         if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
             StarSector sector = player.getSector();
-            if(sector.getStations() == null || sector.getStations().size() == 0) {
+            if(sector.getStations() == null || sector.getStations().size() == 0 || sector.getStations().get(0).getFaction() == null) {
                 return 0;
             } else {
                 return sector.getStations().get(0).getFaction().getID();

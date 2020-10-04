@@ -14,7 +14,7 @@ import java.io.IOException;
 
 public class ReturnClientSectorStationFactionPacket extends Packet {
 
-    private int stationFactionID;
+    private int stationFactionID = 0;
     private Contracts.Mode gameState = Contracts.getInstance().getGameState();
 
     public ReturnClientSectorStationFactionPacket() {
