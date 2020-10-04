@@ -8,6 +8,8 @@ import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.*;
 import dovtech.contracts.util.DataUtils;
 import org.schema.game.common.data.player.PlayerState;
+import org.schema.game.server.data.PlayerNotFountException;
+
 import java.io.IOException;
 
 public class AddContractPacket extends Packet {
@@ -52,20 +54,24 @@ public class AddContractPacket extends Packet {
 
     @Override
     public void processPacketOnClient() {
-        contractName = contract.getName();
-        contractorID = String.valueOf(contract.getContractor().getID());
-        contractType = contract.getContractType().toString();
-        contractReward = String.valueOf(contract.getReward());
-        if(contract.getContractType().equals(Contract.ContractType.CARGO_ESCORT)) {
-            contractLocation = contract.getTarget().getLocation()[0] + "," + contract.getTarget().getLocation()[1] + "," + contract.getTarget().getLocation()[2];
-            for(Object object : contract.getTarget().getTargets()) {
-                ItemStack itemStack = (ItemStack) object;
-                contractTarget = itemStack.getId() + "," + itemStack.getAmount() + ";";
+        try {
+            contractName = contract.getName();
+            contractorID = String.valueOf(contract.getContractor().getID());
+            contractType = contract.getContractType().toString();
+            contractReward = String.valueOf(contract.getReward());
+            if (contract.getContractType().equals(Contract.ContractType.CARGO_ESCORT)) {
+                contractLocation = contract.getTarget().getLocation()[0] + "," + contract.getTarget().getLocation()[1] + "," + contract.getTarget().getLocation()[2];
+                for (Object object : contract.getTarget().getTargets()) {
+                    ItemStack itemStack = (ItemStack) object;
+                    contractTarget = itemStack.getId() + "," + itemStack.getAmount() + ";";
+                }
+            } else {
+                contractLocation = "null";
             }
-        } else {
-            contractLocation = "null";
+            contractUID = contract.getUID();
+        } catch (PlayerNotFountException e) {
+            e.printStackTrace();
         }
-        contractUID = contract.getUID();
     }
 
     @Override

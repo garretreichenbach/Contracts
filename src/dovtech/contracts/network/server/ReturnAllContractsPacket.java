@@ -11,6 +11,8 @@ import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.*;
 import dovtech.contracts.util.DataUtils;
 import org.schema.game.common.data.player.PlayerState;
+import org.schema.game.server.data.PlayerNotFountException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -79,21 +81,25 @@ public class ReturnAllContractsPacket extends Packet {
 
     @Override
     public void processPacketOnServer(PlayerState playerState) {
-        for(Contract contract : DataUtils.getAllContracts()) {
-            contractNames.add(contract.getName());
-            contractorIDs.add(String.valueOf(contract.getContractor().getID()));
-            contractTypes.add(contract.getContractType().toString());
-            contractRewards.add(String.valueOf(contract.getReward()));
-            if(contract.getContractType().equals(Contract.ContractType.CARGO_ESCORT)) {
-                contractLocations.add(contract.getTarget().getLocation()[0] + "," + contract.getTarget().getLocation()[1] + "," + contract.getTarget().getLocation()[2]);
-                for(Object object : contract.getTarget().getTargets()) {
-                    ItemStack itemStack = (ItemStack) object;
-                    contractTargets.add(itemStack.getId() + "," + itemStack.getAmount() + ";");
+        try {
+            for (Contract contract : DataUtils.getAllContracts()) {
+                contractNames.add(contract.getName());
+                contractorIDs.add(String.valueOf(contract.getContractor().getID()));
+                contractTypes.add(contract.getContractType().toString());
+                contractRewards.add(String.valueOf(contract.getReward()));
+                if (contract.getContractType().equals(Contract.ContractType.CARGO_ESCORT)) {
+                    contractLocations.add(contract.getTarget().getLocation()[0] + "," + contract.getTarget().getLocation()[1] + "," + contract.getTarget().getLocation()[2]);
+                    for (Object object : contract.getTarget().getTargets()) {
+                        ItemStack itemStack = (ItemStack) object;
+                        contractTargets.add(itemStack.getId() + "," + itemStack.getAmount() + ";");
+                    }
+                } else {
+                    contractLocations.add("null");
                 }
-            } else {
-                contractLocations.add("null");
+                contractUIDs.add(contract.getUID());
             }
-            contractUIDs.add(contract.getUID());
+        } catch (PlayerNotFountException e) {
+            e.printStackTrace();
         }
     }
 }

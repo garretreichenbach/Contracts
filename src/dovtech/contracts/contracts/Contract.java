@@ -6,6 +6,7 @@ import api.faction.StarFaction;
 import api.server.Server;
 import dovtech.contracts.contracts.target.ContractTarget;
 import dovtech.contracts.util.DataUtils;
+import org.schema.game.server.data.PlayerNotFountException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class Contract implements Serializable {
         return name;
     }
 
-    public StarFaction getContractor() {
+    public StarFaction getContractor() throws PlayerNotFountException {
         if(contractorID != 0) {
             return StarFaction.fromId(contractorID);
         } else {

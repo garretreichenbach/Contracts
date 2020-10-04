@@ -6,6 +6,8 @@ import api.network.PacketWriteBuffer;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.util.DataUtils;
 import org.schema.game.common.data.player.PlayerState;
+import org.schema.game.server.data.PlayerNotFountException;
+
 import java.io.IOException;
 
 public class RemoveContractPacket extends Packet {
@@ -37,6 +39,10 @@ public class RemoveContractPacket extends Packet {
 
     @Override
     public void processPacketOnServer(PlayerState playerState) {
-        DataUtils.cancelContract(contractUID);
+        try {
+            DataUtils.cancelContract(contractUID);
+        } catch (PlayerNotFountException e) {
+            e.printStackTrace();
+        }
     }
 }

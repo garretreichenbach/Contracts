@@ -10,6 +10,7 @@ import api.network.packets.PacketUtil;
 import dovtech.contracts.network.server.ReturnPlayerDataPacket;
 import dovtech.contracts.util.DataUtils;
 import org.schema.game.common.data.player.PlayerState;
+import org.schema.game.server.data.PlayerNotFountException;
 import java.io.IOException;
 
 public class GetPlayerDataPacket extends Packet {
@@ -41,7 +42,12 @@ public class GetPlayerDataPacket extends Packet {
 
     @Override
     public void processPacketOnServer(PlayerState playerState) {
-        ReturnPlayerDataPacket returnPlayerDataPacket = new ReturnPlayerDataPacket(DataUtils.getPlayerData(playerName));
-        PacketUtil.sendPacket(playerState, returnPlayerDataPacket);
+        try {
+            if(playerName == null) playerName = playerState.getName();
+            ReturnPlayerDataPacket returnPlayerDataPacket = new ReturnPlayerDataPacket(DataUtils.getPlayerData(playerName));
+            PacketUtil.sendPacket(playerState, returnPlayerDataPacket);
+        } catch (PlayerNotFountException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -9,6 +9,7 @@ import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.gui.contracts.newcontract.NewContractDialog;
 import dovtech.contracts.util.DataUtils;
 import org.schema.game.client.controller.PlayerOkCancelInput;
+import org.schema.game.server.data.PlayerNotFountException;
 import org.schema.schine.graphicsengine.core.GLFrame;
 import org.schema.schine.graphicsengine.core.MouseEvent;
 import org.schema.schine.graphicsengine.forms.gui.*;
@@ -84,28 +85,36 @@ public class ContractsTab extends GUIContentPane {
                 if (mouseEvent.pressedLeftMouse()) {
                     if (contractsScrollableList.getSelectedRow() != null && contractsScrollableList.getSelectedRow().getSort() != null) {
                         final Contract contract = contractsScrollableList.getSelectedRow().getSort();
-                        if (player.getPlayerState().getFactionId() == contract.getContractor().getID() || player.getPlayerState().isAdmin()) {
-                            GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                            PlayerOkCancelInput confirmBox = new PlayerOkCancelInput("ConfirmBox", state, "Confirm Cancellation", "Are you sure you wish to cancel this contract? You won't get a refund...") {
-                                @Override
-                                public void onDeactivate() {
-                                }
+                        try {
+                            if (player.getPlayerState().getFactionId() == contract.getContractor().getID() || player.getPlayerState().isAdmin()) {
+                                GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
+                                PlayerOkCancelInput confirmBox = new PlayerOkCancelInput("ConfirmBox", state, "Confirm Cancellation", "Are you sure you wish to cancel this contract? You won't get a refund...") {
+                                    @Override
+                                    public void onDeactivate() {
+                                    }
 
-                                @Override
-                                public void pressedOK() {
-                                    GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                                    DataUtils.removeContract(contract, true);
-                                    contractsScrollableList.clear();
-                                    contractsScrollableList.handleDirty();
-                                }
-                            };
-                            confirmBox.getInputPanel().onInit();
-                            confirmBox.getInputPanel().background.setPos(470.0F, 35.0F, 0.0F);
-                            confirmBox.getInputPanel().background.setWidth((float) (GLFrame.getWidth() - 435));
-                            confirmBox.getInputPanel().background.setHeight((float) (GLFrame.getHeight() - 70));
-                            confirmBox.activate();
-                        } else {
-                            (new SimplePopup(getState(), "Cannot Cancel Contract", "You cannot cancel this contract as you aren't the contractor!")).activate();
+                                    @Override
+                                    public void pressedOK() {
+                                        GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
+                                        try {
+                                            DataUtils.removeContract(contract, true);
+                                        } catch (PlayerNotFountException e) {
+                                            e.printStackTrace();
+                                        }
+                                        contractsScrollableList.clear();
+                                        contractsScrollableList.handleDirty();
+                                    }
+                                };
+                                confirmBox.getInputPanel().onInit();
+                                confirmBox.getInputPanel().background.setPos(470.0F, 35.0F, 0.0F);
+                                confirmBox.getInputPanel().background.setWidth((float) (GLFrame.getWidth() - 435));
+                                confirmBox.getInputPanel().background.setHeight((float) (GLFrame.getHeight() - 70));
+                                confirmBox.activate();
+                            } else {
+                                (new SimplePopup(getState(), "Cannot Cancel Contract", "You cannot cancel this contract as you aren't the contractor!")).activate();
+                            }
+                        } catch (PlayerNotFountException e) {
+                            e.printStackTrace();
                         }
                     }
                 }

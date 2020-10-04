@@ -10,7 +10,6 @@ import api.entity.StarPlayer;
 import api.faction.StarFaction;
 import api.listener.Listener;
 import api.listener.events.fleet.FleetLoadSectorEvent;
-import api.listener.events.gui.ControlManagerActivateEvent;
 import api.listener.events.gui.GUITopBarCreateEvent;
 import api.listener.events.gui.MainWindowTabAddEvent;
 import api.listener.events.player.BuyTradeEvent;
@@ -28,7 +27,10 @@ import api.utils.StarRunnable;
 import api.utils.game.PlayerUtils;
 import api.utils.game.inventory.ItemStack;
 import api.utils.gui.GUIUtils;
-import dovtech.contracts.commands.*;
+import dovtech.contracts.commands.EndContractsCommand;
+import dovtech.contracts.commands.RandomContractCommand;
+import dovtech.contracts.commands.SetOpinionCommand;
+import dovtech.contracts.commands.SpawnTradeFleetCommand;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.CargoTarget;
 import dovtech.contracts.contracts.target.PlayerTarget;
@@ -43,10 +45,7 @@ import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.util.ContractUtils;
 import dovtech.contracts.util.DataUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.schema.game.client.controller.manager.ingame.shop.ShopControllerManager;
-import org.schema.game.client.view.gui.PlayerPanel;
 import org.schema.game.client.view.gui.newgui.GUITopBar;
-import org.schema.game.client.view.gui.shop.shopnew.ShopPanelNew;
 import org.schema.game.common.controller.ElementCountMap;
 import org.schema.game.common.controller.SegmentController;
 import org.schema.game.common.data.fleet.FleetMember;
@@ -62,9 +61,7 @@ import org.schema.schine.graphicsengine.forms.gui.GUIElement;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIContentPane;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIMainWindow;
 import org.schema.schine.input.InputState;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.UUID;
 
 public class Contracts extends StarMod {
@@ -116,22 +113,24 @@ public class Contracts extends StarMod {
         inst = this;
         setModName("Contracts");
         setModAuthor("Dovtech");
-        setModVersion("0.7.4");
+        setModVersion("0.8.3");
+        setModSMVersion("0.202.101");
         setModDescription("Adds Contracts for trade and player interaction.");
+    }
+
+    @Override
+    public void onEnable() {
+        super.onEnable();
 
         if (getGameState().equals(Mode.SERVER) || getGameState().equals(Mode.SINGLEPLAYER)) {
             initConfig();
             checkMods();
             registerRunners();
         }
+
+        registerPackets();
         registerCommands();
         registerListeners();
-    }
-
-    @Override
-    public void onEnable() {
-        super.onEnable();
-        registerPackets();
         DebugFile.log("Enabled", this);
     }
 
@@ -166,7 +165,8 @@ public class Contracts extends StarMod {
             return Mode.CLIENT;
         } else {
             DebugFile.err("[CRITICAL]: Game State is invalid!");
-            throw new IllegalStateException();
+            return Mode.CLIENT;
+            //throw new IllegalStateException();
         }
     }
 
@@ -176,10 +176,14 @@ public class Contracts extends StarMod {
             @Override
             public void onEvent(PlayerSpawnEvent event) {
                 StarPlayer player = new StarPlayer(event.getPlayer().getOwnerState());
-                if (DataUtils.getPlayerData(player.getName()) == null) {
-                    PlayerData playerData = new PlayerData(player);
-                    DataUtils.addPlayer(playerData);
-                    DebugFile.log("[DEBUG]: Registered PlayerData for " + player.getName() + ".", Contracts.getInstance());
+                try {
+                    if (DataUtils.getPlayerData(player.getName()) == null) {
+                        PlayerData playerData = new PlayerData(player);
+                        DataUtils.addPlayer(playerData);
+                        DebugFile.log("[DEBUG]: Registered PlayerData for " + player.getName() + ".", Contracts.getInstance());
+                    }
+                } catch (PlayerNotFountException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -194,30 +198,38 @@ public class Contracts extends StarMod {
                         if (ship.getDockedRoot().getPilot() != null) {
                             StarPlayer attacker = ship.getDockedRoot().getPilot();
                             StarPlayer target = new StarPlayer(event.getPlayer());
-                            for (Contract contract : DataUtils.getPlayerContracts(attacker.getName())) {
-                                PlayerTarget playerTarget = (PlayerTarget) contract.getTarget();
-                                if (contract.getContractType().equals(Contract.ContractType.BOUNTY) && playerTarget.getTargets()[0].equals(target.getName())) {
-                                    Server.broadcastMessage("[CONTRACTS]: " + attacker.getName() + " has claimed the bounty on " + target.getName() + " for a reward of " + contract.getReward() + " credits!");
-                                    attacker.setCredits(attacker.getCredits() + contract.getReward());
-                                    DataUtils.removeContract(contract, false, attacker);
+                            try {
+                                for (Contract contract : DataUtils.getPlayerContracts(attacker.getName())) {
+                                    PlayerTarget playerTarget = (PlayerTarget) contract.getTarget();
+                                    if (contract.getContractType().equals(Contract.ContractType.BOUNTY) && playerTarget.getTargets()[0].equals(target.getName())) {
+                                        Server.broadcastMessage("[CONTRACTS]: " + attacker.getName() + " has claimed the bounty on " + target.getName() + " for a reward of " + contract.getReward() + " credits!");
+                                        attacker.setCredits(attacker.getCredits() + contract.getReward());
+                                        DataUtils.removeContract(contract, false, attacker);
+                                    }
                                 }
+                            } catch (PlayerNotFountException e) {
+                                e.printStackTrace();
                             }
                         }
                     }
                 } else if (event.getDamager().getOwnerState() instanceof PlayerState) {
                     StarPlayer attacker = new StarPlayer((PlayerState) event.getDamager().getOwnerState());
                     StarPlayer target = new StarPlayer(event.getPlayer());
-                    for (Contract contract : DataUtils.getPlayerContracts(attacker.getName())) {
-                        PlayerTarget playerTarget = (PlayerTarget) contract.getTarget();
-                        if (contract.getContractType().equals(Contract.ContractType.BOUNTY) && playerTarget.getTargets()[0].equals(target.getName())) {
-                            Server.broadcastMessage("[CONTRACTS]: " + attacker.getName() + " has claimed the bounty on " + target.getName() + " for a reward of " + contract.getReward() + " credits!");
-                            attacker.setCredits(attacker.getCredits() + contract.getReward());
-                            PlayerData attackerData = DataUtils.getPlayerData(attacker.getName());
-                            attackerData.modOpinionScore(contract.getContractor().getID(), 10);
-                            DataUtils.addPlayer(attackerData);
-                            DataUtils.removeContract(contract, false, attacker);
-                            break;
+                    try {
+                        for (Contract contract : DataUtils.getPlayerContracts(attacker.getName())) {
+                            PlayerTarget playerTarget = (PlayerTarget) contract.getTarget();
+                            if (contract.getContractType().equals(Contract.ContractType.BOUNTY) && playerTarget.getTargets()[0].equals(target.getName())) {
+                                Server.broadcastMessage("[CONTRACTS]: " + attacker.getName() + " has claimed the bounty on " + target.getName() + " for a reward of " + contract.getReward() + " credits!");
+                                attacker.setCredits(attacker.getCredits() + contract.getReward());
+                                PlayerData attackerData = DataUtils.getPlayerData(attacker.getName());
+                                attackerData.modOpinionScore(contract.getContractor().getID(), 10);
+                                DataUtils.addPlayer(attackerData);
+                                DataUtils.removeContract(contract, false, attacker);
+                                break;
+                            }
                         }
+                    } catch (PlayerNotFountException e) {
+                        e.printStackTrace();
                     }
                 }
             }
@@ -314,6 +326,88 @@ public class Contracts extends StarMod {
                     contractsTab.onInit();
                     event.getWindow().getTabs().add(contractsTab);
 
+                    try {
+                        SpecialDealsTab specialDealsTab = null;
+                        StarPlayer player = new StarPlayer(GameClient.getClientPlayerState());
+                        PlayerData playerData = DataUtils.getPlayerData(player.getName());
+                        if (DataUtils.getSectorStationFactionID(player) == tradersFactionID) {
+                            switch (playerData.getOpinionFromID(tradersFactionID).getOpinion()) {
+                                case HATED:
+                                    GameClient.getClientState().getGlobalGameControlManager().getIngameControlManager().getPlayerGameControlManager().getShopControlManager().setActive(false);
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Go away scum!");
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "It appears the traders have a strong hatred of you, and are unwilling to even speak to you.");
+                                    for (GUIContentPane tab : event.getWindow().getTabs()) {
+                                        if (tab.getTabName().equals("SPECIAL DEALS")) {
+                                            event.getWindow().getTabs().remove(tab);
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                case HOSTILE:
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: You better have something worth our time...");
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "It appears the traders have a strong distrust of you, and may be unwilling to sell you some items or services.");
+                                    for (GUIContentPane tab : event.getWindow().getTabs()) {
+                                        if (tab.getTabName().equals("SPECIAL DEALS")) {
+                                            event.getWindow().getTabs().remove(tab);
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                case POOR:
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Welcome to our shop space travel-oh... it's you again.");
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "It appears the traders have a slight distrust of you, and may charge more for some items or services.");
+                                    for (GUIContentPane tab : event.getWindow().getTabs()) {
+                                        if (tab.getTabName().equals("SPECIAL DEALS")) {
+                                            event.getWindow().getTabs().remove(tab);
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                case COOL:
+                                case NEUTRAL:
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Welcome to our shop space traveller!");
+                                    for (GUIContentPane tab : event.getWindow().getTabs()) {
+                                        if (tab.getTabName().equals("SPECIAL DEALS")) {
+                                            event.getWindow().getTabs().remove(tab);
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                case CORDIAL:
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Welcome back to our shop space traveller!");
+                                    for (GUIContentPane tab : event.getWindow().getTabs()) {
+                                        if (tab.getTabName().equals("SPECIAL DEALS")) {
+                                            event.getWindow().getTabs().remove(tab);
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                case GOOD:
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Welcome back to our shop space traveller! What can we do for you?");
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "The trader recognizes you and greets you with some enthusiasm. Perhaps they may be willing to get you a Special Deal...");
+                                    specialDealsTab = new SpecialDealsTab(event.getWindow().getState(), event.getWindow(), Opinion.GOOD);
+                                    specialDealsTab.onInit();
+                                    event.getWindow().getTabs().add(specialDealsTab);
+                                    break;
+                                case EXCELLENT:
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Welcome back to our shop friend! What can we do for you?");
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "The trader recognizes you and greets you enthusiastically as if you were a good friend. Perhaps they may be willing to share some valuable information with you...");
+                                    specialDealsTab = new SpecialDealsTab(event.getWindow().getState(), event.getWindow(), Opinion.EXCELLENT);
+                                    specialDealsTab.onInit();
+                                    event.getWindow().getTabs().add(specialDealsTab);
+                                    break;
+                                case TRUSTED:
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Good to see you again! Welcome back to our shop!");
+                                    PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "The trader recognizes you and greets you enthusiastically as if you were a close friend. It is clear the Trading Guild sees you as a close and trusted ally...");
+                                    specialDealsTab = new SpecialDealsTab(event.getWindow().getState(), event.getWindow(), Opinion.TRUSTED);
+                                    specialDealsTab.onInit();
+                                    event.getWindow().getTabs().add(specialDealsTab);
+                                    break;
+                            }
+                        }
+                    } catch (PlayerNotFountException e) {
+                        e.printStackTrace();
+                    }
                 } else if (event.getTitle().equals(Lng.ORG_SCHEMA_GAME_CLIENT_VIEW_GUI_FACTION_NEWFACTION_FACTIONPANELNEW_2)) {
                     GUIContentPane diplomacyTab = event.getPane();
                     diplomacyTab.getTextboxes().clear();
@@ -340,7 +434,8 @@ public class Contracts extends StarMod {
                         StarFaction buyerFaction = StarFaction.fromId(event.getBuyer().getFactionId());
                         StarFaction sellerFaction = StarFaction.fromId(event.getSeller().getFactionId());
 
-                        if (buyerFaction.getInternalFaction().isNPC() && sellerFaction.getInternalFaction().isNPC()) return;
+                        if (buyerFaction.getInternalFaction().isNPC() && sellerFaction.getInternalFaction().isNPC())
+                            return;
                         int totalCost = event.getTotalCost();
                         ItemStack[] items = new ItemStack[event.getItems().size()];
                         for (int i = 0; i < items.length; i++) {
@@ -383,7 +478,8 @@ public class Contracts extends StarMod {
                         StarFaction buyerFaction = StarFaction.fromId(event.getBuyer().getFactionId());
                         StarFaction sellerFaction = StarFaction.fromId(event.getSeller().getFactionId());
 
-                        if (buyerFaction.getInternalFaction().isNPC() && sellerFaction.getInternalFaction().isNPC()) return;
+                        if (buyerFaction.getInternalFaction().isNPC() && sellerFaction.getInternalFaction().isNPC())
+                            return;
                         int totalCost = event.getTotalCost();
                         ItemStack[] items = new ItemStack[event.getItems().size()];
                         for (int i = 0; i < items.length; i++) {
@@ -426,165 +522,39 @@ public class Contracts extends StarMod {
                     if (ContractUtils.cargoSectors.containsValue(newSector)) {
                         for (FleetMember member : event.getFleet().getMembers()) {
                             Ship ship = new Ship(member.getLoaded());
-                            PlayerData playerData = DataUtils.getPlayerData((ship.getDockedRoot().getPilot().getName()));
-                            for (Contract contract : DataUtils.getPlayerContracts(playerData.getName())) {
-                                if (contract.getContractType().equals(Contract.ContractType.CARGO_ESCORT)) {
-                                    Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(ContractUtils.tradeFleets.get(contract)));
-                                    if (tradeFleet.getFlagshipSector().equals(contract.getTarget().getLocation())) {
-                                        DebugFile.log("[DEBUG]: Trade fleet for contract " + contract.getName() + " has arrived at their target destination.");
-                                        try {
-                                            StarPlayer player = new StarPlayer(GameServer.getServerState().getPlayerFromName(playerData.getName()));
-                                            StarFaction traders = new StarFaction(GameServer.getServerState().getFactionManager().getFaction(tradersFactionID));
-                                            StarFaction contractor = contract.getContractor();
-                                            contract.setFinished(true);
-                                            DataUtils.removeContract(contract, false, player);
-                                            PlayerData pData = DataUtils.getPlayerData((player.getName()));
-                                            pData.modOpinionScore(traders.getID(), 5);
-                                            pData.modOpinionScore(contractor.getID(), 10);
-                                            DataUtils.addPlayer(pData);
-                                        } catch (PlayerNotFountException e) {
-                                            e.printStackTrace();
+                            try {
+                                PlayerData playerData = DataUtils.getPlayerData((ship.getDockedRoot().getPilot().getName()));
+                                for (Contract contract : DataUtils.getPlayerContracts(playerData.getName())) {
+                                    if (contract.getContractType().equals(Contract.ContractType.CARGO_ESCORT)) {
+                                        Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(ContractUtils.tradeFleets.get(contract)));
+                                        if (tradeFleet.getFlagshipSector().equals(contract.getTarget().getLocation())) {
+                                            DebugFile.log("[DEBUG]: Trade fleet for contract " + contract.getName() + " has arrived at their target destination.");
+                                            try {
+                                                StarPlayer player = new StarPlayer(GameServer.getServerState().getPlayerFromName(playerData.getName()));
+                                                StarFaction traders = new StarFaction(GameServer.getServerState().getFactionManager().getFaction(tradersFactionID));
+                                                StarFaction contractor = contract.getContractor();
+                                                contract.setFinished(true);
+                                                DataUtils.removeContract(contract, false, player);
+                                                PlayerData pData = DataUtils.getPlayerData((player.getName()));
+                                                pData.modOpinionScore(traders.getID(), 5);
+                                                pData.modOpinionScore(contractor.getID(), 10);
+                                                DataUtils.addPlayer(pData);
+                                            } catch (PlayerNotFountException e) {
+                                                e.printStackTrace();
+                                            }
+                                            //Todo: Pause the trade progress
+                                            return;
                                         }
-                                        //Todo: Pause the trade progress
-                                        return;
                                     }
                                 }
+                            } catch (PlayerNotFountException e) {
+                                e.printStackTrace();
                             }
-                        }
-                    }
-                }
-            });
-
-            StarLoader.registerListener(ControlManagerActivateEvent.class, new Listener<ControlManagerActivateEvent>() {
-                @Override
-                public void onEvent(ControlManagerActivateEvent event) {
-                    if (event.isActive() && event.getControlManager() instanceof ShopControllerManager) {
-                        try {
-                            PlayerPanel playerPanel = GameClient.getClientState().getWorldDrawer().getGuiDrawer().getPlayerPanel();
-                            if (debugMode) DebugFile.log("[DEBUG]: ShopControllerManager activated", getMod());
-                            Field shopPanelField = PlayerPanel.class.getDeclaredField("shopPanelNew");
-                            shopPanelField.setAccessible(true);
-                            ShopPanelNew shopPanelNew = (ShopPanelNew) shopPanelField.get(playerPanel);
-                            Collection<GUIContentPane> tabs = shopPanelNew.shopPanel.getTabs();
-                            SpecialDealsTab specialDealsTab = null;
-                            StarPlayer player = new StarPlayer(GameClient.getClientPlayerState());
-                            PlayerData playerData = DataUtils.getPlayerData(player.getName());
-                            if (DataUtils.getSectorStationFactionID(player) == tradersFactionID) {
-                                switch (playerData.getOpinionFromID(tradersFactionID).getOpinion()) {
-                                    case HATED:
-                                        GameClient.getClientState().getGlobalGameControlManager().getIngameControlManager().getPlayerGameControlManager().getShopControlManager().setActive(false);
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Go away scum!");
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "It appears the traders have a strong hatred of you, and are unwilling to even speak to you.");
-                                        for (GUIContentPane tab : tabs) {
-                                            if (tab.getTabName().equals("SPECIAL DEALS")) {
-                                                shopPanelNew.recreateTabs();
-                                                shopPanelField.set(playerPanel, shopPanelNew);
-                                                return;
-                                            }
-                                        }
-                                        break;
-                                    case HOSTILE:
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: You better have something worth our time...");
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "It appears the traders have a strong distrust of you, and may be unwilling to sell you some items or services.");
-                                        for (GUIContentPane tab : tabs) {
-                                            if (tab.getTabName().equals("SPECIAL DEALS")) {
-                                                shopPanelNew.recreateTabs();
-                                                shopPanelField.set(playerPanel, shopPanelNew);
-                                                return;
-                                            }
-                                        }
-                                        break;
-                                    case POOR:
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Welcome to our shop space travel-oh... it's you again.");
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "It appears the traders have a slight distrust of you, and may charge more for some items or services.");
-                                        for (GUIContentPane tab : tabs) {
-                                            if (tab.getTabName().equals("SPECIAL DEALS")) {
-                                                shopPanelNew.recreateTabs();
-                                                shopPanelField.set(playerPanel, shopPanelNew);
-                                                return;
-                                            }
-                                        }
-                                        break;
-                                    case COOL:
-                                    case NEUTRAL:
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Welcome to our shop space traveller!");
-                                        for (GUIContentPane tab : tabs) {
-                                            if (tab.getTabName().equals("SPECIAL DEALS")) {
-                                                shopPanelNew.recreateTabs();
-                                                shopPanelField.set(playerPanel, shopPanelNew);
-                                                return;
-                                            }
-                                        }
-                                        break;
-                                    case CORDIAL:
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Welcome back to our shop space traveller!");
-                                        for (GUIContentPane tab : tabs) {
-                                            if (tab.getTabName().equals("SPECIAL DEALS")) {
-                                                shopPanelNew.recreateTabs();
-                                                shopPanelField.set(playerPanel, shopPanelNew);
-                                                return;
-                                            }
-                                        }
-                                        break;
-                                    case GOOD:
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Welcome back to our shop space traveller! What can we do for you?");
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "The trader recognizes you and greets you with some enthusiasm. Perhaps they may be willing to get you a Special Deal...");
-                                        for (GUIContentPane tab : tabs) {
-                                            if (tab.getTabName().equals("SPECIAL DEALS")) {
-                                                shopPanelNew.recreateTabs();
-                                                break;
-                                            }
-                                        }
-                                        specialDealsTab = new SpecialDealsTab(shopPanelNew.shopPanel.getState(), shopPanelNew.shopPanel, Opinion.GOOD);
-                                        specialDealsTab.onInit();
-                                        shopPanelNew.shopPanel.getTabs().add(specialDealsTab);
-                                        shopPanelField.set(playerPanel, shopPanelNew);
-                                        break;
-                                    case EXCELLENT:
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Welcome back to our shop friend! What can we do for you?");
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "The trader recognizes you and greets you enthusiastically as if you were a good friend. Perhaps they may be willing to share some valuable information with you...");
-                                        for (GUIContentPane tab : tabs) {
-                                            if (tab.getTabName().equals("SPECIAL DEALS")) {
-                                                shopPanelNew.recreateTabs();
-                                                break;
-                                            }
-                                        }
-                                        specialDealsTab = new SpecialDealsTab(shopPanelNew.shopPanel.getState(), shopPanelNew.shopPanel, Opinion.EXCELLENT);
-                                        specialDealsTab.onInit();
-                                        shopPanelNew.shopPanel.getTabs().add(specialDealsTab);
-                                        shopPanelField.set(playerPanel, shopPanelNew);
-                                        break;
-                                    case TRUSTED:
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "[TRADERS]: Good to see you again! Welcome back to our shop!");
-                                        PlayerUtils.sendMessage(GameClient.getClientPlayerState(), "The trader recognizes you and greets you enthusiastically as if you were a close friend. It is clear the Trading Guild sees you as a close and trusted ally...");
-                                        for (GUIContentPane tab : tabs) {
-                                            if (tab.getTabName().equals("SPECIAL DEALS")) {
-                                                shopPanelNew.recreateTabs();
-                                                break;
-                                            }
-                                        }
-                                        specialDealsTab = new SpecialDealsTab(shopPanelNew.shopPanel.getState(), shopPanelNew.shopPanel, Opinion.TRUSTED);
-                                        specialDealsTab.onInit();
-                                        shopPanelNew.shopPanel.getTabs().add(specialDealsTab);
-                                        shopPanelField.set(playerPanel, shopPanelNew);
-                                        break;
-                                }
-                                for (GUIContentPane tab : tabs) {
-                                    if (tab.getTabName().equals("SPECIAL DEALS")) {
-                                        shopPanelNew.recreateTabs();
-                                        shopPanelField.set(playerPanel, shopPanelNew);
-                                        return;
-                                    }
-                                }
-                            }
-                        } catch (NoSuchFieldException | IllegalAccessException | NullPointerException ex) {
-                            ex.printStackTrace();
                         }
                     }
                 }
             });
         }
-
         DebugFile.log("Registered Listeners", this);
     }
 

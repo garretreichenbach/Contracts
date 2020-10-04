@@ -15,6 +15,7 @@ import dovtech.contracts.contracts.target.ProductionTarget;
 import org.schema.common.util.linAlg.Vector3i;
 import org.schema.game.common.data.element.ElementInformation;
 import org.schema.game.common.data.element.ElementKeyMap;
+import org.schema.game.server.data.PlayerNotFountException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -107,9 +108,14 @@ public class ContractUtils {
         new StarRunnable() {
             @Override
             public void run() {
+
                 if (contract.getTimer() >= Contracts.getInstance().contractTimerMax) {
                     if (contract.getClaimants().contains(player)) {
-                        DataUtils.timeoutContract(contract, player);
+                        try {
+                            DataUtils.timeoutContract(contract, player);
+                        } catch (PlayerNotFountException e) {
+                            e.printStackTrace();
+                        }
                     } else {
                         contract.setTimer(0);
                     }
@@ -139,11 +145,19 @@ public class ContractUtils {
                 int members = faction.getActiveMembers().size();
                 int refund = (contract.getReward() / 2) / members;
                 for (StarPlayer factionMember : faction.getActiveMembers()) {
-                    factionMember.sendMail(contract.getContractor().getName(), "Trade Cargo Intercepted", "We regret to inform you that one of your faction's recent trade requests had it's cargo intercepted. We apologize for this interruption and have issued a partial refund to your member's accounts.");
+                    try {
+                        factionMember.sendMail(contract.getContractor().getName(), "Trade Cargo Intercepted", "We regret to inform you that one of your faction's recent trade requests had it's cargo intercepted. We apologize for this interruption and have issued a partial refund to your member's accounts.");
+                    } catch (PlayerNotFountException e) {
+                        e.printStackTrace();
+                    }
                     factionMember.setCredits(factionMember.getCredits() + refund);
                 }
             }
-            DataUtils.removeContract(contract, true, player);
+            try {
+                DataUtils.removeContract(contract, true, player);
+            } catch (PlayerNotFountException e) {
+                e.printStackTrace();
+            }
         } else {
 
             StarSector starSector = StarUniverse.getUniverse().getSector(new Vector3i(contract.getTarget().getLocation()[0], contract.getTarget().getLocation()[1], contract.getTarget().getLocation()[2]));
@@ -155,11 +169,19 @@ public class ContractUtils {
                 int members = faction.getActiveMembers().size();
                 int refund = (contract.getReward() / 2) / members;
                 for (StarPlayer factionMember : faction.getActiveMembers()) {
-                    factionMember.sendMail(contract.getContractor().getName(), "Trade Cargo Intercepted", "We regret to inform you that one of your faction's recent trade requests had it's cargo intercepted. We apologize for this interruption and have issued a partial refund to your member's accounts.");
+                    try {
+                        factionMember.sendMail(contract.getContractor().getName(), "Trade Cargo Intercepted", "We regret to inform you that one of your faction's recent trade requests had it's cargo intercepted. We apologize for this interruption and have issued a partial refund to your member's accounts.");
+                    } catch (PlayerNotFountException e) {
+                        e.printStackTrace();
+                    }
                     factionMember.setCredits(factionMember.getCredits() + refund);
                 }
             }
-            DataUtils.removeContract(contract, true);
+            try {
+                DataUtils.removeContract(contract, true);
+            } catch (PlayerNotFountException e) {
+                e.printStackTrace();
+            }
         }
         contract.setFinished(true);
     }
@@ -183,7 +205,11 @@ public class ContractUtils {
                 } else {
                     Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(tradeFleets.get(contract)));
                     tradeFleet.moveTo(contract.getTarget().getLocation()[0], contract.getTarget().getLocation()[1], contract.getTarget().getLocation()[2]);
-                    DataUtils.removeContract(contract, false);
+                    try {
+                        DataUtils.removeContract(contract, false);
+                    } catch (PlayerNotFountException e) {
+                        e.printStackTrace();
+                    }
                     cancel();
                 }
             }
@@ -196,11 +222,19 @@ public class ContractUtils {
             @Override
             public void run() {
                 if (contract.getTimer() >= Contracts.getInstance().contractTimerMax) {
-                    DataUtils.timeoutContract(contract, player);
+                    try {
+                        DataUtils.timeoutContract(contract, player);
+                    } catch (PlayerNotFountException e) {
+                        e.printStackTrace();
+                    }
                     Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(tradeFleets.get(contract)));
                     tradeFleet.moveTo(contract.getTarget().getLocation()[0], contract.getTarget().getLocation()[1], contract.getTarget().getLocation()[2]);
                     cargoSectors.remove(player);
-                    DataUtils.timeoutContract(contract, player);
+                    try {
+                        DataUtils.timeoutContract(contract, player);
+                    } catch (PlayerNotFountException e) {
+                        e.printStackTrace();
+                    }
                     cancel();
                 } else {
                     contract.setTimer(contract.getTimer() + 1);
@@ -252,7 +286,11 @@ public class ContractUtils {
                         public void run() {
                             if (player.getCurrentEntity() != null && !player.getCurrentEntity().getSector().getCoordinates().equals(tradeFleet.getInternalFleet().getFlagShip().getSector())) {
                                 contract.setFinished(true);
-                                DataUtils.timeoutContract(contract, player);
+                                try {
+                                    DataUtils.timeoutContract(contract, player);
+                                } catch (PlayerNotFountException e) {
+                                    e.printStackTrace();
+                                }
                                 cancel();
                             }
                         }

@@ -13,6 +13,8 @@ import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.player.PlayerHistory;
 import dovtech.contracts.util.DataUtils;
 import org.schema.game.common.data.player.PlayerState;
+import org.schema.game.server.data.PlayerNotFountException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -69,6 +71,7 @@ public class ReturnPlayerDataPacket extends Packet {
 
     @Override
     public void processPacketOnClient() {
+
         playerData = new PlayerData(playerName, playerHistory, contractUIDs, factionID, factionOpinions);
         DataUtils.addPlayerDataToLocal(playerData);
         DataUtils.playerData = playerData;
@@ -76,24 +79,28 @@ public class ReturnPlayerDataPacket extends Packet {
 
     @Override
     public void processPacketOnServer(PlayerState playerState) {
-        playerData = DataUtils.getPlayerData(playerState.getName());
-        playerName = playerState.getName();
-        playerHistoryEvents = new ArrayList<>();
-        playerHistoryDates = new ArrayList<>();
-        for(PlayerHistory history : playerData.getHistory()) {
-            playerHistoryEvents.add(history.getEvent());
-            playerHistoryDates.add(history.getDate());
-        }
-        contractUIDs = new ArrayList<>();
-        for(Contract contract : DataUtils.getPlayerContracts(playerName)) {
-            contractUIDs.add(contract.getUID());
-        }
-        factionID = playerData.getFactionID();
-        factionOpinionIDs = new ArrayList<>();
-        factionOpinionInts = new ArrayList<>();
-        for(FactionOpinion factionOpinion : playerData.getOpinions()) {
-            factionOpinionIDs.add(String.valueOf(factionOpinion.getFaction().getID()));
-            factionOpinionInts.add(String.valueOf(factionOpinion.getOpinionScore()));
+        try {
+            playerData = DataUtils.getPlayerData(playerName);
+            playerName = playerState.getName();
+            playerHistoryEvents = new ArrayList<>();
+            playerHistoryDates = new ArrayList<>();
+            for (PlayerHistory history : playerData.getHistory()) {
+                playerHistoryEvents.add(history.getEvent());
+                playerHistoryDates.add(history.getDate());
+            }
+            contractUIDs = new ArrayList<>();
+            for (Contract contract : DataUtils.getPlayerContracts(playerName)) {
+                contractUIDs.add(contract.getUID());
+            }
+            factionID = playerData.getFactionID();
+            factionOpinionIDs = new ArrayList<>();
+            factionOpinionInts = new ArrayList<>();
+            for (FactionOpinion factionOpinion : playerData.getOpinions()) {
+                factionOpinionIDs.add(String.valueOf(factionOpinion.getFaction().getID()));
+                factionOpinionInts.add(String.valueOf(factionOpinion.getOpinionScore()));
+            }
+        } catch (PlayerNotFountException e) {
+            e.printStackTrace();
         }
     }
 }

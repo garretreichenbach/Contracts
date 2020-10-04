@@ -19,6 +19,8 @@ import dovtech.contracts.network.client.*;
 import dovtech.contracts.player.PlayerData;
 import org.schema.game.common.data.player.faction.Faction;
 import org.schema.game.common.data.player.faction.FactionManager;
+import org.schema.game.server.data.PlayerNotFountException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,15 +60,18 @@ public class DataUtils {
         return localFactionAllies;
     }
 
-    public static PlayerData getPlayerData(String name) {
+    public static PlayerData getPlayerData(String name) throws PlayerNotFountException {
         if(instance.getGameState().equals(Contracts.Mode.SERVER) || instance.getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
             for(Object object : PersistentObjectUtil.getObjects(instance, PlayerData.class)) {
                 PlayerData pData = (PlayerData) object;
                 if(pData.getName().equals(name)) return pData;
             }
-            return null;
+            PlayerData pData = new PlayerData(new StarPlayer(GameServer.getServerState().getPlayerFromName(name)));
+            addPlayer(pData);
+            return pData;
+        } else {
+            return getUpdatedPlayerData(name);
         }
-        return getUpdatedPlayerData(name);
     }
 
     public static void addPlayerDataToLocal(PlayerData pData) {
@@ -135,7 +140,7 @@ public class DataUtils {
         return null;
     }
 
-    public static ArrayList<Contract> getPlayerContracts(String name) {
+    public static ArrayList<Contract> getPlayerContracts(String name) throws PlayerNotFountException {
         if(Contracts.getInstance().getGameState().equals(Contracts.Mode.SERVER) || Contracts.getInstance().getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
             ArrayList<Contract> playerContracts = new ArrayList<>();
             for(Object object : PersistentObjectUtil.getObjects(instance, Contract.class)) {
@@ -166,7 +171,7 @@ public class DataUtils {
         }
     }
 
-    public static void timeoutContract(Contract contract, StarPlayer player) {
+    public static void timeoutContract(Contract contract, StarPlayer player) throws PlayerNotFountException {
         PlayerData pData = getPlayerData(player.getName());
         contract.removeClaimant(player);
         assert pData != null;
@@ -177,7 +182,7 @@ public class DataUtils {
         player.sendMail(contract.getContractor().getName(), "Contract Cancellation", contract.getContractor().getName() + " has cancelled your contract because you took too long!");
     }
 
-    public static void cancelContract(String contractUID) {
+    public static void cancelContract(String contractUID) throws PlayerNotFountException {
         for(Contract contract : getAllContracts()) {
             if(contract.getUID().equals(contractUID)) {
                 removeContract(contract, true);
@@ -186,7 +191,7 @@ public class DataUtils {
         }
     }
 
-    public static void removeContract(Contract contract, boolean canceled, StarPlayer... claimer) {
+    public static void removeContract(Contract contract, boolean canceled, StarPlayer... claimer) throws PlayerNotFountException {
         if(Contracts.getInstance().getGameState().equals(Contracts.Mode.SERVER) || Contracts.getInstance().getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
             if (claimer != null) {
                 ArrayList<StarPlayer> claimants = contract.getClaimants();

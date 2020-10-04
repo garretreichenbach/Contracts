@@ -18,6 +18,7 @@ import dovtech.contracts.util.ContractUtils;
 import dovtech.contracts.util.DataUtils;
 import org.hsqldb.lib.StringComparator;
 import org.schema.common.util.CompareTools;
+import org.schema.game.server.data.PlayerNotFountException;
 import org.schema.schine.graphicsengine.core.MouseEvent;
 import org.schema.schine.graphicsengine.forms.gui.*;
 import org.schema.schine.graphicsengine.forms.gui.newgui.*;
@@ -58,7 +59,12 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
         this.addColumn("Contractor", 7.0F, new Comparator<Contract>() {
             public int compare(Contract o1, Contract o2) {
-                return o1.getContractor().getName().compareTo(o2.getContractor().getName());
+                try {
+                    return o1.getContractor().getName().compareTo(o2.getContractor().getName());
+                } catch (PlayerNotFountException e) {
+                    e.printStackTrace();
+                }
+                return 0;
             }
         });
 
@@ -115,10 +121,15 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
     @Override
     protected Collection<Contract> getElementList() {
         inst = this;
-        return DataUtils.getPlayerContracts(player.getName());
+        try {
+            return DataUtils.getPlayerContracts(player.getName());
+        } catch (PlayerNotFountException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
-    public SimpleGUIHorizontalButtonPane redrawButtonPane(final Contract contract) {
+    public SimpleGUIHorizontalButtonPane redrawButtonPane(final Contract contract) throws PlayerNotFountException {
         SimpleGUIHorizontalButtonPane buttonPane = new SimpleGUIHorizontalButtonPane(getState(), 300, 32, 2);
         final PlayerData playerData = DataUtils.getPlayerData(player.getName());
 
@@ -191,7 +202,11 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
                             for (ItemStack itemStack : miningTarget.getTargets()) InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), itemStack);
 
-                            DataUtils.removeContract(contract, false, player);
+                            try {
+                                DataUtils.removeContract(contract, false, player);
+                            } catch (PlayerNotFountException e) {
+                                e.printStackTrace();
+                            }
                             player.setCredits(player.getCredits() + contract.getReward());
                         } else {
                             (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
@@ -226,7 +241,11 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
                             for (ItemStack itemStack : productionTarget.getTargets()) InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), itemStack);
 
-                            DataUtils.removeContract(contract, false, player);
+                            try {
+                                DataUtils.removeContract(contract, false, player);
+                            } catch (PlayerNotFountException e) {
+                                e.printStackTrace();
+                            }
                             player.setCredits(player.getCredits() + contract.getReward());
                         } else {
                             (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
@@ -248,39 +267,43 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
     public void updateListEntries(GUIElementList guiElementList, Set<Contract> set) {
         guiElementList.deleteObservers();
         guiElementList.addObserver(this);
-        for (final Contract contract : set) {
+        try {
+            for (final Contract contract : set) {
 
-            GUITextOverlayTable nameTextElement;
-            (nameTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(contract.getName());
-            GUIClippedRow nameRowElement;
-            (nameRowElement = new GUIClippedRow(this.getState())).attach(nameTextElement);
+                GUITextOverlayTable nameTextElement;
+                (nameTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(contract.getName());
+                GUIClippedRow nameRowElement;
+                (nameRowElement = new GUIClippedRow(this.getState())).attach(nameTextElement);
 
-            GUITextOverlayTable contractTypeTextElement;
-            (contractTypeTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(contract.getContractType().displayName);
-            GUIClippedRow contractTypeRowElement;
-            (contractTypeRowElement = new GUIClippedRow(this.getState())).attach(contractTypeTextElement);
+                GUITextOverlayTable contractTypeTextElement;
+                (contractTypeTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(contract.getContractType().displayName);
+                GUIClippedRow contractTypeRowElement;
+                (contractTypeRowElement = new GUIClippedRow(this.getState())).attach(contractTypeTextElement);
 
-            GUITextOverlayTable contractorTextElement;
-            (contractorTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(String.valueOf(contract.getContractor().getName()));
-            GUIClippedRow contractorRowElement;
-            (contractorRowElement = new GUIClippedRow(this.getState())).attach(contractorTextElement);
+                GUITextOverlayTable contractorTextElement;
+                (contractorTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(String.valueOf(contract.getContractor().getName()));
+                GUIClippedRow contractorRowElement;
+                (contractorRowElement = new GUIClippedRow(this.getState())).attach(contractorTextElement);
 
-            GUITextOverlayTable rewardTextElement;
-            (rewardTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(String.valueOf(contract.getReward()));
-            GUIClippedRow rewardRowElement;
-            (rewardRowElement = new GUIClippedRow(this.getState())).attach(rewardTextElement);
+                GUITextOverlayTable rewardTextElement;
+                (rewardTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(String.valueOf(contract.getReward()));
+                GUIClippedRow rewardRowElement;
+                (rewardRowElement = new GUIClippedRow(this.getState())).attach(rewardTextElement);
 
-            ContractListRow contractListRow = new ContractListRow(this.getState(), contract, nameRowElement, contractTypeRowElement, contractorRowElement, rewardRowElement);
-            contractListRow.expanded = new GUIElementList(getState());
+                ContractListRow contractListRow = new ContractListRow(this.getState(), contract, nameRowElement, contractTypeRowElement, contractorRowElement, rewardRowElement);
+                contractListRow.expanded = new GUIElementList(getState());
 
-            SimpleGUIHorizontalButtonPane buttonPane = redrawButtonPane(contract);
-            buttonPane.setPos(contractListRow.expanded.getPos());
-            contractListRow.expanded.add(new GUIListElement(buttonPane, buttonPane, getState()));
-            contractListRow.expanded.attach(buttonPane);
-            contractListRow.onInit();
-            guiElementList.add(contractListRow);
+                SimpleGUIHorizontalButtonPane buttonPane = redrawButtonPane(contract);
+                buttonPane.setPos(contractListRow.expanded.getPos());
+                contractListRow.expanded.add(new GUIListElement(buttonPane, buttonPane, getState()));
+                contractListRow.expanded.attach(buttonPane);
+                contractListRow.onInit();
+                guiElementList.add(contractListRow);
+            }
+            guiElementList.updateDim();
+        } catch (PlayerNotFountException e) {
+            e.printStackTrace();
         }
-        guiElementList.updateDim();
     }
 
     public class ContractListRow extends ScrollableTableList<Contract>.Row {
