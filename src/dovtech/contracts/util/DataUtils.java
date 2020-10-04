@@ -20,6 +20,7 @@ import dovtech.contracts.player.PlayerData;
 import org.schema.game.common.data.player.faction.Faction;
 import org.schema.game.common.data.player.faction.FactionManager;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 public class DataUtils {
@@ -101,8 +102,11 @@ public class DataUtils {
             PacketUtil.sendPacket(GameClient.getClientPlayerState(), addContractPacket);
         }
         if(ContractsScrollableList.getInst() != null) {
-            ContractsScrollableList.getInst().clear();
-            ContractsScrollableList.getInst().handleDirty();
+            try {
+                ContractsScrollableList.getInst().clear();
+                ContractsScrollableList.getInst().handleDirty();
+            } catch (RuntimeException ignored) {
+            }
         }
     }
 
@@ -219,26 +223,31 @@ public class DataUtils {
         }
     }
 
-    public static FactionOpinion[] genOpinions() {
-        if (Contracts.getInstance().getGameState().equals(Contracts.Mode.SERVER) || Contracts.getInstance().getGameState().equals(Contracts.Mode.SINGLEPLAYER)) {
-            Collection<Faction> factions = GameServer.getServerState().getFactionManager().getFactionCollection();
-            FactionOpinion[] opinions = new FactionOpinion[factions.size()];
-            int i = 0;
-            for (Faction f : factions) {
-                StarFaction faction = new StarFaction(f);
-                if (faction.getInternalFaction().isNPC() && faction.getID() == Contracts.getInstance().tradersFactionID) {
-                    opinions[i] = new FactionOpinion(faction.getID(), 15);
-                } else if (faction.getName().toLowerCase().contains("pirate") || faction.getID() == -1) {
-                    opinions[i] = new FactionOpinion(faction.getID(), -40);
-                } else {
-                    opinions[i] = new FactionOpinion(faction.getID(), 0);
-                }
-                i++;
-            }
-            return opinions;
-        } else {
-            playerData = getUpdatedPlayerData(GameClient.getClientPlayerState().getName());
-            return new FactionOpinion[] {new FactionOpinion(Contracts.getInstance().tradersFactionID, 15)};
+    public static void genOpinions(PlayerData pData) {
+        Collection<Faction> factions = StarLoader.getGameState().getFactionManager().getFactionCollection();
+        ArrayList<Integer> factionIds = new ArrayList<>();
+        ArrayList<FactionOpinion> newOpinionsList = new ArrayList<>(Arrays.asList(pData.getOpinions()));
+        for (FactionOpinion opinion : pData.getOpinions()) {
+            factionIds.add(opinion.getFaction().getID());
         }
+
+        for (Faction faction : factions) {
+            int factionID = faction.getIdFaction();
+            if (!factionIds.contains(factionID) && pData.getFactionID() != factionID) {
+                if (faction.isNPC() && faction.getIdFaction() == Contracts.getInstance().tradersFactionID) {
+                    newOpinionsList.add(new FactionOpinion(faction.getIdFaction(), 15));
+                } else if (faction.getName().toLowerCase().contains("pirate") || faction.getIdFaction() == -1) {
+                    newOpinionsList.add(new FactionOpinion(faction.getIdFaction(), -40));
+                } else {
+                    newOpinionsList.add(new FactionOpinion(faction.getIdFaction(), 0));
+                }
+            }
+        }
+        FactionOpinion[] newOpinions = new FactionOpinion[newOpinionsList.size()];
+        for(int i = 0; i < newOpinions.length; i ++) {
+            newOpinions[i] = newOpinionsList.get(i);
+        }
+        pData.setOpinions(newOpinions);
+        addPlayer(pData);
     }
 }

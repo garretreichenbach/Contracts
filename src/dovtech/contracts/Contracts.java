@@ -51,7 +51,6 @@ import org.schema.game.common.controller.ElementCountMap;
 import org.schema.game.common.controller.SegmentController;
 import org.schema.game.common.data.fleet.FleetMember;
 import org.schema.game.common.data.player.PlayerState;
-import org.schema.game.common.data.player.faction.Faction;
 import org.schema.game.common.data.world.SimpleTransformableSendableObject;
 import org.schema.game.server.data.PlayerNotFountException;
 import org.schema.game.server.data.simulation.npc.NPCFaction;
@@ -96,7 +95,7 @@ public class Contracts extends StarMod {
 
     //Config Settings
     public boolean debugMode = true;
-    public boolean modCompatibility = false;
+    public boolean modCompatibility = false; //Todo: Temp value
     public boolean cargoContractsEnabled = true;
     public double cargoEscortBonus = 1.3;
     public int contractTimerMax = 30;
@@ -117,7 +116,7 @@ public class Contracts extends StarMod {
         inst = this;
         setModName("Contracts");
         setModAuthor("Dovtech");
-        setModVersion("0.6.5");
+        setModVersion("0.7.4");
         setModDescription("Adds Contracts for trade and player interaction.");
 
         if (getGameState().equals(Mode.SERVER) || getGameState().equals(Mode.SINGLEPLAYER)) {
@@ -361,7 +360,8 @@ public class Contracts extends StarMod {
                         for (ItemStack item : items) {
                             elementCountMap.inc(item.getId(), item.getAmount());
                         }
-                        Fleet tradeFleet = new Fleet(npcFaction.getFleetManager().spawnTradingFleet(elementCountMap, event.getFrom(), event.getTo()));
+                        //Fleet tradeFleet = new Fleet(npcFaction.getFleetManager().spawnTradingFleet(elementCountMap, event.getFrom(), event.getTo()));
+                        Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(event.getOrder().assignFleetBuy(event.getBuyer(), event.getSeller(), event.getFrom(), event.getTo())));
                         tradeFleet.idle();
                         ContractUtils.tradeFleets.put(cargoContract, tradeFleet.getInternalFleet().dbid);
                         ContractUtils.startCargoClaimTimer(cargoContract);
@@ -371,7 +371,7 @@ public class Contracts extends StarMod {
                             ContractsScrollableList.getInst().clear();
                             ContractsScrollableList.getInst().handleDirty();
                         }
-                        event.setCanceled(true);
+                        //event.setCanceled(true);
                     }
                 }
             });
@@ -403,7 +403,8 @@ public class Contracts extends StarMod {
                         for (ItemStack item : items) {
                             elementCountMap.inc(item.getId(), item.getAmount());
                         }
-                        Fleet tradeFleet = new Fleet(npcFaction.getFleetManager().spawnTradingFleet(elementCountMap, event.getFrom(), event.getTo()));
+                        //Fleet tradeFleet = new Fleet(npcFaction.getFleetManager().spawnTradingFleet(elementCountMap, event.getFrom(), event.getTo()));
+                        Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(event.getOrder().assignFleetSell(event.getBuyer(), event.getSeller(), event.getFrom(), event.getTo())));
                         tradeFleet.idle();
                         ContractUtils.tradeFleets.put(cargoContract, tradeFleet.getInternalFleet().dbid);
                         ContractUtils.startCargoClaimTimer(cargoContract);
@@ -413,7 +414,7 @@ public class Contracts extends StarMod {
                             ContractsScrollableList.getInst().clear();
                             ContractsScrollableList.getInst().handleDirty();
                         }
-                        event.setCanceled(true);
+                        //event.setCanceled(true);
                     }
                 }
             });

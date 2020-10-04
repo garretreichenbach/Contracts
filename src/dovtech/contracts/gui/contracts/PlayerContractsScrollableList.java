@@ -154,7 +154,7 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
                 public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                     if(mouseEvent.pressedLeftMouse()) {
                         Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(ContractUtils.tradeFleets.get(contract)));
-                        if (tradeFleet.getFlagshipSector().equals(player.getSector())) {
+                        if (tradeFleet.getFlagshipSector().getCoordinates().equals(player.getSector().getCoordinates())) {
                             getState().getController().queueUIAudio("0022_menu_ui - enter");
                             PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: Heading to " + cargoTarget.getLocation()[0] + ", " + cargoTarget.getLocation()[1] + ", " + cargoTarget.getLocation()[2] + ".");
                             ContractUtils.startCargoContract(contract, player);

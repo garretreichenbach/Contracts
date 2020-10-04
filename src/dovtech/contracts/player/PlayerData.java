@@ -72,7 +72,7 @@ public class PlayerData implements Serializable {
     }
 
     public FactionOpinion[] getOpinions() {
-        if(opinions == null) opinions = DataUtils.genOpinions();
+        DataUtils.genOpinions(this);
         return opinions;
     }
 
@@ -82,9 +82,8 @@ public class PlayerData implements Serializable {
 
     public FactionOpinion getOpinion(StarFaction faction) {
         for(int i = 0; i < getOpinions().length; i ++) {
-            if(getOpinions()[i].getFaction().equals(faction)) return getOpinions()[i];
+            if(opinions[i].getFaction().equals(faction)) return opinions[i];
         }
-        DataUtils.genOpinions();
         return null;
     }
 
@@ -92,29 +91,24 @@ public class PlayerData implements Serializable {
         for(FactionOpinion opinion : getOpinions()) {
             if(opinion.getFaction().getID() == ID)  return opinion;
         }
-        DataUtils.genOpinions();
         return null;
     }
 
     public void modOpinionScore(int factionID, int scoreToAdd) {
-        if(opinions == null) opinions = DataUtils.genOpinions();
-        for(FactionOpinion opinion : opinions) {
+        for(FactionOpinion opinion : getOpinions()) {
             if(opinion.getFaction().getID() == factionID) {
                 opinion.setOpinionScore(opinion.getOpinionScore() + scoreToAdd);
                 return;
             }
         }
-        DataUtils.genOpinions();
     }
 
     public void setOpinionScore(StarFaction faction, int score) {
-        if(opinions == null) opinions = DataUtils.genOpinions();
-        for(FactionOpinion opinion : opinions) {
+        for(FactionOpinion opinion : getOpinions()) {
             if(opinion.getFaction().getID() == faction.getID()) {
                 opinion.setOpinionScore(score);
                 return;
             }
         }
-        DataUtils.genOpinions();
     }
 }

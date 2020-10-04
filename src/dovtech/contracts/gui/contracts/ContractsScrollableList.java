@@ -1,5 +1,6 @@
 package dovtech.contracts.gui.contracts;
 
+import api.DebugFile;
 import api.common.GameClient;
 import api.common.GameServer;
 import api.entity.Fleet;
@@ -9,6 +10,7 @@ import api.utils.game.inventory.InventoryUtils;
 import api.utils.game.inventory.ItemStack;
 import api.utils.gui.SimpleGUIHorizontalButtonPane;
 import api.utils.gui.SimplePopup;
+import dovtech.contracts.Contracts;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.CargoTarget;
 import dovtech.contracts.contracts.target.MiningTarget;
@@ -222,7 +224,11 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                     public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                         if(mouseEvent.pressedLeftMouse()) {
                             Fleet tradeFleet = new Fleet(Fleet.getServerFleetManager().getByFleetDbId(ContractUtils.tradeFleets.get(contract)));
-                            if (tradeFleet.getFlagshipSector().equals(player.getSector())) {
+                            if(Contracts.getInstance().debugMode) {
+                                DebugFile.log("[DEBUG]: Player Sector: " + player.getSector().getCoordinates().toString(), Contracts.getInstance());
+                                DebugFile.log("[DEBUG]: Fleet Sector: " + tradeFleet.getFlagshipSector().getCoordinates().toString(), Contracts.getInstance());
+                            }
+                            if (tradeFleet.getFlagshipSector().getCoordinates().equals(player.getSector().getCoordinates())) {
                                 getState().getController().queueUIAudio("0022_menu_ui - enter");
                                 PlayerUtils.sendMessage(player.getPlayerState(), "[TRADERS]: Heading to " + cargoTarget.getLocation()[0] + ", " + cargoTarget.getLocation()[1] + ", " + cargoTarget.getLocation()[2] + ".");
                                 ContractUtils.startCargoContract(contract, player);
