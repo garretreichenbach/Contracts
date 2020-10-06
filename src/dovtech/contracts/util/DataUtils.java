@@ -24,6 +24,7 @@ import org.schema.game.server.data.PlayerNotFountException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 
 public class DataUtils {
 
@@ -235,9 +236,14 @@ public class DataUtils {
     public static void genOpinions(PlayerData pData) {
         Collection<Faction> factions = StarLoader.getGameState().getFactionManager().getFactionCollection();
         ArrayList<Integer> factionIds = new ArrayList<>();
-        ArrayList<FactionOpinion> newOpinionsList = new ArrayList<>(Arrays.asList(pData.getOpinions()));
-        for (FactionOpinion opinion : pData.getOpinions()) {
-            factionIds.add(opinion.getFaction().getID());
+        ArrayList<FactionOpinion> newOpinionsList;
+        if(pData.getOpinions() == null) {
+            newOpinionsList = new ArrayList<>();
+        } else {
+           newOpinionsList = new ArrayList<>(Arrays.asList(pData.getOpinions()));
+            for (FactionOpinion opinion : Objects.requireNonNull(pData.getOpinions())) {
+                factionIds.add(opinion.getFaction().getID());
+            }
         }
 
         for (Faction faction : factions) {

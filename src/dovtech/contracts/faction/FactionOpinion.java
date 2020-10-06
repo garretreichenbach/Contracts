@@ -1,7 +1,7 @@
 package dovtech.contracts.faction;
 
-import api.common.GameServer;
 import api.faction.StarFaction;
+import api.mod.StarLoader;
 import java.io.Serializable;
 
 public class FactionOpinion implements Serializable {
@@ -17,7 +17,7 @@ public class FactionOpinion implements Serializable {
 
     public StarFaction getFaction() {
         if(factionID != 0) {
-            return new StarFaction(GameServer.getServerState().getFactionManager().getFaction(factionID));
+            return new StarFaction(StarLoader.getGameState().getFactionManager().getFaction(factionID));
         } else {
             return null;
         }

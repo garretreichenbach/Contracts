@@ -1,15 +1,16 @@
 package dovtech.contracts.faction;
 
 public enum Opinion {
-    HATED("Hated", -300, -149),
-    HOSTILE("Hostile", -150, -66),
-    POOR("Poor", -65, -21),
-    COOL("Cool", -20, -6),
-    NEUTRAL("Neutral", -5, 5),
-    CORDIAL("Cordial", 6, 20),
-    GOOD("Good", 21, 64),
-    EXCELLENT("Excellent", 65, 149),
-    TRUSTED("Trusted", 150, 300);
+    ALL("ALL", 0, 0),
+    HATED("HATED", -300, -149),
+    HOSTILE("HOSTILE", -150, -66),
+    POOR("POOR", -65, -21),
+    COOL("COOL", -20, -6),
+    NEUTRAL("NEUTRAL", -5, 5),
+    CORDIAL("CORDIAL", 6, 20),
+    GOOD("GOOD", 21, 64),
+    EXCELLENT("EXCELLENT", 65, 149),
+    TRUSTED("TRUSTED", 150, 300);
 
     public String display;
     public int min;

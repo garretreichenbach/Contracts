@@ -21,6 +21,7 @@ public class PlayerData implements Serializable {
         this.history = new ArrayList<>();
         this.contractUIDs = new ArrayList<>();
         this.factionID = player.getPlayerState().getFactionId();
+        DataUtils.genOpinions(this);
     }
 
     public PlayerData(String name, ArrayList<PlayerHistory> history, ArrayList<String> contractUIDs, int factionID, FactionOpinion[] opinions) {
@@ -29,6 +30,7 @@ public class PlayerData implements Serializable {
         this.contractUIDs = contractUIDs;
         this.factionID = factionID;
         this.opinions = opinions;
+        DataUtils.genOpinions(this);
     }
 
     public void setName(String name) {
@@ -72,7 +74,6 @@ public class PlayerData implements Serializable {
     }
 
     public FactionOpinion[] getOpinions() {
-        DataUtils.genOpinions(this);
         return opinions;
     }
 
@@ -82,9 +83,9 @@ public class PlayerData implements Serializable {
 
     public FactionOpinion getOpinion(StarFaction faction) {
         for(int i = 0; i < getOpinions().length; i ++) {
-            if(opinions[i].getFaction().equals(faction)) return opinions[i];
+            if(opinions[i].getFaction().getID() == faction.getID()) return opinions[i];
         }
-        return null;
+        return new FactionOpinion(faction.getID(), 0);
     }
 
     public FactionOpinion getOpinionFromID(int ID) {
