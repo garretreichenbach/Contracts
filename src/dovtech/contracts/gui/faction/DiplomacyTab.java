@@ -3,6 +3,9 @@ package dovtech.contracts.gui.faction;
 import api.common.GameClient;
 import api.faction.StarFaction;
 import api.mod.StarLoader;
+import dovtech.contracts.faction.FactionData;
+import dovtech.contracts.faction.FactionOpinion;
+import dovtech.contracts.util.FactionUtils;
 import org.schema.schine.graphicsengine.forms.gui.GUIAncor;
 import org.schema.schine.graphicsengine.forms.gui.GUIScrollablePanel;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIContentPane;
@@ -12,8 +15,6 @@ import org.schema.schine.input.InputState;
 
 public class DiplomacyTab extends GUIContentPane {
 
-    private int width;
-    private int height;
     private FactionDiplomacyList factionDiplomacyList;
     private GUIAncor infoPanel;
     private GUIAncor opinionPanel;
@@ -21,9 +22,7 @@ public class DiplomacyTab extends GUIContentPane {
     private StarFaction playerFaction;
 
     public DiplomacyTab(InputState inputState, GUIWindowInterface guiWindowInterface) {
-        super(inputState, guiWindowInterface, "DIPLOMACY");
-        this.width = guiWindowInterface.getInnerWidth();
-        this.height = guiWindowInterface.getInnerHeigth();
+        super(inputState, guiWindowInterface, "FACTIONS");
         this.playerFaction = new StarFaction(StarLoader.getGameState().getFactionManager().getFaction(GameClient.getClientPlayerState().getFactionId()));
     }
 
@@ -35,33 +34,54 @@ public class DiplomacyTab extends GUIContentPane {
 
     private void createTab() {
         setTextBoxHeightLast(270);
-        addNewTextBox(50);
         infoPanel = getContent(0, 0);
         addNewTextBox(0, 50);
         opinionPanel = getContent(0, 1);
-        addDivider(290);
+        addDivider(330);
 
-        factionDiplomacyList = new FactionDiplomacyList(getState(), this);
+        factionDiplomacyList = new FactionDiplomacyList(getState(), getContent(1, 0), this);
         factionDiplomacyList.onInit();
+        factionDiplomacyList.setInside(true);
         getContent(1, 0).attach(factionDiplomacyList);
     }
 
     public void onSelectFaction(StarFaction faction) {
+        infoPanel.getChilds().clear();
+        infoPanel.cleanUp();
+        opinionPanel.getChilds().clear();
+        opinionPanel.cleanUp();
+
         createInfoPanel(faction);
         createOpinionPanel(faction);
     }
 
 
     private void createInfoPanel(final StarFaction faction) {
-        GUIScrollablePanel scrollablePanel = new GUIScrollablePanel(10, 10, infoPanel, getState());
+        final FactionData factionData = FactionUtils.getFactionData(faction);
+        FactionOpinion opinion = new FactionOpinion(faction.getID(), 0);
+        String fedName = "NONE";
+        if (factionData.getFederation() != null) fedName = factionData.getFederation().getName();
 
+        if (GameClient.getClientPlayerState().getFactionId() != 0) {
+            StarFaction playerFaction = new StarFaction(StarLoader.getGameState().getFactionManager().getFaction(GameClient.getClientPlayerState().getFactionId()));
+            opinion = FactionUtils.getOpinion(faction, playerFaction);
+        }
+
+        GUIScrollablePanel scrollablePanel = new GUIScrollablePanel(10, 10, infoPanel, getState());
         GUITextOverlayTable infoBoxText = new GUITextOverlayTable(2, 2, getState());
         infoBoxText.autoHeight = true;
         infoBoxText.autoWrapOn = infoPanel;
+        final String opinionString = opinion.toString();
+        final String federationString = fedName;
         infoBoxText.setTextSimple(new Object() {
             @Override
             public String toString() {
-                return faction.getName() + "\n" + faction.getInternalFaction().getDescription();
+                return faction.getName() + "\n" + faction.getInternalFaction().getDescription() +
+                        "\n" +
+                        "\nMembers: " + faction.getMembers().size() +
+                        "\nFederation: " + federationString +
+                        "\nPower: " + factionData.getFactionPower() +
+                        "\nOpinion: " + opinionString;
             }
 
         });
@@ -74,7 +94,7 @@ public class DiplomacyTab extends GUIContentPane {
 
     private void createOpinionPanel(StarFaction faction) {
         GUIScrollablePanel scrollablePanel = new GUIScrollablePanel(10, 10, opinionPanel, getState());
-        diplomacyModifierList = new FactionDiplomacyModifierList(getState(), this, playerFaction, faction);
+        diplomacyModifierList = new FactionDiplomacyModifierList(getState(), scrollablePanel, playerFaction, faction);
         diplomacyModifierList.onInit();
         scrollablePanel.setContent(diplomacyModifierList);
         scrollablePanel.onInit();

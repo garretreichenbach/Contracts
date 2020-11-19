@@ -31,7 +31,9 @@ public enum FactionDiplomacyModifier {
     DEFENSIVE_ALLIANCE("In a defensive alliance with them", 50, 0, 18),
     FEDERATION_MEMBER("In a federation with them", 80, 0, 19),
     TO_PUPPET("They are your puppet", 30, 0, 20),
-    FROM_PUPPET("You are their puppet", 30, 0, 21);
+    FROM_PUPPET("You are their puppet", 30, 0, 21),
+
+    ADMIN_COMMAND("Set by admin", 300, 0, 22);
 
     private String display;
     private int modifier;

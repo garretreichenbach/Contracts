@@ -4,9 +4,7 @@ import api.DebugFile;
 import api.common.GameClient;
 import api.common.GameCommon;
 import api.common.GameServer;
-import api.entity.Fleet;
-import api.entity.Ship;
-import api.entity.StarPlayer;
+import api.entity.*;
 import api.faction.StarFaction;
 import api.listener.Listener;
 import api.listener.events.fleet.FleetLoadSectorEvent;
@@ -17,6 +15,7 @@ import api.listener.events.player.BuyTradeEvent;
 import api.listener.events.player.PlayerDeathEvent;
 import api.listener.events.player.PlayerSpawnEvent;
 import api.listener.events.player.SellTradeEvent;
+import api.listener.fastevents.FastListenerCommon;
 import api.mod.StarLoader;
 import api.mod.StarMod;
 import api.mod.config.FileConfiguration;
@@ -30,22 +29,26 @@ import api.utils.game.inventory.ItemStack;
 import api.utils.gui.GUIUtils;
 import dovtech.contracts.commands.EndContractsCommand;
 import dovtech.contracts.commands.RandomContractCommand;
-import dovtech.contracts.commands.SetOpinionCommand;
+import dovtech.contracts.commands.GiveOpinionCommand;
 import dovtech.contracts.commands.SpawnTradeFleetCommand;
 import dovtech.contracts.contracts.Contract;
 import dovtech.contracts.contracts.target.CargoTarget;
 import dovtech.contracts.contracts.target.PlayerTarget;
+import dovtech.contracts.faction.FactionData;
 import dovtech.contracts.faction.Opinion;
 import dovtech.contracts.gui.SpecialDealsTab;
 import dovtech.contracts.gui.contracts.ContractsScrollableList;
 import dovtech.contracts.gui.contracts.ContractsTab;
 import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
 import dovtech.contracts.gui.faction.DiplomacyTab;
+import dovtech.contracts.gui.federation.FederationsTab;
+import dovtech.contracts.gui.galaxymap.GameMapListener;
 import dovtech.contracts.network.client.*;
 import dovtech.contracts.network.server.*;
 import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.util.ContractUtils;
 import dovtech.contracts.util.DataUtils;
+import dovtech.contracts.util.FactionUtils;
 import org.schema.game.client.controller.manager.ingame.shop.ShopControllerManager;
 import org.schema.game.client.view.gui.PlayerPanel;
 import org.schema.game.client.view.gui.newgui.GUITopBar;
@@ -110,6 +113,9 @@ public class Contracts extends StarMod {
     public ArrayList<StarMod> mods;
     public boolean betterFactionsEnabled = false; //Todo: Temp value
 
+    //Other
+    public GameMapListener gameMapListener;
+
     public static void main(String[] args) {
 
     }
@@ -119,8 +125,8 @@ public class Contracts extends StarMod {
         inst = this;
         setModName("Contracts");
         setModAuthor("Dovtech");
-        setModVersion("0.10.1");
-        setModSMVersion("0.202.101");
+        setModVersion("0.11.5");
+        setModSMVersion("0.202.108");
         setModDescription("Adds Contracts for trade and player interaction.");
     }
 
@@ -134,11 +140,26 @@ public class Contracts extends StarMod {
             registerRunners();
         }
 
+        if (getGameState().equals(Mode.CLIENT) || getGameState().equals(Mode.SINGLEPLAYER)) {
+            gameMapListener = new GameMapListener();
+            FastListenerCommon.getGameMapListeners().add(gameMapListener);
+        }
+
         registerPackets();
         registerCommands();
         registerListeners();
         DebugFile.log("Enabled", this);
     }
+
+    @Override
+    public void onDisable() {
+        super.onDisable();
+
+        if (getGameState().equals(Mode.CLIENT) || getGameState().equals(Mode.SINGLEPLAYER)) {
+            FastListenerCommon.getGameMapListeners().remove(gameMapListener);
+        }
+    }
+
 
     /*@Override
     public void onBlockConfigLoad(BlockConfig config) {
@@ -195,8 +216,23 @@ public class Contracts extends StarMod {
         StarLoader.registerListener(PlayerDeathEvent.class, new Listener<PlayerDeathEvent>() {
             @Override
             public void onEvent(PlayerDeathEvent event) {
+                StarFaction killerFaction = null;
+                StarFaction targetFaction = null;
+                double pointAward = 15.0;
+                double pointCost = 15.0;
+                if (event.getPlayer().getFactionId() != 0) {
+                    targetFaction = new StarFaction(StarLoader.getGameState().getFactionManager().getFaction(event.getPlayer().getFactionId()));
+                    pointAward += 5.0;
+                    pointCost -= 5.0;
+                }
                 if (event.getDamager().isSegmentController()) {
                     SegmentController controller = (SegmentController) event.getDamager();
+                    if (controller.getFactionId() != 0) {
+                        killerFaction = new StarFaction(StarLoader.getGameState().getFactionManager().getFaction(controller.getFactionId()));
+                        pointAward += 5.0;
+                        pointCost -= 5.0;
+                    }
+
                     if (controller.getType().equals(SimpleTransformableSendableObject.EntityType.SHIP)) {
                         Ship ship = new Ship(controller);
                         if (ship.getDockedRoot().getPilot() != null) {
@@ -219,6 +255,7 @@ public class Contracts extends StarMod {
                 } else if (event.getDamager().getOwnerState() instanceof PlayerState) {
                     StarPlayer attacker = new StarPlayer((PlayerState) event.getDamager().getOwnerState());
                     StarPlayer target = new StarPlayer(event.getPlayer());
+                    if (attacker.getPlayerState().getFactionId() != 0) killerFaction = attacker.getFaction();
                     try {
                         for (Contract contract : DataUtils.getPlayerContracts(attacker.getName())) {
                             PlayerTarget playerTarget = (PlayerTarget) contract.getTarget();
@@ -235,6 +272,18 @@ public class Contracts extends StarMod {
                     } catch (PlayerNotFountException e) {
                         e.printStackTrace();
                     }
+                }
+
+                if (killerFaction != null) {
+                    FactionData killerData = FactionUtils.getFactionData(killerFaction);
+                    killerData.setFactionPower(killerData.getFactionPower() + pointAward);
+                    FactionUtils.updateFactionData(killerData);
+                }
+
+                if (targetFaction != null) {
+                    FactionData targetData = FactionUtils.getFactionData(targetFaction);
+                    targetData.setFactionPower(targetData.getFactionPower() + pointCost);
+                    FactionUtils.updateFactionData(targetData);
                 }
             }
         });
@@ -481,6 +530,14 @@ public class Contracts extends StarMod {
                     DiplomacyTab diplomacyTab = new DiplomacyTab(event.getWindow().getState(), event.getWindow());
                     diplomacyTab.onInit();
                     event.getWindow().getTabs().add(diplomacyTab);
+                } else if (event.getTitle().equals(Lng.ORG_SCHEMA_GAME_CLIENT_VIEW_GUI_FACTION_NEWFACTION_FACTIONPANELNEW_9)) {
+                    GUIContentPane oldListTab = event.getPane();
+                    event.getWindow().getTabs().remove(oldListTab);
+                    if (GameClient.getClientPlayerState().getFactionId() != 0) {
+                        FederationsTab federationsTab = new FederationsTab(event.getWindow().getState(), event.getWindow());
+                        federationsTab.onInit();
+                        event.getWindow().getTabs().add(federationsTab);
+                    }
                 }
             }
         });
@@ -621,7 +678,7 @@ public class Contracts extends StarMod {
 
         StarLoader.registerCommand(new EndContractsCommand());
         StarLoader.registerCommand(new SpawnTradeFleetCommand());
-        StarLoader.registerCommand(new SetOpinionCommand());
+        StarLoader.registerCommand(new GiveOpinionCommand());
         StarLoader.registerCommand(new RandomContractCommand());
 
         DebugFile.log("Registered Commands", this);
@@ -640,6 +697,8 @@ public class Contracts extends StarMod {
         Packet.registerPacket(ReturnFactionAlliesPacket.class);
         Packet.registerPacket(GetClientSectorStationFactionPacket.class);
         Packet.registerPacket(ReturnClientSectorStationFactionPacket.class);
+        Packet.registerPacket(GetFederationsPacket.class);
+        Packet.registerPacket(ReturnFederationsPacket.class);
 
         DebugFile.log("Registered Packets", this);
     }

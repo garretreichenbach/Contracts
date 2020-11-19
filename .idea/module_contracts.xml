@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_contracts" default="compile.module.contracts">
+  <dirname property="module.contracts.basedir" file="${ant.file.module_contracts}"/>
+  
+  <property name="module.jdk.home.contracts" value="${jdk.home.1.8}"/>
+  <property name="module.jdk.bin.contracts" value="${jdk.bin.1.8}"/>
+  <property name="module.jdk.classpath.contracts" value="jdk.classpath.1.8"/>
+  
+  <property name="compiler.args.contracts" value="-encoding UTF-8 -source 7 -target 7 ${compiler.args}"/>
+  
+  <property name="contracts.output.dir" value="${module.contracts.basedir}/../out/production/Contracts"/>
+  <property name="contracts.testoutput.dir" value="${module.contracts.basedir}/../out/test/Contracts"/>
+  
+  <path id="contracts.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="contracts.module.production.classpath">
+    <path refid="${module.jdk.classpath.contracts}"/>
+    <pathelement location="${basedir}/../starloader/build/libs/starloader.jar"/>
+    <fileset dir="${basedir}/../../Game Files/StarMade-Modded/StarMade/lib">
+      <patternset refid="library.patterns"/>
+    </fileset>
+    <pathelement location="${basedir}/../../Game Files/StarMade-Modded/StarMade/StarMade.jar"/>
+    <pathelement location="${basedir}/../star-api/build/libs/star-api.jar"/>
+  </path>
+  
+  <path id="contracts.runtime.production.module.classpath">
+    <pathelement location="${contracts.output.dir}"/>
+    <pathelement location="${basedir}/../starloader/build/libs/starloader.jar"/>
+    <fileset dir="${basedir}/../../Game Files/StarMade-Modded/StarMade/lib">
+      <patternset refid="library.patterns"/>
+    </fileset>
+    <pathelement location="${basedir}/../../Game Files/StarMade-Modded/StarMade/StarMade.jar"/>
+    <pathelement location="${basedir}/../star-api/build/libs/star-api.jar"/>
+  </path>
+  
+  <path id="contracts.module.classpath">
+    <path refid="${module.jdk.classpath.contracts}"/>
+    <pathelement location="${contracts.output.dir}"/>
+    <pathelement location="${basedir}/../starloader/build/libs/starloader.jar"/>
+    <fileset dir="${basedir}/../../Game Files/StarMade-Modded/StarMade/lib">
+      <patternset refid="library.patterns"/>
+    </fileset>
+    <pathelement location="${basedir}/../../Game Files/StarMade-Modded/StarMade/StarMade.jar"/>
+    <pathelement location="${basedir}/../star-api/build/libs/star-api.jar"/>
+  </path>
+  
+  <path id="contracts.runtime.module.classpath">
+    <pathelement location="${contracts.testoutput.dir}"/>
+    <pathelement location="${contracts.output.dir}"/>
+    <pathelement location="${basedir}/../starloader/build/libs/starloader.jar"/>
+    <fileset dir="${basedir}/../../Game Files/StarMade-Modded/StarMade/lib">
+      <patternset refid="library.patterns"/>
+    </fileset>
+    <pathelement location="${basedir}/../../Game Files/StarMade-Modded/StarMade/StarMade.jar"/>
+    <pathelement location="${basedir}/../star-api/build/libs/star-api.jar"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.contracts">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.contracts">
+    <patternset refid="excluded.from.module.contracts"/>
+  </patternset>
+  
+  <path id="contracts.module.sourcepath">
+    <dirset dir="${module.contracts.basedir}/../../Contracts">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.contracts" depends="compile.module.contracts.production,compile.module.contracts.tests" description="Compile module Contracts"/>
+  
+  <target name="compile.module.contracts.production" depends="register.custom.compilers" description="Compile module Contracts; production classes">
+    <mkdir dir="${contracts.output.dir}"/>
+    <javac2 destdir="${contracts.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.contracts}/javac">
+      <compilerarg line="${compiler.args.contracts}"/>
+      <bootclasspath refid="contracts.module.bootclasspath"/>
+      <classpath refid="contracts.module.production.classpath"/>
+      <src refid="contracts.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.contracts"/>
+    </javac2>
+    
+    <copy todir="${contracts.output.dir}">
+      <fileset dir="${module.contracts.basedir}/../src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.contracts.tests" depends="register.custom.compilers,compile.module.contracts.production" description="compile module Contracts; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.contracts" description="cleanup module">
+    <delete dir="${contracts.output.dir}"/>
+    <delete dir="${contracts.testoutput.dir}"/>
+  </target>
+</project>

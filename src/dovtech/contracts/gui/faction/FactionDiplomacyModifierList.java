@@ -45,21 +45,21 @@ public class FactionDiplomacyModifierList extends ScrollableTableList<FactionDip
     public void initColumns() {
         new StringComparator();
 
-        addColumn(Lng.str("Modifier"), 17.0f, new Comparator<FactionDiplomacyModifier>() {
+        addColumn(Lng.str("Modifier"), 12.0f, new Comparator<FactionDiplomacyModifier>() {
             @Override
             public int compare(FactionDiplomacyModifier o1, FactionDiplomacyModifier o2) {
                 return (o1.getDisplay()).compareTo(o2.getDisplay());
             }
         });
 
-        addColumn(Lng.str("Value"), 10.0f, new Comparator<FactionDiplomacyModifier>() {
+        addColumn(Lng.str("Value"), 7.0f, new Comparator<FactionDiplomacyModifier>() {
             @Override
             public int compare(FactionDiplomacyModifier o1, FactionDiplomacyModifier o2) {
                 return CompareTools.compare(o1.getModifier(), o2.getModifier());
             }
         });
 
-        addColumn(Lng.str("Date"), 10.0f, new Comparator<FactionDiplomacyModifier>() {
+        addColumn(Lng.str("Date"), 7.0f, new Comparator<FactionDiplomacyModifier>() {
             @Override
             public int compare(FactionDiplomacyModifier o1, FactionDiplomacyModifier o2) {
                 return CompareTools.compare(o1.getModifier(), o2.getModifier());

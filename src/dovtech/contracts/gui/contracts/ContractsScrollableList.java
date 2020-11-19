@@ -269,7 +269,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                                 for (ItemStack itemStack : miningTarget.getTargets()) {
                                     short id = itemStack.getId();
                                     int amount = itemStack.getAmount();
-                                    if (InventoryUtils.getItemAmount(player.getInventory().getInternalInventory(), id) < amount) {
+                                    if (InventoryUtils.getItemAmount(player.getInventory(), id) < amount) {
                                         hasItems = false;
                                         break;
                                     }
@@ -279,7 +279,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                                     getState().getController().queueUIAudio("0022_menu_ui - enter");
 
                                     for (ItemStack itemStack : miningTarget.getTargets())
-                                        InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), itemStack);
+                                        InventoryUtils.consumeItems(player.getInventory(), itemStack);
 
                                     try {
                                         DataUtils.removeContract(contract, false, player);
@@ -309,7 +309,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                                 for (ItemStack itemStack : productionTarget.getTargets()) {
                                     short id = itemStack.getId();
                                     int amount = itemStack.getAmount();
-                                    if (InventoryUtils.getItemAmount(player.getInventory().getInternalInventory(), id) < amount) {
+                                    if (InventoryUtils.getItemAmount(player.getInventory(), id) < amount) {
                                         hasItems = false;
                                         break;
                                     }
@@ -319,7 +319,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                                     getState().getController().queueUIAudio("0022_menu_ui - enter");
 
                                     for (ItemStack itemStack : productionTarget.getTargets())
-                                        InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), itemStack);
+                                        InventoryUtils.consumeItems(player.getInventory(), itemStack);
 
                                     try {
                                         DataUtils.removeContract(contract, false, player);

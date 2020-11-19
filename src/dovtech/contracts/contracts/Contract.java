@@ -1,13 +1,11 @@
 package dovtech.contracts.contracts;
 
-import api.common.GameServer;
 import api.entity.StarPlayer;
 import api.faction.StarFaction;
 import api.server.Server;
 import dovtech.contracts.contracts.target.ContractTarget;
 import dovtech.contracts.util.DataUtils;
 import org.schema.game.server.data.PlayerNotFountException;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 

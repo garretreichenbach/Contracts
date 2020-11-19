@@ -5,6 +5,7 @@ import api.element.block.Blocks;
 import api.entity.Fleet;
 import api.utils.game.PlayerUtils;
 import api.utils.game.chat.ChatCommand;
+import dovtech.contracts.Contracts;
 import org.schema.game.common.controller.ElementCountMap;
 import org.schema.game.common.data.player.PlayerState;
 import org.schema.game.common.data.player.faction.Faction;
@@ -13,7 +14,7 @@ import org.schema.game.server.data.simulation.npc.NPCFaction;
 public class SpawnTradeFleetCommand extends ChatCommand {
 
     public SpawnTradeFleetCommand() {
-        super("spawnTradeFleet", "/spawnTradeFleet", "Spawns a trade fleet at your current position.", true);
+        super("spawn_trade_fleet", "/spawn_trade_fleet", "Spawns a trade fleet at your current position.", true, Contracts.getInstance());
     }
 
     @Override

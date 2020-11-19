@@ -16,7 +16,6 @@ import org.schema.common.util.linAlg.Vector3i;
 import org.schema.game.common.data.element.ElementInformation;
 import org.schema.game.common.data.element.ElementKeyMap;
 import org.schema.game.server.data.PlayerNotFountException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;

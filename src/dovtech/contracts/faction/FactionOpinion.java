@@ -34,4 +34,9 @@ public class FactionOpinion implements Serializable {
     public void setOpinionScore(int opinionScore) {
         this.opinionScore = opinionScore;
     }
+
+    @Override
+    public String toString() {
+        return getOpinion().display + " [" + opinionScore + "]";
+    }
 }

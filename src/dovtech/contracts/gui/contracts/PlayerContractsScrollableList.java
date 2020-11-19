@@ -6,7 +6,6 @@ import api.entity.StarPlayer;
 import api.utils.game.PlayerUtils;
 import api.utils.game.inventory.InventoryUtils;
 import api.utils.game.inventory.ItemStack;
-import api.utils.gui.GUIUtils;
 import api.utils.gui.SimpleGUIHorizontalButtonPane;
 import api.utils.gui.SimplePopup;
 import dovtech.contracts.contracts.Contract;
@@ -191,7 +190,7 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
                         for (ItemStack itemStack : miningTarget.getTargets()) {
                             short id = itemStack.getId();
                             int amount = itemStack.getAmount();
-                            if (InventoryUtils.getItemAmount(player.getInventory().getInternalInventory(), id) < amount) {
+                            if (InventoryUtils.getItemAmount(player.getInventory(), id) < amount) {
                                 hasItems = false;
                                 break;
                             }
@@ -200,7 +199,7 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
                         if (hasItems || (player.getPlayerState().isUseCreativeMode() && player.getPlayerState().isAdmin())) {
                             getState().getController().queueUIAudio("0022_menu_ui - enter");
 
-                            for (ItemStack itemStack : miningTarget.getTargets()) InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), itemStack);
+                            for (ItemStack itemStack : miningTarget.getTargets()) InventoryUtils.consumeItems(player.getInventory(), itemStack);
 
                             try {
                                 DataUtils.removeContract(contract, false, player);
@@ -230,7 +229,7 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
                         for (ItemStack itemStack : productionTarget.getTargets()) {
                             short id = itemStack.getId();
                             int amount = itemStack.getAmount();
-                            if (InventoryUtils.getItemAmount(player.getInventory().getInternalInventory(), id) < amount) {
+                            if (InventoryUtils.getItemAmount(player.getInventory(), id) < amount) {
                                 hasItems = false;
                                 break;
                             }
@@ -239,7 +238,7 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
                         if (hasItems || (player.getPlayerState().isUseCreativeMode() && player.getPlayerState().isAdmin())) {
                             getState().getController().queueUIAudio("0022_menu_ui - enter");
 
-                            for (ItemStack itemStack : productionTarget.getTargets()) InventoryUtils.consumeItems(player.getInventory().getInternalInventory(), itemStack);
+                            for (ItemStack itemStack : productionTarget.getTargets()) InventoryUtils.consumeItems(player.getInventory(), itemStack);
 
                             try {
                                 DataUtils.removeContract(contract, false, player);

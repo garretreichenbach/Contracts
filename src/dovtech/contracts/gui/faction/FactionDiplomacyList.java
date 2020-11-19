@@ -4,19 +4,25 @@ import api.common.GameClient;
 import api.entity.StarPlayer;
 import api.faction.StarFaction;
 import api.mod.StarLoader;
+import api.utils.gui.SimpleGUIHorizontalButtonPane;
+import dovtech.contracts.faction.FactionData;
+import dovtech.contracts.faction.FactionOpinion;
 import dovtech.contracts.faction.Opinion;
+import dovtech.contracts.gui.contracts.PlayerContractsScrollableList;
+import dovtech.contracts.gui.faction.diplomacy.FactionDiplomacyModifier;
 import dovtech.contracts.player.PlayerData;
 import dovtech.contracts.util.DataUtils;
+import dovtech.contracts.util.FactionUtils;
 import org.hsqldb.lib.StringComparator;
 import org.schema.common.util.CompareTools;
 import org.schema.game.client.data.GameClientState;
 import org.schema.game.common.data.player.faction.Faction;
 import org.schema.game.server.data.PlayerNotFountException;
-import org.schema.schine.graphicsengine.forms.gui.GUIAncor;
-import org.schema.schine.graphicsengine.forms.gui.GUIElement;
-import org.schema.schine.graphicsengine.forms.gui.GUIElementList;
+import org.schema.schine.graphicsengine.core.MouseEvent;
+import org.schema.schine.graphicsengine.forms.gui.*;
 import org.schema.schine.graphicsengine.forms.gui.newgui.*;
 import org.schema.schine.input.InputState;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -25,11 +31,17 @@ import java.util.Set;
 public class FactionDiplomacyList extends ScrollableTableList<StarFaction> {
 
     private DiplomacyTab panel;
+    private StarFaction playerFaction;
 
-    public FactionDiplomacyList(InputState state, DiplomacyTab panel) {
-        super(state, 100, 100, panel);
-        ((GameClientState)state).getFactionManager().addObserver(this);
+    public FactionDiplomacyList(InputState state, GUIAncor content, DiplomacyTab panel) {
+        super(state, 100, 100, content);
+        ((GameClientState) state).getFactionManager().addObserver(this);
         this.panel = panel;
+        if(GameClient.getClientPlayerState().getFactionId() != 0) {
+            playerFaction = new StarFaction(StarLoader.getGameState().getFactionManager().getFaction(GameClient.getClientPlayerState().getFactionId()));
+        } else {
+            playerFaction = null;
+        }
     }
 
     @Override
@@ -48,7 +60,9 @@ public class FactionDiplomacyList extends ScrollableTableList<StarFaction> {
 
             this.addColumn("Power", 10.0F, new Comparator<StarFaction>() {
                 public int compare(StarFaction o1, StarFaction o2) {
-                    return CompareTools.compare(o1.getInternalFaction().factionPoints, o2.getInternalFaction().factionPoints);
+                    FactionData o1Data = FactionUtils.getFactionData(o1);
+                    FactionData o2Data = FactionUtils.getFactionData(o2);
+                    return CompareTools.compare(o1Data.getFactionPower(), o2Data.getFactionPower());
                 }
             });
 
@@ -60,7 +74,13 @@ public class FactionDiplomacyList extends ScrollableTableList<StarFaction> {
 
             this.addColumn("Opinion", 15.0F, new Comparator<StarFaction>() {
                 public int compare(StarFaction o1, StarFaction o2) {
-                    return CompareTools.compare(playerData.getOpinion(o1).getOpinionScore(), playerData.getOpinion(o2).getOpinionScore());
+                    if(playerFaction != null) {
+                        int o1Opinion = FactionUtils.getOpinion(o1, playerFaction).getOpinionScore();
+                        int o2Opinion = FactionUtils.getOpinion(o2, playerFaction).getOpinionScore();
+                        return CompareTools.compare(o1Opinion, o2Opinion);
+                    } else {
+                        return 0;
+                    }
                 }
             });
 
@@ -124,18 +144,120 @@ public class FactionDiplomacyList extends ScrollableTableList<StarFaction> {
     @Override
     protected Collection<StarFaction> getElementList() {
         ArrayList<StarFaction> factions = new ArrayList<>();
-        for(Faction faction : StarLoader.getGameState().getFactionManager().getFactionCollection()) factions.add(new StarFaction(faction));
+        for (Faction faction : StarLoader.getGameState().getFactionManager().getFactionCollection()) {
+            if (!faction.getName().toLowerCase().contains("fauna") && !faction.getName().toLowerCase().contains("guild")) {
+                factions.add(new StarFaction(faction));
+            }
+        }
         return factions;
+    }
+
+    private SimpleGUIHorizontalButtonPane redrawButtonPane(StarFaction faction, int width, int height) {
+        SimpleGUIHorizontalButtonPane buttonPane = new SimpleGUIHorizontalButtonPane(getState(), width, height, 2);
+        StarFaction playerFaction = new StarFaction(StarLoader.getGameState().getFactionManager().getFaction(GameClient.getClientPlayerState().getFactionId()));
+        int opinionScore = FactionUtils.getOpinionScore(faction, playerFaction);
+        Opinion opinion = Opinion.getFromScore(opinionScore);
+        ArrayList<FactionDiplomacyModifier> modifiers = FactionUtils.getOpinionModifiers(faction, playerFaction);
+
+        //Todo
+        final boolean hasNonAggressionPact = false;
+        final boolean hasDefensivePact = false;
+
+        boolean canRequestAlliance = false;
+        boolean canInviteToFederation = false;
+        boolean canRequestJoinFederation = false;
+        boolean canDeclareIndependence = false;
+        boolean canDeclareWar = false;
+        boolean canSanction = false;
+
+        if (opinionScore >= -15) {
+            GUITextButton sendGiftButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.FRIENDLY, "SEND GIFT", new GUICallback() {
+                @Override
+                public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                    if (mouseEvent.pressedLeftMouse()) {
+                        getState().getController().queueUIAudio("0022_menu_ui - enter");
+                        //Todo: Send gift
+                    }
+                }
+
+                @Override
+                public boolean isOccluded() {
+                    return !isActive();
+                }
+            });
+            buttonPane.addButton(sendGiftButton);
+
+            String nonAggressionText = "REQUEST NON-AGGRESSION PACT";
+            GUITextButton.ColorPalette nonAggressionColor = GUITextButton.ColorPalette.OK;
+            if(hasNonAggressionPact) {
+                nonAggressionText = "CANCEL NON-AGGRESSION PACT";
+                nonAggressionColor = GUITextButton.ColorPalette.CANCEL;
+            }
+
+            GUITextButton nonAggressionPactButton = new GUITextButton(getState(), 130, 24, nonAggressionColor, nonAggressionText, new GUICallback() {
+                @Override
+                public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                    if (mouseEvent.pressedLeftMouse()) {
+                        if (!hasNonAggressionPact) {
+                            getState().getController().queueUIAudio("0022_menu_ui - enter");
+
+                        } else {
+                            getState().getController().queueUIAudio("0022_menu_ui - back");
+
+                        }
+                        //Todo: Non-Aggression pacts
+                    }
+                }
+
+                @Override
+                public boolean isOccluded() {
+                    return !isActive();
+                }
+            });
+            buttonPane.addButton(nonAggressionPactButton);
+
+            String defensivePactText = "REQUEST DEFENSIVE PACT";
+            GUITextButton.ColorPalette defensivePactColor = GUITextButton.ColorPalette.FRIENDLY;
+            if (hasDefensivePact) {
+                defensivePactText = "CANCEL DEFENSIVE PACT";
+                nonAggressionColor = GUITextButton.ColorPalette.CANCEL;
+            }
+
+            GUITextButton defensivePactButton = new GUITextButton(getState(), 130, 24, defensivePactColor, defensivePactText, new GUICallback() {
+                @Override
+                public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                    if (mouseEvent.pressedLeftMouse()) {
+                        if (!hasDefensivePact) {
+                            getState().getController().queueUIAudio("0022_menu_ui - enter");
+
+                        } else {
+                            getState().getController().queueUIAudio("0022_menu_ui - back");
+
+                        }
+                        //Todo: Defensive pacts
+                    }
+                }
+
+                @Override
+                public boolean isOccluded() {
+                    return !isActive();
+                }
+            });
+            buttonPane.addButton(defensivePactButton);
+        }
+
+
+        return buttonPane;
     }
 
     @Override
     public void updateListEntries(GUIElementList mainList, Set<StarFaction> set) {
         mainList.deleteObservers();
         mainList.addObserver(this);
-        try {
-            StarPlayer player = new StarPlayer(GameClient.getClientPlayerState());
-            PlayerData playerData = DataUtils.getPlayerData(player.getName());
-            if(set.size() != playerData.getOpinions().length) DataUtils.genOpinions(playerData);
+        StarPlayer player = new StarPlayer(GameClient.getClientPlayerState());
+        //PlayerData playerData = DataUtils.getPlayerData(player.getName());
+        //Use faction opinions instead of ones for individual players
+            //if(set.size() != playerData.getOpinions().length) DataUtils.genOpinions(playerData);
             for (final StarFaction faction : set) {
 
                 GUITextOverlayTable nameTextElement;
@@ -153,25 +275,36 @@ public class FactionDiplomacyList extends ScrollableTableList<StarFaction> {
                 GUIClippedRow membersRowElement;
                 (membersRowElement = new GUIClippedRow(this.getState())).attach(membersTextElement);
 
+                String opinionText = "NEUTRAL [0]";
+
+                if(player.getPlayerState().getFactionId() != 0) {
+                    FactionOpinion factionOpinion = FactionUtils.getOpinion(faction, player.getFaction());
+                    opinionText = factionOpinion.toString();
+                }
+
                 GUITextOverlayTable opinionTextElement;
-                (opinionTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(playerData.getOpinion(faction).getOpinion().display + " [" + playerData.getOpinion(faction).getOpinionScore() + "]");
+                (opinionTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(opinionText);
                 GUIClippedRow opinionRowElement;
                 (opinionRowElement = new GUIClippedRow(this.getState())).attach(opinionTextElement);
 
                 FactionDiplomacyListRow factionDiplomacyListRow = new FactionDiplomacyListRow(getState(), faction, nameRowElement, powerRowElement, membersRowElement, opinionRowElement);
+                if (GameClient.getClientPlayerState().getFactionId() != 0) { //Faction diplomacy should only be available to players in factions (duh)
+                    factionDiplomacyListRow.expanded = new GUIElementList(getState());
+                    SimpleGUIHorizontalButtonPane buttonPane = redrawButtonPane(faction, factionDiplomacyListRow.expanded.width, factionDiplomacyListRow.expanded.height);
+                    buttonPane.setPos(factionDiplomacyListRow.expanded.getPos());
+                    factionDiplomacyListRow.expanded.add(new GUIListElement(buttonPane, buttonPane, getState()));
+                    factionDiplomacyListRow.expanded.attach(buttonPane);
+                }
                 factionDiplomacyListRow.onInit();
                 mainList.add(factionDiplomacyListRow);
             }
             mainList.updateDim();
-        } catch (PlayerNotFountException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
     public void cleanUp() {
         super.cleanUp();
-        ((GameClientState)getState()).getFactionManager().deleteObserver(this);
+        ((GameClientState) getState()).getFactionManager().deleteObserver(this);
     }
 
     public class FactionDiplomacyListRow extends ScrollableTableList<StarFaction>.Row {
