@@ -2,11 +2,13 @@ package thederpgamer.contracts;
 
 import api.common.GameClient;
 import api.listener.Listener;
+import api.listener.events.gui.ControlManagerActivateEvent;
 import api.listener.events.gui.GUITopBarCreateEvent;
 import api.listener.events.gui.MainWindowTabAddEvent;
 import api.mod.StarLoader;
 import api.mod.StarMod;
 import api.mod.config.FileConfiguration;
+import org.schema.game.client.controller.manager.ingame.InventoryControllerManager;
 import org.schema.game.client.view.gui.newgui.GUITopBar;
 import org.schema.schine.common.language.Lng;
 import org.schema.schine.graphicsengine.core.MouseEvent;
@@ -75,34 +77,14 @@ public class Contracts extends StarMod {
                     public void callback(final GUIElement guiElement, MouseEvent mouseEvent) {
                         if (mouseEvent.pressedLeftMouse()) {
                             GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                            final GUIMainWindow guiWindow = new GUIMainWindow(GameClient.getClientState(), 850, 550, "CONTRACTS");
-                            guiWindow.onInit();
-                            guiWindow.setCloseCallback(new GUICallback() {
-                                @Override
-                                public void callback(GUIElement guiElement, MouseEvent event) {
-                                    if (event.pressedLeftMouse()) {
-                                        GameClient.getClientState().getWorldDrawer().getGuiDrawer().getPlayerPanel().deactivateAll();
-                                        GameClient.getClientState().getWorldDrawer().getGuiDrawer().getPlayerPanel().getInventoryPanel().recreateTabs();
-                                        GameClient.getClientState().getGlobalGameControlManager().getIngameControlManager().getPlayerGameControlManager().deactivateAll();
-                                    }
-                                }
-
-                                @Override
-                                public boolean isOccluded() {
-                                    return !guiWindow.getState().getController().getPlayerInputs().isEmpty();
-                                }
-                            });
-
-                            GUIContentPane contractsPane = guiWindow.addTab("CONTRACTS");
+                            GUIMainWindow guiWindow = GameClient.getClientState().getWorldDrawer().getGuiDrawer().getPlayerPanel().getInventoryPanel().inventoryPanel;
+                            guiWindow.clearTabs();
+                            GUIContentPane contractsPane = guiWindow.addTab(Lng.str("CONTRACTS"));
                             contractsPane.setTextBoxHeightLast(300);
 
                             PlayerContractsScrollableList playerContractsList = new PlayerContractsScrollableList(GameClient.getClientState(), 500, 300, contractsPane.getContent(0));
                             playerContractsList.onInit();
                             contractsPane.getContent(0).attach(playerContractsList);
-
-                            GameClient.getClientState().getGlobalGameControlManager().getIngameControlManager().getPlayerGameControlManager().deactivateAll();
-                            GameClient.getClientState().getWorldDrawer().getGuiDrawer().getPlayerPanel().getInventoryPanel().inventoryPanel = guiWindow;
-                            GameClient.getClientState().getGlobalGameControlManager().getIngameControlManager().getPlayerGameControlManager().getInventoryControlManager().setActive(true);
                         }
                     }
 
@@ -129,10 +111,19 @@ public class Contracts extends StarMod {
             }
         }, this);
 
+        StarLoader.registerListener(ControlManagerActivateEvent.class, new Listener<ControlManagerActivateEvent>() {
+            @Override
+            public void onEvent(ControlManagerActivateEvent event) {
+                if(event.getControlManager() instanceof InventoryControllerManager) {
+                    GameClient.getClientState().getWorldDrawer().getGuiDrawer().getPlayerPanel().getInventoryPanel().recreateTabs();
+                }
+            }
+        }, this);
+
         StarLoader.registerListener(MainWindowTabAddEvent.class, new Listener<MainWindowTabAddEvent>() {
             @Override
             public void onEvent(MainWindowTabAddEvent event) {
-                if (event.getTitle().equals(Lng.ORG_SCHEMA_GAME_CLIENT_VIEW_GUI_SHOP_SHOPNEW_SHOPPANELNEW_2)) {
+                if(event.getTitle().equals(Lng.ORG_SCHEMA_GAME_CLIENT_VIEW_GUI_SHOP_SHOPNEW_SHOPPANELNEW_2)) {
                     ContractsTab contractsTab = new ContractsTab(event.getWindow().getState(), event.getWindow());
                     contractsTab.onInit();
                     event.getWindow().getTabs().add(contractsTab);

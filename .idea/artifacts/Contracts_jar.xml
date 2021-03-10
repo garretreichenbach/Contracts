@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact name="Contracts:jar">
-    <output-path>$PROJECT_DIR$/../../Game Files/StarMade-Modded/StarMade/mods/</output-path>
+    <output-path>$PROJECT_DIR$/../../Game Files/StarMade Modded/StarMade/mods/</output-path>
     <root id="root">
       <element id="archive" name="Contracts.jar">
         <element id="module-output" name="Contracts" />
