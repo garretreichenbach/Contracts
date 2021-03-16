@@ -15,6 +15,8 @@ import thederpgamer.contracts.data.contract.target.ContractTarget;
 import thederpgamer.contracts.data.contract.target.ProductionTarget;
 import thederpgamer.contracts.data.inventory.ItemStack;
 import thederpgamer.contracts.data.player.PlayerData;
+import thederpgamer.contracts.gui.contract.ContractsScrollableList;
+import thederpgamer.contracts.gui.contract.PlayerContractsScrollableList;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.UUID;
@@ -39,6 +41,7 @@ public class ServerDatabase {
         for(PlayerData pData : toRemove) PersistentObjectUtil.removeObject(Contracts.getInstance().getSkeleton(), pData);
         PersistentObjectUtil.addObject(Contracts.getInstance().getSkeleton(), playerData);
         PersistentObjectUtil.save(Contracts.getInstance().getSkeleton());
+        updateContractGUI();
     }
 
     public static PlayerData getPlayerData(String playerName) {
@@ -86,6 +89,7 @@ public class ServerDatabase {
         for(Contract c : toRemove) PersistentObjectUtil.removeObject(Contracts.getInstance().getSkeleton(), c);
         PersistentObjectUtil.addObject(Contracts.getInstance().getSkeleton(), contract);
         PersistentObjectUtil.save(Contracts.getInstance().getSkeleton());
+        updateContractGUI();
     }
 
     public static void addContract(Contract contract) {
@@ -98,11 +102,13 @@ public class ServerDatabase {
         for(Contract c : toRemove) PersistentObjectUtil.removeObject(Contracts.getInstance().getSkeleton(), c);
         PersistentObjectUtil.addObject(Contracts.getInstance().getSkeleton(), contract);
         PersistentObjectUtil.save(Contracts.getInstance().getSkeleton());
+        updateContractGUI();
     }
 
     public static void removeContract(Contract contract) {
         PersistentObjectUtil.removeObject(Contracts.getInstance().getSkeleton(), contract);
         PersistentObjectUtil.save(Contracts.getInstance().getSkeleton());
+        updateContractGUI();
     }
 
     public static ArrayList<Contract> getAllContracts() {
@@ -122,15 +128,26 @@ public class ServerDatabase {
         return contracts;
     }
 
+    public static void updateContractGUI() {
+        if(ContractsScrollableList.getInst() != null) {
+            ContractsScrollableList.getInst().clear();
+            ContractsScrollableList.getInst().handleDirty();
+        }
+        if(PlayerContractsScrollableList.getInst() != null) {
+            PlayerContractsScrollableList.getInst().clear();
+            PlayerContractsScrollableList.getInst().handleDirty();
+        }
+    }
+
     public static void startContractTimer(final Contract contract, final PlayerData player) {
         new StarRunnable() {
             @Override
             public void run() {
-                if (contract.getTimer() >= Contracts.getInstance().contractTimerMax) {
-                    if (contract.getClaimants().contains(player)) {
+                if(contract.getTimer() >= Contracts.getInstance().contractTimerMax) {
+                    if(contract.getClaimants().contains(player)) {
                         try {
                             timeoutContract(contract, player);
-                        } catch (PlayerNotFountException e) {
+                        } catch(PlayerNotFountException e) {
                             e.printStackTrace();
                         }
                     } else {
@@ -139,7 +156,7 @@ public class ServerDatabase {
                     cancel();
                 } else {
                     contract.setTimer(contract.getTimer() + 1);
-                    if (Contracts.getInstance().debugMode) {
+                    if(Contracts.getInstance().debugMode) {
                         DebugFile.log("[DEBUG]: Contract timer: " + contract.getTimer(), Contracts.getInstance());
                         DebugFile.log("[DEBUG]: for contract " + contract.getUID(), Contracts.getInstance());
                     }
@@ -159,7 +176,7 @@ public class ServerDatabase {
 
     public static void generateRandomContract() {
         Random random = new Random();
-        int contractTypeInt = random.nextInt(2 - 1) + 1;
+        int contractTypeInt = random.nextInt(2) + 1;
         Contract.ContractType contractType = null;
         ArrayList<Short> possibleIDs = new ArrayList<>();
         String contractName = "";
@@ -167,10 +184,10 @@ public class ServerDatabase {
         int amountInt = random.nextInt(3000 - 100) + 100;
         int basePrice = 0;
         ContractTarget target = null;
-        switch (contractTypeInt) {
+        switch(contractTypeInt) {
             case 1:
                 contractType = Contract.ContractType.PRODUCTION;
-                for (ElementInformation info : getProductionFilter()) possibleIDs.add(info.getId());
+                for(ElementInformation info : getProductionFilter()) possibleIDs.add(info.getId());
                 int productionIndex = random.nextInt(possibleIDs.size() - 1) + 1;
                 short productionID = possibleIDs.get(productionIndex);
                 contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(productionID).getName();
@@ -183,7 +200,7 @@ public class ServerDatabase {
                 break;
             case 2:
                 contractType = Contract.ContractType.MINING;
-                for (ElementInformation info : getResourcesFilter()) possibleIDs.add(info.getId());
+                for(ElementInformation info : getResourcesFilter()) possibleIDs.add(info.getId());
                 int miningIndex = random.nextInt(possibleIDs.size() - 1) + 1;
                 short miningID = possibleIDs.get(miningIndex);
                 contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(miningID).getName();
@@ -203,28 +220,22 @@ public class ServerDatabase {
 
     public static ArrayList<ElementInformation> getResourcesFilter() {
         ArrayList<ElementInformation> filter = new ArrayList<>();
-        for (ElementInformation info : ElementKeyMap.getInfoArray()) {
-            try {
-                if (info != null && !info.isDeprecated() && (info.name.toLowerCase().contains("raw") || info.name.toLowerCase().contains("capsule"))) {
-                    filter.add(info);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        ArrayList<ElementInformation> elementList = new ArrayList<>();
+        ElementKeyMap.getCategoryHirarchy().getChild("Manufacturing").getInfoElementsRecursive(elementList);
+        for(ElementInformation info : elementList) {
+            if(!info.isDeprecated() && info.isShoppable() && info.isInRecipe()) filter.add(info);
         }
         return filter;
     }
 
     public static ArrayList<ElementInformation> getProductionFilter() {
         ArrayList<ElementInformation> filter = new ArrayList<>();
-        for (ElementInformation info : ElementKeyMap.getInfoArray()) {
-            try {
-                if (info != null && info.isInRecipe() && !info.name.toLowerCase().contains("capsule") && !info.name.toLowerCase().contains("raw") && !info.isDeprecated()) {
-                    filter.add(info);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        ArrayList<ElementInformation> elementList = new ArrayList<>();
+        ElementKeyMap.getCategoryHirarchy().getChild("General").getInfoElementsRecursive(elementList);
+        ElementKeyMap.getCategoryHirarchy().getChild("Ship").getInfoElementsRecursive(elementList);
+        ElementKeyMap.getCategoryHirarchy().getChild("SpaceStation").getInfoElementsRecursive(elementList);
+        for(ElementInformation info : elementList) {
+            if(!info.isDeprecated() && info.isShoppable() && info.isInRecipe()) filter.add(info);
         }
         return filter;
     }

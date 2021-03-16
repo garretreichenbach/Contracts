@@ -136,7 +136,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
 
             @Override
             public boolean isActive(InputState inputState) {
-                return content.isActive() && ContractsScrollableList.this.isActive();
+                return ContractsScrollableList.this.isActive();
             }
         };
 
@@ -184,12 +184,6 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                                     SimplePopup popup = new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim this bounty!");
                                     popup.activate();
                                 }
-                                if(PlayerContractsScrollableList.getInst() != null) {
-                                    PlayerContractsScrollableList.getInst().clear();
-                                    PlayerContractsScrollableList.getInst().handleDirty();
-                                }
-                                clear();
-                                handleDirty();
                             }
                         } catch(PlayerNotFountException e) {
                             e.printStackTrace();
@@ -212,12 +206,6 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                         playerData.contracts.remove(contract);
                         ServerDatabase.updatePlayerData(playerData);
                         ServerDatabase.updateContract(contract);
-                        if(PlayerContractsScrollableList.getInst() != null) {
-                            PlayerContractsScrollableList.getInst().clear();
-                            PlayerContractsScrollableList.getInst().handleDirty();
-                        }
-                        clear();
-                        handleDirty();
                     }
                 }
 
@@ -305,6 +293,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
     public void updateListEntries(GUIElementList guiElementList, final Set<Contract> set) {
         guiElementList.deleteObservers();
         guiElementList.addObserver(this);
+        guiElementList.clear();
         try {
             for(final Contract contract : set) {
 

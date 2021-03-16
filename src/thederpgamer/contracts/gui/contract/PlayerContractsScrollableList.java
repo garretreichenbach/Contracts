@@ -130,7 +130,7 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
             @Override
             public boolean isActive(InputState inputState) {
-                return content.isActive() && PlayerContractsScrollableList.this.isActive();
+                return PlayerContractsScrollableList.this.isActive();
             }
         };
 
@@ -143,12 +143,6 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
                     playerData.contracts.remove(contract);
                     ServerDatabase.updatePlayerData(playerData);
                     ServerDatabase.updateContract(contract);
-                    if(ContractsScrollableList.getInst() != null) {
-                        ContractsScrollableList.getInst().clear();
-                        ContractsScrollableList.getInst().handleDirty();
-                    }
-                    clear();
-                    handleDirty();
                 }
             }
 
@@ -237,8 +231,9 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
     public void updateListEntries(GUIElementList guiElementList, Set<Contract> set) {
         guiElementList.deleteObservers();
         guiElementList.addObserver(this);
+        guiElementList.clear();
         try {
-            for (final Contract contract : set) {
+            for(final Contract contract : set) {
 
                 GUITextOverlayTable nameTextElement;
                 (nameTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(contract.getName());

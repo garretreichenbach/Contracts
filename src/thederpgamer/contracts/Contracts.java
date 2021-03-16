@@ -18,7 +18,7 @@ import org.schema.schine.graphicsengine.forms.gui.GUIElement;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIContentPane;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIMainWindow;
 import org.schema.schine.input.InputState;
-import thederpgamer.contracts.commands.RandomContractCommand;
+import thederpgamer.contracts.server.commands.RandomContractCommand;
 import thederpgamer.contracts.gui.contract.ContractsTab;
 import thederpgamer.contracts.gui.contract.PlayerContractsScrollableList;
 

@@ -87,7 +87,7 @@ public class NewContractDialog extends PlayerInput {
                                 } else {
 
                                     PlayerTarget target = new PlayerTarget();
-                                    target.setTargets(playerData.name);
+                                    target.setTargets(playerData);
                                     Contract contract = new Contract(currentPlayer.getFactionId(), "Kill " + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), target);
                                     ServerDatabase.addContract(contract);
                                     currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());

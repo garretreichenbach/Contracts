@@ -1,6 +1,5 @@
 package thederpgamer.contracts.gui.contract.newcontract;
 
-import api.DebugFile;
 import api.common.GameClient;
 import org.schema.game.common.data.player.faction.Faction;
 import org.schema.game.client.data.GameClientState;
@@ -19,6 +18,7 @@ import org.schema.schine.graphicsengine.forms.gui.newgui.GUIActivatableTextBar;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIHorizontalArea;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIHorizontalButtonTablePane;
 import org.schema.schine.input.InputState;
+import thederpgamer.contracts.data.ServerDatabase;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -43,7 +43,7 @@ public class NewContractPanel extends GUIInputPanel implements BlockTypeSearchRu
     public NewContractPanel(InputState inputState, GUICallback guiCallback, Faction contractor) {
         super("NewContractPanel", inputState, guiCallback, "New Contract", "");
         this.contractor = contractor;
-        this.content = new GUIAncor(getState(), 350, 300);
+        this.content = new GUIAncor(getState(), 350, 450);
         this.guiCallback = guiCallback;
         this.curText = "";
     }
@@ -650,41 +650,11 @@ public class NewContractPanel extends GUIInputPanel implements BlockTypeSearchRu
     }
 
     private ArrayList<ElementInformation> getResourcesFilter() {
-        ArrayList<ElementInformation> filter = new ArrayList<>();
-        for (ElementInformation info : ElementKeyMap.getInfoArray()) {
-            try {
-                if (info != null && !info.isDeprecated() && (info.name.toLowerCase().contains("raw") || info.name.toLowerCase().contains("capsule"))) {
-                    if (curText.equals("")) {
-                        filter.add(info);
-                    } else {
-                        if (info.name.toLowerCase().contains(curText.toLowerCase())) filter.add(info);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                DebugFile.log("fuck you suck my dicc and bal");
-            }
-        }
-        return filter;
+        return ServerDatabase.getResourcesFilter();
     }
 
     private ArrayList<ElementInformation> getProductionFilter() {
-        ArrayList<ElementInformation> filter = new ArrayList<>();
-        for (ElementInformation info : ElementKeyMap.getInfoArray()) {
-            try {
-                if (info != null && info.isInRecipe() && !info.name.toLowerCase().contains("capsule") && !info.name.toLowerCase().contains("raw") && !info.isDeprecated()) {
-                    if (curText.equals("")) {
-                        filter.add(info);
-                    } else {
-                        if (info.name.toLowerCase().contains(curText.toLowerCase())) filter.add(info);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                DebugFile.log("fuck you suck my dicc and bal");
-            }
-        }
-        return filter;
+        return ServerDatabase.getProductionFilter();
     }
 
     private ArrayList<GUIElement> getResourceElements() {

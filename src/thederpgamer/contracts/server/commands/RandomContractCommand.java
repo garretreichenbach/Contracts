@@ -1,4 +1,4 @@
-package thederpgamer.contracts.commands;
+package thederpgamer.contracts.server.commands;
 
 import api.utils.game.chat.ChatCommand;
 import thederpgamer.contracts.Contracts;
