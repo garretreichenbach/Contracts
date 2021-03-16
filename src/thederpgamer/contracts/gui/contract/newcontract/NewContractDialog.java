@@ -15,9 +15,6 @@ import org.schema.schine.input.KeyboardMappings;
 import thederpgamer.contracts.gui.contract.ContractsScrollableList;
 import thederpgamer.contracts.data.ServerDatabase;
 import thederpgamer.contracts.data.contract.Contract;
-import thederpgamer.contracts.data.contract.target.MiningTarget;
-import thederpgamer.contracts.data.contract.target.PlayerTarget;
-import thederpgamer.contracts.data.contract.target.ProductionTarget;
 import thederpgamer.contracts.data.inventory.ItemStack;
 import thederpgamer.contracts.data.player.PlayerData;
 import java.util.UUID;
@@ -86,9 +83,7 @@ public class NewContractDialog extends PlayerInput {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on a member of an allied faction!")).activate();
                                 } else {
 
-                                    PlayerTarget target = new PlayerTarget();
-                                    target.setTargets(playerData);
-                                    Contract contract = new Contract(currentPlayer.getFactionId(), "Kill " + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), target);
+                                    Contract contract = new Contract(currentPlayer.getFactionId(), "Kill " + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), playerData);
                                     ServerDatabase.addContract(contract);
                                     currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                     if (ContractsScrollableList.getInst() != null) {
@@ -99,15 +94,13 @@ public class NewContractDialog extends PlayerInput {
                                 }
                             }
                         } else if (contractMode == 2) {
-                            MiningTarget target = new MiningTarget();
                             int count = panel.getCount();
                             if (count <= 0) {
                                 (new SimplePopup(getState(), "Cannot Add Contract", "The amount must be above 0!")).activate();
                             } else {
                                 ItemStack itemStack = new ItemStack(panel.getSelectedBlockType());
                                 itemStack.count = count;
-                                target.setTargets(itemStack);
-                                Contract contract = new Contract(currentPlayer.getFactionId(), "Mine x" + count + " " + itemStack.name, Contract.ContractType.MINING, panel.getReward(), UUID.randomUUID().toString(), target);
+                                Contract contract = new Contract(currentPlayer.getFactionId(), "Mine x" + count + " " + itemStack.name, Contract.ContractType.MINING, panel.getReward(), UUID.randomUUID().toString(), itemStack);
                                 ServerDatabase.addContract(contract);
                                 currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                 if (ContractsScrollableList.getInst() != null) {
@@ -117,15 +110,13 @@ public class NewContractDialog extends PlayerInput {
                                 deactivate();
                             }
                         } else if (contractMode == 3) {
-                            ProductionTarget target = new ProductionTarget();
                             int count = panel.getCount();
                             if (count <= 0) {
                                 (new SimplePopup(getState(), "Cannot Add Contract", "The amount must be above 0!")).activate();
                             } else {
                                 ItemStack itemStack = new ItemStack(panel.getSelectedBlockType());
                                 itemStack.count = count;
-                                target.setTargets(itemStack);
-                                Contract contract = new Contract(currentPlayer.getFactionId(), "Produce x" + count + " " + itemStack.name, Contract.ContractType.PRODUCTION, panel.getReward(), UUID.randomUUID().toString(), target);
+                                Contract contract = new Contract(currentPlayer.getFactionId(), "Produce x" + count + " " + itemStack.name, Contract.ContractType.PRODUCTION, panel.getReward(), UUID.randomUUID().toString(), itemStack);
                                 ServerDatabase.addContract(contract);
                                 currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                 if (ContractsScrollableList.getInst() != null) {

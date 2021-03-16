@@ -11,8 +11,6 @@ import org.schema.game.common.data.player.faction.Faction;
 import org.schema.game.server.data.PlayerNotFountException;
 import thederpgamer.contracts.Contracts;
 import thederpgamer.contracts.data.contract.Contract;
-import thederpgamer.contracts.data.contract.target.ContractTarget;
-import thederpgamer.contracts.data.contract.target.ProductionTarget;
 import thederpgamer.contracts.data.inventory.ItemStack;
 import thederpgamer.contracts.data.player.PlayerData;
 import thederpgamer.contracts.gui.contract.ContractsScrollableList;
@@ -183,7 +181,7 @@ public class ServerDatabase {
 
         int amountInt = random.nextInt(3000 - 100) + 100;
         int basePrice = 0;
-        ContractTarget target = null;
+        ItemStack target = null;
         switch(contractTypeInt) {
             case 1:
                 contractType = Contract.ContractType.PRODUCTION;
@@ -191,25 +189,19 @@ public class ServerDatabase {
                 int productionIndex = random.nextInt(possibleIDs.size() - 1) + 1;
                 short productionID = possibleIDs.get(productionIndex);
                 contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(productionID).getName();
-                target = new ProductionTarget();
-                ItemStack productionStack = new ItemStack(ElementKeyMap.getInfo(productionID));
-                productionStack.count = amountInt;
+                target = new ItemStack(ElementKeyMap.getInfo(productionID));
+                target.count = amountInt;
                 basePrice = (int) ElementKeyMap.getInfo(productionID).getPrice(true);
-                ItemStack[] productionStacks = new ItemStack[]{productionStack};
-                target.setTargets(productionStacks);
                 break;
             case 2:
                 contractType = Contract.ContractType.MINING;
                 for(ElementInformation info : getResourcesFilter()) possibleIDs.add(info.getId());
                 int miningIndex = random.nextInt(possibleIDs.size() - 1) + 1;
-                short miningID = possibleIDs.get(miningIndex);
-                contractName = "Produce x" + amountInt + " " + ElementKeyMap.getInfo(miningID).getName();
-                target = new ProductionTarget();
-                ItemStack miningStack = new ItemStack(ElementKeyMap.getInfo(miningID));
-                miningStack.count = amountInt;
-                basePrice = (int) ElementKeyMap.getInfo(miningID).getPrice(true);
-                ItemStack[] miningStacks = new ItemStack[]{miningStack};
-                target.setTargets(miningStacks);
+                short miningId = possibleIDs.get(miningIndex);
+                contractName = "Mine x" + amountInt + " " + ElementKeyMap.getInfo(miningId).getName();
+                target = new ItemStack(ElementKeyMap.getInfo(miningId));
+                target.count = amountInt;
+                basePrice = (int) ElementKeyMap.getInfo(miningId).getPrice(true);
                 break;
         }
         int reward = (int) ((basePrice * amountInt) * 1.3);
@@ -223,7 +215,7 @@ public class ServerDatabase {
         ArrayList<ElementInformation> elementList = new ArrayList<>();
         ElementKeyMap.getCategoryHirarchy().getChild("Manufacturing").getInfoElementsRecursive(elementList);
         for(ElementInformation info : elementList) {
-            if(!info.isDeprecated() && info.isShoppable() && info.isInRecipe()) filter.add(info);
+            if(!info.isDeprecated() && info.isShoppable() && info.isInRecipe() && !info.getName().contains("Paint")) filter.add(info);
         }
         return filter;
     }

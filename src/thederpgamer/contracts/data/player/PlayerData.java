@@ -3,10 +3,9 @@ package thederpgamer.contracts.data.player;
 import api.common.GameCommon;
 import org.schema.game.common.data.player.PlayerState;
 import thederpgamer.contracts.data.contract.Contract;
-import java.io.Serializable;
 import java.util.ArrayList;
 
-public class PlayerData implements Serializable {
+public class PlayerData {
 
     public String name;
     public ArrayList<Contract> contracts;

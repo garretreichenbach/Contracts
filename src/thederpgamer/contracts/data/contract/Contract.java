@@ -4,24 +4,22 @@ import api.common.GameCommon;
 import org.schema.game.common.data.player.faction.Faction;
 import org.schema.game.server.data.PlayerNotFountException;
 import thederpgamer.contracts.data.ServerDatabase;
-import thederpgamer.contracts.data.contract.target.ContractTarget;
 import thederpgamer.contracts.data.player.PlayerData;
-import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Contract implements Serializable {
+public class Contract {
 
     private String name;
     private int contractorID;
     private ContractType contractType;
     private int reward;
-    private ContractTarget target;
+    private Object target;
     private ArrayList<PlayerData> claimants;
     private String uid;
     private int timer;
     private boolean finished;
 
-    public Contract(int contractorID, String name, ContractType contractType, int reward, String uid, ContractTarget target) {
+    public Contract(int contractorID, String name, ContractType contractType, int reward, String uid, Object target) {
         this.name = name;
         this.contractorID = contractorID;
         this.contractType = contractType;
@@ -41,7 +39,7 @@ public class Contract implements Serializable {
         this.finished = finished;
     }
 
-    public void setTarget(ContractTarget target) {
+    public void setTarget(Object target) {
         this.target = target;
     }
 
@@ -78,7 +76,7 @@ public class Contract implements Serializable {
         return reward;
     }
 
-    public ContractTarget getTarget() {
+    public Object getTarget() {
         return target;
     }
 

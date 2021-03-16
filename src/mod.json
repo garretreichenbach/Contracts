@@ -2,7 +2,7 @@
   "name": "Contracts",
   "author": "TheDerpGamer",
   "description": "Adds completable contracts for player and faction interaction.",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "starmade_version": "0.202.108",
   "client_mod": false,
   "server_mod": false,

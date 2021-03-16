@@ -37,14 +37,14 @@ public class ContractsTab extends GUIContentPane {
     }
 
     private void createTab() {
-        setTextBoxHeightLast(height - 88);
+        setTextBoxHeightLast(height - 84);
 
         final ContractsScrollableList contractsScrollableList = new ContractsScrollableList(getState(), width, height - 86, getContent(0));
         contractsScrollableList.onInit();
         final PlayerState player = GameClient.getClientPlayerState();
         final InputState state = getState();
 
-        addNewTextBox(0, 26);
+        addNewTextBox(0, 30);
         (buttonPane = new GUIHorizontalButtonTablePane(getState(), 2, 1, getContent(1))).onInit();
 
         buttonPane.addButton(0, 0, "ADD CONTRACT", GUIHorizontalArea.HButtonColor.BLUE, new GUICallback() {

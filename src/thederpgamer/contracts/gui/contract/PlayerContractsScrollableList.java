@@ -13,8 +13,6 @@ import org.schema.schine.graphicsengine.forms.gui.newgui.*;
 import org.schema.schine.input.InputState;
 import thederpgamer.contracts.data.ServerDatabase;
 import thederpgamer.contracts.data.contract.Contract;
-import thederpgamer.contracts.data.contract.target.MiningTarget;
-import thederpgamer.contracts.data.contract.target.ProductionTarget;
 import thederpgamer.contracts.data.inventory.ItemStack;
 import thederpgamer.contracts.data.player.PlayerData;
 import java.util.ArrayList;
@@ -154,24 +152,19 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
         GUICallback completeContractCallback = null;
         if(contract.getContractType().equals(Contract.ContractType.MINING)) {
-            final MiningTarget target = (MiningTarget) contract.getTarget();
             completeContractCallback = new GUICallback() {
                 @Override
                 public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                     if(mouseEvent.pressedLeftMouse()) {
                         boolean hasItems = true;
-                        for(ItemStack itemStack : target.getTargets()) {
-                            short id = itemStack.id;
-                            int amount = itemStack.count;
-                            if(InventoryUtils.getItemAmount(player.getInventory(), id) < amount) {
-                                hasItems = false;
-                                break;
-                            }
-                        }
+                        ItemStack itemStack = (ItemStack) contract.getTarget();
+                        short id = itemStack.id;
+                        int amount = itemStack.count;
+                        if(InventoryUtils.getItemAmount(player.getInventory(), id) < amount) hasItems = false;
 
                         if(hasItems || (player.isUseCreativeMode() && player.isAdmin())) {
                             getState().getController().queueUIAudio("0022_menu_ui - enter");
-                            for(ItemStack itemStack : target.getTargets()) InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
+                            InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
                             player.setCredits(player.getCredits() + contract.getReward());
                             ServerDatabase.removeContract(contract);
                         } else {
@@ -186,24 +179,19 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
                 }
             };
         } else if(contract.getContractType().equals(Contract.ContractType.PRODUCTION)) {
-            final ProductionTarget target = (ProductionTarget) contract.getTarget();
             completeContractCallback = new GUICallback() {
                 @Override
                 public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                     if(mouseEvent.pressedLeftMouse()) {
                         boolean hasItems = true;
-                        for(ItemStack itemStack : target.getTargets()) {
-                            short id = itemStack.id;
-                            int amount = itemStack.count;
-                            if(InventoryUtils.getItemAmount(player.getInventory(), id) < amount) {
-                                hasItems = false;
-                                break;
-                            }
-                        }
+                        ItemStack itemStack = (ItemStack) contract.getTarget();
+                        short id = itemStack.id;
+                        int amount = itemStack.count;
+                        if(InventoryUtils.getItemAmount(player.getInventory(), id) < amount) hasItems = false;
 
                         if(hasItems || (player.isUseCreativeMode() && player.isAdmin())) {
                             getState().getController().queueUIAudio("0022_menu_ui - enter");
-                            for(ItemStack itemStack : target.getTargets()) InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
+                            InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
                             player.setCredits(player.getCredits() + contract.getReward());
                             ServerDatabase.removeContract(contract);
                         } else {
@@ -257,12 +245,12 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
                 ContractListRow contractListRow = new ContractListRow(this.getState(), contract, nameRowElement, contractTypeRowElement, contractorRowElement, rewardRowElement);
                 contractListRow.expanded = new GUIElementList(getState());
+                contractListRow.onInit();
 
                 GUIHorizontalButtonTablePane buttonPane = redrawButtonPane(contract, contractListRow.expanded);
                 buttonPane.setPos(contractListRow.expanded.getPos());
                 contractListRow.expanded.add(new GUIListElement(buttonPane, buttonPane, getState()));
                 contractListRow.expanded.attach(buttonPane);
-                contractListRow.onInit();
                 guiElementList.add(contractListRow);
             }
             guiElementList.updateDim();
