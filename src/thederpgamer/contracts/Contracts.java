@@ -115,7 +115,9 @@ public class Contracts extends StarMod {
             @Override
             public void onEvent(ControlManagerActivateEvent event) {
                 if(event.getControlManager() instanceof InventoryControllerManager) {
-                    GameClient.getClientState().getWorldDrawer().getGuiDrawer().getPlayerPanel().getInventoryPanel().recreateTabs();
+                    try {
+                        GameClient.getClientState().getWorldDrawer().getGuiDrawer().getPlayerPanel().getInventoryPanel().recreateTabs();
+                    } catch (Exception ignored) { }
                 }
             }
         }, this);

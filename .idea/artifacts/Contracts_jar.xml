@@ -4,7 +4,7 @@
     <root id="root">
       <element id="archive" name="Contracts.jar">
         <element id="module-output" name="Contracts" />
-        <element id="file-copy" path="$PROJECT_DIR$/src/thederpgamer/contracts/mod.json" />
+        <element id="file-copy" path="$PROJECT_DIR$/src/mod.json" />
       </element>
     </root>
   </artifact>

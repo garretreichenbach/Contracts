@@ -2,7 +2,6 @@ package thederpgamer.contracts.gui.contract.newcontract;
 
 import api.DebugFile;
 import api.common.GameClient;
-import api.utils.gui.SimpleGUIHorizontalButtonPane;
 import org.schema.game.common.data.player.faction.Faction;
 import org.schema.game.client.data.GameClientState;
 import org.schema.game.client.view.gui.GUIBlockSprite;
@@ -17,6 +16,8 @@ import org.schema.schine.graphicsengine.core.settings.PrefixNotFoundException;
 import org.schema.schine.graphicsengine.forms.font.FontLibrary;
 import org.schema.schine.graphicsengine.forms.gui.*;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIActivatableTextBar;
+import org.schema.schine.graphicsengine.forms.gui.newgui.GUIHorizontalArea;
+import org.schema.schine.graphicsengine.forms.gui.newgui.GUIHorizontalButtonTablePane;
 import org.schema.schine.input.InputState;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,6 +37,7 @@ public class NewContractPanel extends GUIInputPanel implements BlockTypeSearchRu
     private GUIAdvBlockDisplay display;
     private boolean textChanged;
     private String curText;
+    private GUIHorizontalButtonTablePane buttonPane;
 
 
     public NewContractPanel(InputState inputState, GUICallback guiCallback, Faction contractor) {
@@ -621,25 +623,26 @@ public class NewContractPanel extends GUIInputPanel implements BlockTypeSearchRu
     @Override
     public void onInit() {
         super.onInit();
-
         setPos(0, 0, 0);
+        (buttonPane = new GUIHorizontalButtonTablePane(getState(), 3, 1, getContent())).onInit();
+        GUIActivationCallback activationCallback = new GUIActivationCallback() {
+            @Override
+            public boolean isVisible(InputState inputState) {
+                return true;
+            }
 
-        SimpleGUIHorizontalButtonPane buttonPane = new SimpleGUIHorizontalButtonPane(getState(), background.getInnerWidth() + 12, background.getInnerHeigth(), 2);
+            @Override
+            public boolean isActive(InputState inputState) {
+                return NewContractPanel.this.isActive();
+            }
+        };
 
-        //Todo: Make Cargo contracts automatically generate for trade network deals
-        GUITextButton bountyButton = new GUITextButton(getState(), 100, 24, GUITextButton.ColorPalette.OK, "BOUNTY", guiCallback);
-        bountyButton.setUserPointer("BOUNTY");
-        buttonPane.addButton(bountyButton);
-        GUITextButton miningButton = new GUITextButton(getState(), 100, 24, GUITextButton.ColorPalette.OK, "MINING", guiCallback);
-        miningButton.setUserPointer("MINING");
-        buttonPane.addButton(miningButton);
-        GUITextButton productionButton = new GUITextButton(getState(), 100, 24, GUITextButton.ColorPalette.OK, "PRODUCTION", guiCallback);
-        productionButton.setUserPointer("PRODUCTION");
-        buttonPane.addButton(productionButton);
+        buttonPane.addButton(0, 0, "BOUNTY", GUIHorizontalArea.HButtonColor.BLUE, guiCallback, activationCallback).setUserPointer("BOUNTY");
+        buttonPane.addButton(1, 0, "MINING", GUIHorizontalArea.HButtonColor.BLUE, guiCallback, activationCallback).setUserPointer("MINING");
+        buttonPane.addButton(2, 0, "PRODUCTION", GUIHorizontalArea.HButtonColor.BLUE, guiCallback, activationCallback).setUserPointer("PRODUCTION");
 
         buttonPane.setPos(0, 0, 0);
         content.attach(buttonPane);
-
         getContent().attach(content);
 
         float currentWidth = background.getWidth();

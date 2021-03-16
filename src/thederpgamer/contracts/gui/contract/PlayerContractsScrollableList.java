@@ -2,7 +2,6 @@ package thederpgamer.contracts.gui.contract;
 
 import api.common.GameClient;
 import api.utils.game.inventory.InventoryUtils;
-import api.utils.gui.SimpleGUIHorizontalButtonPane;
 import api.utils.gui.SimplePopup;
 import org.hsqldb.lib.StringComparator;
 import org.schema.common.util.CompareTools;
@@ -119,14 +118,26 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
         return ServerDatabase.getPlayerContracts(ServerDatabase.getPlayerData(player));
     }
 
-    public SimpleGUIHorizontalButtonPane redrawButtonPane(final Contract contract) throws PlayerNotFountException {
-        SimpleGUIHorizontalButtonPane buttonPane = new SimpleGUIHorizontalButtonPane(getState(), 300, 32, 2);
+    public GUIHorizontalButtonTablePane redrawButtonPane(final Contract contract, final GUIElementList content) throws PlayerNotFountException {
+        GUIHorizontalButtonTablePane buttonPane = new GUIHorizontalButtonTablePane(getState(), 1, 1, content);
+        buttonPane.onInit();
         final PlayerData playerData = ServerDatabase.getPlayerData(player);
+        GUIActivationCallback activationCallback = new GUIActivationCallback() {
+            @Override
+            public boolean isVisible(InputState inputState) {
+                return true;
+            }
 
-        GUITextButton cancelClaimButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.CANCEL, "CANCEL CLAIM", new GUICallback() {
+            @Override
+            public boolean isActive(InputState inputState) {
+                return content.isActive() && PlayerContractsScrollableList.this.isActive();
+            }
+        };
+
+        buttonPane.addButton(0, 0, "CANCEL CLAIM", GUIHorizontalArea.HButtonColor.ORANGE, new GUICallback() {
             @Override
             public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                if (mouseEvent.pressedLeftMouse()) {
+                if(mouseEvent.pressedLeftMouse()) {
                     getState().getController().queueUIAudio("0022_menu_ui - back");
                     contract.getClaimants().remove(playerData);
                     playerData.contracts.remove(contract);
@@ -143,30 +154,30 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
             @Override
             public boolean isOccluded() {
-                return !isActive();
+                return false;
             }
-        });
-        buttonPane.addButton(cancelClaimButton);
+        }, activationCallback);
 
-        if (contract.getContractType().equals(Contract.ContractType.MINING)) {
-            final MiningTarget miningTarget = (MiningTarget) contract.getTarget();
-            GUITextButton completeContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "COMPLETE CONTRACT", new GUICallback() {
+        GUICallback completeContractCallback = null;
+        if(contract.getContractType().equals(Contract.ContractType.MINING)) {
+            final MiningTarget target = (MiningTarget) contract.getTarget();
+            completeContractCallback = new GUICallback() {
                 @Override
                 public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                    if (mouseEvent.pressedLeftMouse()) {
+                    if(mouseEvent.pressedLeftMouse()) {
                         boolean hasItems = true;
-                        for (ItemStack itemStack : miningTarget.getTargets()) {
+                        for(ItemStack itemStack : target.getTargets()) {
                             short id = itemStack.id;
                             int amount = itemStack.count;
-                            if (InventoryUtils.getItemAmount(player.getInventory(), id) < amount) {
+                            if(InventoryUtils.getItemAmount(player.getInventory(), id) < amount) {
                                 hasItems = false;
                                 break;
                             }
                         }
 
-                        if (hasItems || (player.isUseCreativeMode() && player.isAdmin())) {
+                        if(hasItems || (player.isUseCreativeMode() && player.isAdmin())) {
                             getState().getController().queueUIAudio("0022_menu_ui - enter");
-                            for (ItemStack itemStack : miningTarget.getTargets()) InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
+                            for(ItemStack itemStack : target.getTargets()) InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
                             player.setCredits(player.getCredits() + contract.getReward());
                             ServerDatabase.removeContract(contract);
                         } else {
@@ -177,31 +188,30 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
                 @Override
                 public boolean isOccluded() {
-                    return !isActive();
+                    return false;
                 }
-            });
-            buttonPane.addButton(completeContractButton);
-        } else if (contract.getContractType().equals(Contract.ContractType.PRODUCTION)) {
-            final ProductionTarget productionTarget = (ProductionTarget) contract.getTarget();
-            GUITextButton completeContractButton = new GUITextButton(getState(), 130, 24, GUITextButton.ColorPalette.OK, "COMPLETE CONTRACT", new GUICallback() {
+            };
+        } else if(contract.getContractType().equals(Contract.ContractType.PRODUCTION)) {
+            final ProductionTarget target = (ProductionTarget) contract.getTarget();
+            completeContractCallback = new GUICallback() {
                 @Override
                 public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                    if (mouseEvent.pressedLeftMouse()) {
+                    if(mouseEvent.pressedLeftMouse()) {
                         boolean hasItems = true;
-                        for (ItemStack itemStack : productionTarget.getTargets()) {
+                        for(ItemStack itemStack : target.getTargets()) {
                             short id = itemStack.id;
                             int amount = itemStack.count;
-                            if (InventoryUtils.getItemAmount(player.getInventory(), id) < amount) {
+                            if(InventoryUtils.getItemAmount(player.getInventory(), id) < amount) {
                                 hasItems = false;
                                 break;
                             }
                         }
 
-                        if (hasItems || (player.isUseCreativeMode() && player.isAdmin())) {
+                        if(hasItems || (player.isUseCreativeMode() && player.isAdmin())) {
                             getState().getController().queueUIAudio("0022_menu_ui - enter");
-                            for (ItemStack itemStack : productionTarget.getTargets()) InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
-                            ServerDatabase.removeContract(contract);
+                            for(ItemStack itemStack : target.getTargets()) InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
                             player.setCredits(player.getCredits() + contract.getReward());
+                            ServerDatabase.removeContract(contract);
                         } else {
                             (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
                         }
@@ -210,11 +220,16 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
                 @Override
                 public boolean isOccluded() {
-                    return !isActive();
+                    return false;
                 }
-            });
-            buttonPane.addButton(completeContractButton);
+            };
         }
+
+        if(completeContractCallback != null) {
+            buttonPane.addColumn();
+            buttonPane.addButton(1, 0, "COMPLETE CONTRACT", GUIHorizontalArea.HButtonType.BUTTON_BLUE_LIGHT, completeContractCallback, activationCallback);
+        }
+
         return buttonPane;
     }
 
@@ -248,7 +263,7 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
                 ContractListRow contractListRow = new ContractListRow(this.getState(), contract, nameRowElement, contractTypeRowElement, contractorRowElement, rewardRowElement);
                 contractListRow.expanded = new GUIElementList(getState());
 
-                SimpleGUIHorizontalButtonPane buttonPane = redrawButtonPane(contract);
+                GUIHorizontalButtonTablePane buttonPane = redrawButtonPane(contract, contractListRow.expanded);
                 buttonPane.setPos(contractListRow.expanded.getPos());
                 contractListRow.expanded.add(new GUIListElement(buttonPane, buttonPane, getState()));
                 contractListRow.expanded.attach(buttonPane);
