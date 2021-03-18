@@ -2,31 +2,30 @@ package thederpgamer.contracts;
 
 import api.common.GameClient;
 import api.listener.Listener;
-import api.listener.events.gui.ControlManagerActivateEvent;
 import api.listener.events.gui.GUITopBarCreateEvent;
 import api.listener.events.gui.MainWindowTabAddEvent;
 import api.mod.StarLoader;
 import api.mod.StarMod;
 import api.mod.config.FileConfiguration;
-import org.schema.game.client.controller.manager.ingame.InventoryControllerManager;
+import api.mod.config.PersistentObjectUtil;
+import api.utils.StarRunnable;
+import api.utils.gui.ControlManagerHandler;
 import org.schema.game.client.view.gui.newgui.GUITopBar;
 import org.schema.schine.common.language.Lng;
 import org.schema.schine.graphicsengine.core.MouseEvent;
 import org.schema.schine.graphicsengine.forms.gui.GUIActivationHighlightCallback;
 import org.schema.schine.graphicsengine.forms.gui.GUICallback;
 import org.schema.schine.graphicsengine.forms.gui.GUIElement;
-import org.schema.schine.graphicsengine.forms.gui.newgui.GUIContentPane;
-import org.schema.schine.graphicsengine.forms.gui.newgui.GUIMainWindow;
 import org.schema.schine.input.InputState;
+import thederpgamer.contracts.gui.contract.playercontractlist.PlayerContractsControlManager;
 import thederpgamer.contracts.server.commands.RandomContractCommand;
-import thederpgamer.contracts.gui.contract.ContractsTab;
-import thederpgamer.contracts.gui.contract.PlayerContractsScrollableList;
+import thederpgamer.contracts.gui.contract.contractlist.ContractsTab;
 
 /**
  * Contracts.java
- * Contracts mod main class
- * ==================================================
- * Created 03/09/2021
+ * Contracts mod main class.
+ *
+ * @since 03/09/2021
  * @author TheDerpGamer
  */
 public class Contracts extends StarMod {
@@ -36,14 +35,18 @@ public class Contracts extends StarMod {
     public Contracts() { }
     public static void main(String[] args) { }
 
+    //Controller
+    public PlayerContractsControlManager playerContractsControlManager;
+
     //Config
     private final String[] defaultConfig = {
             "debug-mode: false",
+            "auto-save-frequency: 10000",
             "contract-timer-max: 30",
             "traders-faction-id: -10000000",
     };
-
     public boolean debugMode = false;
+    public long autoSaveFrequency = 10000;
     public int contractTimerMax = 30;
     public int tradersFactionID = -10000000;
 
@@ -52,39 +55,25 @@ public class Contracts extends StarMod {
         instance = this;
         initConfig();
         registerRunners();
-        registerPackets();
         registerCommands();
-        registerFastListeners();
         registerListeners();
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
-
-    private void registerFastListeners() {
-
     }
 
     private void registerListeners() {
         StarLoader.registerListener(GUITopBarCreateEvent.class, new Listener<GUITopBarCreateEvent>() {
             @Override
-            public void onEvent(final GUITopBarCreateEvent guiTopBarCreateEvent) {
-                GUITopBar.ExpandedButton dropDownButton = guiTopBarCreateEvent.getDropdownButtons().get(guiTopBarCreateEvent.getDropdownButtons().size() - 1);
+            public void onEvent(final GUITopBarCreateEvent event) {
+                GUITopBar.ExpandedButton dropDownButton = event.getDropdownButtons().get(event.getDropdownButtons().size() - 1);
                 dropDownButton.addExpandedButton("CONTRACTS", new GUICallback() {
                     @Override
                     public void callback(final GUIElement guiElement, MouseEvent mouseEvent) {
-                        if (mouseEvent.pressedLeftMouse()) {
+                        if(mouseEvent.pressedLeftMouse()) {
                             GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                            GUIMainWindow guiWindow = GameClient.getClientState().getWorldDrawer().getGuiDrawer().getPlayerPanel().getInventoryPanel().inventoryPanel;
-                            guiWindow.clearTabs();
-                            GUIContentPane contractsPane = guiWindow.addTab(Lng.str("CONTRACTS"));
-                            contractsPane.setTextBoxHeightLast(300);
-
-                            PlayerContractsScrollableList playerContractsList = new PlayerContractsScrollableList(GameClient.getClientState(), 500, 300, contractsPane.getContent(0));
-                            playerContractsList.onInit();
-                            contractsPane.getContent(0).attach(playerContractsList);
+                            if(playerContractsControlManager == null) {
+                                playerContractsControlManager = new PlayerContractsControlManager(event.getGuiTopBar().getState());
+                                ControlManagerHandler.registerNewControlManager(getSkeleton(), playerContractsControlManager);
+                            }
+                            playerContractsControlManager.setActive(true);
                         }
                     }
 
@@ -111,17 +100,6 @@ public class Contracts extends StarMod {
             }
         }, this);
 
-        StarLoader.registerListener(ControlManagerActivateEvent.class, new Listener<ControlManagerActivateEvent>() {
-            @Override
-            public void onEvent(ControlManagerActivateEvent event) {
-                if(event.getControlManager() instanceof InventoryControllerManager) {
-                    try {
-                        GameClient.getClientState().getWorldDrawer().getGuiDrawer().getPlayerPanel().getInventoryPanel().recreateTabs();
-                    } catch (Exception ignored) { }
-                }
-            }
-        }, this);
-
         StarLoader.registerListener(MainWindowTabAddEvent.class, new Listener<MainWindowTabAddEvent>() {
             @Override
             public void onEvent(MainWindowTabAddEvent event) {
@@ -138,21 +116,23 @@ public class Contracts extends StarMod {
         StarLoader.registerCommand(new RandomContractCommand());
     }
 
-    private void registerPackets() {
-
-    }
-
     private void registerRunners() {
-
+        new StarRunnable() {
+            @Override
+            public void run() {
+                PersistentObjectUtil.save(getSkeleton());
+            }
+        }.runTimer(this, autoSaveFrequency);
     }
 
     private void initConfig() {
         FileConfiguration config = getConfig("config");
         config.saveDefault(defaultConfig);
 
-        this.debugMode = Boolean.parseBoolean(config.getString("debug-mode"));
-        this.contractTimerMax = config.getInt("contract-timer-max");
-        this.tradersFactionID = config.getInt("traders-faction-id");
+        this.debugMode = config.getConfigurableBoolean("debug-mode", false);
+        this.autoSaveFrequency = config.getConfigurableLong("auto-save-frequency", 10000);
+        this.contractTimerMax = config.getConfigurableInt("contract-timer-max", 30);
+        this.tradersFactionID = config.getConfigurableInt("traders-faction-id", -10000000);
     }
 
     public static Contracts getInstance() {

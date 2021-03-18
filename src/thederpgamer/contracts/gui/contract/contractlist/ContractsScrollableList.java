@@ -1,4 +1,4 @@
-package thederpgamer.contracts.gui.contract;
+package thederpgamer.contracts.gui.contract.contractlist;
 
 import api.common.GameClient;
 import api.common.GameCommon;
@@ -18,7 +18,6 @@ import thederpgamer.contracts.data.contract.Contract;
 import thederpgamer.contracts.data.inventory.ItemStack;
 import thederpgamer.contracts.data.player.PlayerData;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Set;
 
@@ -26,15 +25,19 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
 
     private PlayerState player;
     private static ContractsScrollableList inst;
+    private float width;
+    private float height;
 
     public static ContractsScrollableList getInst() {
         if (inst != null) return inst;
         return null;
     }
 
-    public ContractsScrollableList(InputState state, float var2, float var3, GUIElement guiElement) {
-        super(state, var2, var3, guiElement);
+    public ContractsScrollableList(InputState state, float width, float height, GUIElement guiElement) {
+        super(state, width, height, guiElement);
         this.player = GameClient.getClientPlayerState();
+        this.width = width;
+        this.height = height;
         inst = this;
     }
 
@@ -114,27 +117,16 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
     }
 
     @Override
-    protected Collection<Contract> getElementList() {
+    public ArrayList<Contract> getElementList() {
         inst = this;
         return ServerDatabase.getAllContracts();
     }
 
-    public GUIHorizontalButtonTablePane redrawButtonPane(final Contract contract, final GUIElementList content) {
-        GUIHorizontalButtonTablePane buttonPane = new GUIHorizontalButtonTablePane(getState(), 1, 1, content);
+    public GUIHorizontalButtonTablePane redrawButtonPane(final Contract contract, GUIAncor anchor) {
+        GUIHorizontalButtonTablePane buttonPane = new GUIHorizontalButtonTablePane(getState(), 1, 1, anchor);
         buttonPane.onInit();
         final PlayerData playerData = ServerDatabase.getPlayerData(player);
         final ArrayList<Contract> playerContracts = ServerDatabase.getPlayerContracts(playerData);
-        GUIActivationCallback activationCallback = new GUIActivationCallback() {
-            @Override
-            public boolean isVisible(InputState inputState) {
-                return true;
-            }
-
-            @Override
-            public boolean isActive(InputState inputState) {
-                return ContractsScrollableList.this.isActive();
-            }
-        };
 
         if(!playerContracts.contains(contract)) {
             buttonPane.addButton(0, 0, "CLAIM CONTRACT", GUIHorizontalArea.HButtonColor.BLUE, new GUICallback() {
@@ -172,8 +164,9 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                                         contract.getClaimants().add(playerData);
                                         playerData.contracts.add(contract);
                                         ServerDatabase.updatePlayerData(playerData);
-                                        ServerDatabase.addContract(contract);
+                                        ServerDatabase.updateContract(contract);
                                         ServerDatabase.startContractTimer(contract, playerData);
+                                        ServerDatabase.updateContractGUI();
                                     }
                                 } else {
                                     SimplePopup popup = new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim this bounty!");
@@ -190,9 +183,19 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                 public boolean isOccluded() {
                     return false;
                 }
-            }, activationCallback);
+            }, new GUIActivationCallback() {
+                @Override
+                public boolean isVisible(InputState inputState) {
+                    return true;
+                }
+
+                @Override
+                public boolean isActive(InputState inputState) {
+                    return true;
+                }
+            });
         } else {
-            buttonPane.addButton(0, 0, "CANCEL CONTRACT", GUIHorizontalArea.HButtonColor.ORANGE, new GUICallback() {
+            buttonPane.addButton(0, 0, "CANCEL CLAIM", GUIHorizontalArea.HButtonColor.ORANGE, new GUICallback() {
                 @Override
                 public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                     if(mouseEvent.pressedLeftMouse()) {
@@ -201,14 +204,25 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                         playerData.contracts.remove(contract);
                         ServerDatabase.updatePlayerData(playerData);
                         ServerDatabase.updateContract(contract);
+                        ServerDatabase.updateContractGUI();
                     }
                 }
 
                 @Override
                 public boolean isOccluded() {
-                    return !isActive();
+                    return false;
                 }
-            }, activationCallback);
+            }, new GUIActivationCallback() {
+                @Override
+                public boolean isVisible(InputState inputState) {
+                    return true;
+                }
+
+                @Override
+                public boolean isActive(InputState inputState) {
+                    return true;
+                }
+            });
             GUICallback completeContractCallback = null;
             if(contract.getContractType().equals(Contract.ContractType.MINING)) {
                 completeContractCallback = new GUICallback() {
@@ -225,6 +239,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                                 InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
                                 player.setCredits(player.getCredits() + contract.getReward());
                                 ServerDatabase.removeContract(contract);
+                                ServerDatabase.updateContractGUI();
                             } else {
                                 (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
                             }
@@ -252,6 +267,7 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                                 InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
                                 player.setCredits(player.getCredits() + contract.getReward());
                                 ServerDatabase.removeContract(contract);
+                                ServerDatabase.updateContractGUI();
                             } else {
                                 (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
                             }
@@ -266,8 +282,17 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
             }
 
             if(completeContractCallback != null) {
-                buttonPane.addColumn();
-                buttonPane.addButton(1, 0, "COMPLETE CONTRACT", GUIHorizontalArea.HButtonType.BUTTON_BLUE_LIGHT, completeContractCallback, activationCallback);
+                buttonPane.addButton(1, 0, "COMPLETE CONTRACT", GUIHorizontalArea.HButtonColor.GREEN, completeContractCallback, new GUIActivationCallback() {
+                    @Override
+                    public boolean isVisible(InputState inputState) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean isActive(InputState inputState) {
+                        return true;
+                    }
+                });
             }
         }
         return buttonPane;
@@ -277,10 +302,8 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
     public void updateListEntries(GUIElementList guiElementList, final Set<Contract> set) {
         guiElementList.deleteObservers();
         guiElementList.addObserver(this);
-        guiElementList.clear();
-        try {
-            for(final Contract contract : set) {
-
+        for(Contract contract : set) {
+            try {
                 GUITextOverlayTable nameTextElement;
                 (nameTextElement = new GUITextOverlayTable(10, 10, this.getState())).setTextSimple(contract.getName());
                 GUIClippedRow nameRowElement;
@@ -301,20 +324,19 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                 GUIClippedRow rewardRowElement;
                 (rewardRowElement = new GUIClippedRow(this.getState())).attach(rewardTextElement);
 
-                ContractListRow contractListRow = new ContractListRow(this.getState(), contract, nameRowElement, contractTypeRowElement, contractorRowElement, rewardRowElement);
+                final ContractListRow contractListRow = new ContractListRow(this.getState(), contract, nameRowElement, contractTypeRowElement, contractorRowElement, rewardRowElement);
+                GUIAncor anchor = new GUIAncor(getState(), width - 49.0f, 28.0f);
+                anchor.attach(redrawButtonPane(contract, anchor));
                 contractListRow.expanded = new GUIElementList(getState());
+                contractListRow.expanded.add(new GUIListElement(anchor, getState()));
+                contractListRow.expanded.attach(anchor);
                 contractListRow.onInit();
-
-                GUIHorizontalButtonTablePane buttonPane = redrawButtonPane(contract, contractListRow.expanded);
-                buttonPane.setPos(contractListRow.expanded.getPos());
-                contractListRow.expanded.add(new GUIListElement(buttonPane, buttonPane, getState()));
-                contractListRow.expanded.attach(buttonPane);
                 guiElementList.add(contractListRow);
+            } catch(PlayerNotFountException e) {
+                e.printStackTrace();
             }
-            guiElementList.updateDim();
-        } catch(PlayerNotFountException e) {
-            e.printStackTrace();
         }
+        guiElementList.updateDim();
     }
 
     public class ContractListRow extends ScrollableTableList<Contract>.Row {

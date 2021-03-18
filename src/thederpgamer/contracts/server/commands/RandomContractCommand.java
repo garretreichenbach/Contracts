@@ -14,6 +14,7 @@ public class RandomContractCommand extends ChatCommand {
     @Override
     public boolean onCommand(PlayerState sender, String[] args) {
         ServerDatabase.generateRandomContract();
+        ServerDatabase.updateContractGUI();
         return true;
     }
 }

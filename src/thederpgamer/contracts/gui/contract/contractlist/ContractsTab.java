@@ -1,4 +1,4 @@
-package thederpgamer.contracts.gui.contract;
+package thederpgamer.contracts.gui.contract.contractlist;
 
 import api.common.GameClient;
 import api.utils.gui.SimplePopup;
@@ -19,8 +19,8 @@ import thederpgamer.contracts.data.contract.Contract;
 
 public class ContractsTab extends GUIContentPane {
 
-    private int width;
-    private int height;
+    private final int width;
+    private final int height;
 
     private GUIHorizontalButtonTablePane buttonPane;
 
@@ -37,25 +37,23 @@ public class ContractsTab extends GUIContentPane {
     }
 
     private void createTab() {
-        setTextBoxHeightLast(height - 84);
+        setTextBoxHeightLast(height - 82);
 
         final ContractsScrollableList contractsScrollableList = new ContractsScrollableList(getState(), width, height - 86, getContent(0));
         contractsScrollableList.onInit();
         final PlayerState player = GameClient.getClientPlayerState();
         final InputState state = getState();
 
-        addNewTextBox(0, 30);
+        addNewTextBox(0, 22);
         (buttonPane = new GUIHorizontalButtonTablePane(getState(), 2, 1, getContent(1))).onInit();
 
         buttonPane.addButton(0, 0, "ADD CONTRACT", GUIHorizontalArea.HButtonColor.BLUE, new GUICallback() {
             @Override
             public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                if (mouseEvent.pressedLeftMouse()) {
-                    if (player.getFactionId() != 0) {
+                if(mouseEvent.pressedLeftMouse()) {
+                    if(player.getFactionId() != 0) {
                         GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
                         (new NewContractDialog(GameClient.getClientState(), player.getFactionId())).activate();
-                        contractsScrollableList.clear();
-                        contractsScrollableList.handleDirty();
                     } else {
                         (new SimplePopup(getState(), "Cannot Add Contract", "You must be in a faction to add new contracts!")).activate();
                     }
