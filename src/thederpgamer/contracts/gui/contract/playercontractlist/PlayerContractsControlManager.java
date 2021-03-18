@@ -1,7 +1,6 @@
 package thederpgamer.contracts.gui.contract.playercontractlist;
 
 import api.utils.gui.GUIControlManager;
-import api.utils.gui.GUIMenuPanel;
 import org.schema.game.client.data.GameClientState;
 
 /**
@@ -18,7 +17,7 @@ public class PlayerContractsControlManager extends GUIControlManager {
     }
 
     @Override
-    public GUIMenuPanel createMenuPanel() {
+    public PlayerContractsPanel createMenuPanel() {
         return new PlayerContractsPanel(getState());
     }
 }
