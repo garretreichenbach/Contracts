@@ -30,11 +30,11 @@ public class PlayerContractsPanel extends GUIMenuPanel {
         playerContractsList.onInit();
         contractsPane.getContent(0).attach(playerContractsList);
 
-        //History Pane
-        GUIContentPane historyPane = guiWindow.addTab("HISTORY");
-        historyPane.setTextBoxHeightLast(300);
-
         //Todo: Player Contract History
+        //History Pane
+        //GUIContentPane historyPane = guiWindow.addTab("HISTORY");
+        //historyPane.setTextBoxHeightLast(300);
+
         //PlayerContractHistoryList playerContractHistoryList = new PlayerContractHistoryList(GameClient.getClientState(), 739, 300, historyPane.getContent(0));
         //playerContractHistoryList.onInit();
         //historyPane.getContent(0).attach(playerContractHistoryList);
