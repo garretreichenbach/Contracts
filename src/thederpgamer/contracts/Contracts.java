@@ -18,14 +18,14 @@ import org.schema.schine.graphicsengine.forms.gui.GUICallback;
 import org.schema.schine.graphicsengine.forms.gui.GUIElement;
 import org.schema.schine.input.InputState;
 import thederpgamer.contracts.gui.contract.playercontractlist.PlayerContractsControlManager;
-import thederpgamer.contracts.server.commands.RandomContractCommand;
+import thederpgamer.contracts.server.commands.ContractsCommand;
 import thederpgamer.contracts.gui.contract.contractlist.ContractsTab;
 
 /**
- * Contracts.java
+ * Contracts
  * Contracts mod main class.
  *
- * @since 03/09/2021
+ * @since 09/25/2020
  * @author TheDerpGamer
  */
 public class Contracts extends StarMod {
@@ -113,7 +113,7 @@ public class Contracts extends StarMod {
     }
 
     private void registerCommands() {
-        StarLoader.registerCommand(new RandomContractCommand());
+        StarLoader.registerCommand(new ContractsCommand());
     }
 
     private void registerRunners() {
@@ -129,10 +129,10 @@ public class Contracts extends StarMod {
         FileConfiguration config = getConfig("config");
         config.saveDefault(defaultConfig);
 
-        this.debugMode = config.getConfigurableBoolean("debug-mode", false);
-        this.autoSaveFrequency = config.getConfigurableLong("auto-save-frequency", 10000);
-        this.contractTimerMax = config.getConfigurableInt("contract-timer-max", 30);
-        this.tradersFactionID = config.getConfigurableInt("traders-faction-id", -10000000);
+        debugMode = config.getConfigurableBoolean("debug-mode", false);
+        autoSaveFrequency = config.getConfigurableLong("auto-save-frequency", 10000);
+        contractTimerMax = config.getConfigurableInt("contract-timer-max", 30);
+        tradersFactionID = config.getConfigurableInt("traders-faction-id", -10000000);
     }
 
     public static Contracts getInstance() {

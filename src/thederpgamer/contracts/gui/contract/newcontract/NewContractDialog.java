@@ -16,13 +16,11 @@ import thederpgamer.contracts.data.ServerDatabase;
 import thederpgamer.contracts.data.contract.Contract;
 import thederpgamer.contracts.data.inventory.ItemStack;
 import thederpgamer.contracts.data.player.PlayerData;
-import java.util.UUID;
 
 public class NewContractDialog extends PlayerInput {
 
     private NewContractPanel panel;
     private int contractMode;
-
 
     public NewContractDialog(GameClientState gameClientState, int contractorId) {
         super(gameClientState);
@@ -37,16 +35,14 @@ public class NewContractDialog extends PlayerInput {
     }
 
     @Override
-    public void handleKeyEvent(KeyEventInterface e) {
-        if (KeyboardMappings.getEventKeyState(e, getState())) {
-            if (KeyboardMappings.getEventKeyRaw(e) == GLFW.GLFW_KEY_ESCAPE) {
-                deactivate();
-            }
+    public void handleKeyEvent(KeyEventInterface event) {
+        if(KeyboardMappings.getEventKeyState(event, getState())) {
+            if(KeyboardMappings.getEventKeyRaw(event) == GLFW.GLFW_KEY_ESCAPE) deactivate();
         }
     }
 
     @Override
-    public void handleMouseEvent(MouseEvent mouseEvent) {
+    public void handleMouseEvent(MouseEvent event) {
 
     }
 
@@ -81,7 +77,7 @@ public class NewContractDialog extends PlayerInput {
                                 } else if(ServerDatabase.getFactionAllies(currentPlayerData.factionID).contains(playerData.factionID) && !currentPlayer.isAdmin()) {
                                     (new SimplePopup(getState(), "Cannot Add Bounty", "You can't put a bounty on a member of an allied faction!")).activate();
                                 } else {
-                                    Contract contract = new Contract(currentPlayer.getFactionId(), "Kill " + name, Contract.ContractType.BOUNTY, bountyAmount, UUID.randomUUID().toString(), playerData);
+                                    Contract contract = new Contract(currentPlayer.getFactionId(), "Kill " + name, Contract.ContractType.BOUNTY, bountyAmount, ServerDatabase.getRandomId(), playerData);
                                     ServerDatabase.addContract(contract);
                                     currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                     ServerDatabase.updateContractGUI();
@@ -95,7 +91,7 @@ public class NewContractDialog extends PlayerInput {
                             } else {
                                 ItemStack itemStack = new ItemStack(panel.getSelectedBlockType());
                                 itemStack.count = count;
-                                Contract contract = new Contract(currentPlayer.getFactionId(), "Mine x" + count + " " + itemStack.name, Contract.ContractType.MINING, panel.getReward(), UUID.randomUUID().toString(), itemStack);
+                                Contract contract = new Contract(currentPlayer.getFactionId(), "Mine x" + count + " " + itemStack.name, Contract.ContractType.MINING, panel.getReward(), ServerDatabase.getRandomId(), itemStack);
                                 ServerDatabase.addContract(contract);
                                 currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                 ServerDatabase.updateContractGUI();
@@ -108,7 +104,7 @@ public class NewContractDialog extends PlayerInput {
                             } else {
                                 ItemStack itemStack = new ItemStack(panel.getSelectedBlockType());
                                 itemStack.count = count;
-                                Contract contract = new Contract(currentPlayer.getFactionId(), "Produce x" + count + " " + itemStack.name, Contract.ContractType.PRODUCTION, panel.getReward(), UUID.randomUUID().toString(), itemStack);
+                                Contract contract = new Contract(currentPlayer.getFactionId(), "Produce x" + count + " " + itemStack.name, Contract.ContractType.PRODUCTION, panel.getReward(), ServerDatabase.getRandomId(), itemStack);
                                 ServerDatabase.addContract(contract);
                                 currentPlayer.setCredits(currentPlayer.getCredits() - contract.getReward());
                                 ServerDatabase.updateContractGUI();

@@ -2,7 +2,6 @@ package thederpgamer.contracts.data.contract;
 
 import api.common.GameCommon;
 import org.schema.game.common.data.player.faction.Faction;
-import org.schema.game.server.data.PlayerNotFountException;
 import thederpgamer.contracts.data.ServerDatabase;
 import thederpgamer.contracts.data.player.PlayerData;
 import java.util.ArrayList;
@@ -15,18 +14,18 @@ public class Contract {
     private int reward;
     private Object target;
     private ArrayList<PlayerData> claimants;
-    private String uid;
+    private int id;
     private int timer;
     private boolean finished;
 
-    public Contract(int contractorID, String name, ContractType contractType, int reward, String uid, Object target) {
+    public Contract(int contractorID, String name, ContractType contractType, int reward, int id, Object target) {
         this.name = name;
         this.contractorID = contractorID;
         this.contractType = contractType;
         this.reward = reward;
         this.target = target;
         this.claimants = new ArrayList<>();
-        this.uid = uid;
+        this.id = id;
         this.timer = -1;
         this.finished = false;
     }
@@ -51,13 +50,17 @@ public class Contract {
         return name;
     }
 
-    public Faction getContractor() throws PlayerNotFountException {
+    public Faction getContractor() {
         if(contractorID != 0) {
             return GameCommon.getGameState().getFactionManager().getFaction(contractorID);
         } else {
             ServerDatabase.removeContract(this);
             return null;
         }
+    }
+
+    public String getContractorName() {
+        return (contractorID != 0) ? getContractor().getName() : "Non-Aligned" ;
     }
 
     public int getTimer() {
@@ -80,8 +83,8 @@ public class Contract {
         return target;
     }
 
-    public String getUID() {
-        return uid;
+    public int getId() {
+        return id;
     }
 
     public enum ContractType {
@@ -94,6 +97,13 @@ public class Contract {
 
         ContractType(String displayName) {
             this.displayName = displayName;
+        }
+
+        public static ContractType fromString(String s) {
+            for(ContractType type : values()) {
+                if(s.trim().equalsIgnoreCase(type.displayName.trim())) return type;
+            }
+            return null;
         }
     }
 }

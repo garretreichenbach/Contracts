@@ -57,12 +57,7 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
         this.addColumn("Contractor", 7.0F, new Comparator<Contract>() {
             public int compare(Contract o1, Contract o2) {
-                try {
-                    return o1.getContractor().getName().compareTo(o2.getContractor().getName());
-                } catch (PlayerNotFountException e) {
-                    e.printStackTrace();
-                }
-                return 0;
+                return o1.getContractor().getName().compareTo(o2.getContractor().getName());
             }
         });
 

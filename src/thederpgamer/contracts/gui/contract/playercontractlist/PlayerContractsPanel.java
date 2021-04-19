@@ -30,6 +30,7 @@ public class PlayerContractsPanel extends GUIMenuPanel {
         playerContractsList.onInit();
         contractsPane.getContent(0).attach(playerContractsList);
 
+
         //Todo: Player Contract History
         //History Pane
         //GUIContentPane historyPane = guiWindow.addTab("HISTORY");

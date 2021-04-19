@@ -2,20 +2,21 @@ package thederpgamer.contracts.gui.contract.contractlist;
 
 import api.common.GameClient;
 import api.utils.gui.SimplePopup;
-import org.schema.game.common.data.player.PlayerState;
 import org.schema.game.client.controller.PlayerOkCancelInput;
-import org.schema.game.server.data.PlayerNotFountException;
+import org.schema.game.common.data.player.PlayerState;
 import org.schema.schine.graphicsengine.core.GLFrame;
 import org.schema.schine.graphicsengine.core.MouseEvent;
-import org.schema.schine.graphicsengine.forms.gui.*;
+import org.schema.schine.graphicsengine.forms.gui.GUIActivationCallback;
+import org.schema.schine.graphicsengine.forms.gui.GUICallback;
+import org.schema.schine.graphicsengine.forms.gui.GUIElement;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIContentPane;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIHorizontalArea;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIHorizontalButtonTablePane;
 import org.schema.schine.graphicsengine.forms.gui.newgui.GUIWindowInterface;
 import org.schema.schine.input.InputState;
-import thederpgamer.contracts.gui.contract.newcontract.NewContractDialog;
 import thederpgamer.contracts.data.ServerDatabase;
 import thederpgamer.contracts.data.contract.Contract;
+import thederpgamer.contracts.gui.contract.newcontract.NewContractDialog;
 
 public class ContractsTab extends GUIContentPane {
 
@@ -82,32 +83,28 @@ public class ContractsTab extends GUIContentPane {
                 if(mouseEvent.pressedLeftMouse()) {
                     if(contractsScrollableList.getSelectedRow() != null && contractsScrollableList.getSelectedRow().getSort() != null) {
                         final Contract contract = contractsScrollableList.getSelectedRow().getSort();
-                        try {
-                            if(player.getFactionId() == contract.getContractor().getIdFaction() || player.isAdmin()) {
-                                GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                                PlayerOkCancelInput confirmBox = new PlayerOkCancelInput("ConfirmBox", state, "Confirm Cancellation", "Are you sure you wish to cancel this contract? You won't get a refund...") {
-                                    @Override
-                                    public void onDeactivate() {
-                                    }
+                        if(player.getFactionId() == contract.getContractor().getIdFaction() || player.isAdmin()) {
+                            GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
+                            PlayerOkCancelInput confirmBox = new PlayerOkCancelInput("ConfirmBox", state, "Confirm Cancellation", "Are you sure you wish to cancel this contract? You won't get a refund...") {
+                                @Override
+                                public void onDeactivate() {
+                                }
 
-                                    @Override
-                                    public void pressedOK() {
-                                        GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
-                                        ServerDatabase.removeContract(contract);
-                                        contractsScrollableList.clear();
-                                        contractsScrollableList.handleDirty();
-                                    }
-                                };
-                                confirmBox.getInputPanel().onInit();
-                                confirmBox.getInputPanel().background.setPos(470.0F, 35.0F, 0.0F);
-                                confirmBox.getInputPanel().background.setWidth((float) (GLFrame.getWidth() - 435));
-                                confirmBox.getInputPanel().background.setHeight((float) (GLFrame.getHeight() - 70));
-                                confirmBox.activate();
-                            } else {
-                                (new SimplePopup(getState(), "Cannot Cancel Contract", "You cannot cancel this contract as you aren't the contractor!")).activate();
-                            }
-                        } catch(PlayerNotFountException e) {
-                            e.printStackTrace();
+                                @Override
+                                public void pressedOK() {
+                                    GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
+                                    ServerDatabase.removeContract(contract);
+                                    contractsScrollableList.clear();
+                                    contractsScrollableList.handleDirty();
+                                }
+                            };
+                            confirmBox.getInputPanel().onInit();
+                            confirmBox.getInputPanel().background.setPos(470.0F, 35.0F, 0.0F);
+                            confirmBox.getInputPanel().background.setWidth((float) (GLFrame.getWidth() - 435));
+                            confirmBox.getInputPanel().background.setHeight((float) (GLFrame.getHeight() - 70));
+                            confirmBox.activate();
+                        } else {
+                            (new SimplePopup(getState(), "Cannot Cancel Contract", "You cannot cancel this contract as you aren't the contractor!")).activate();
                         }
                     }
                 }

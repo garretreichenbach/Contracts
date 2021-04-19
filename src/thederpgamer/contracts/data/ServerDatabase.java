@@ -18,7 +18,6 @@ import thederpgamer.contracts.gui.contract.contractlist.ContractsScrollableList;
 import thederpgamer.contracts.gui.contract.playercontractlist.PlayerContractsScrollableList;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.UUID;
 
 /**
  * ServerDatabase.java
@@ -104,7 +103,7 @@ public class ServerDatabase {
         ArrayList<Contract> toRemove = new ArrayList<>();
         for(Object contractObject : objectList) {
             Contract c = (Contract) contractObject;
-            if(c.getUID().equals(contract.getUID())) toRemove.add(c);
+            if(c.getId() == contract.getId()) toRemove.add(c);
         }
 
         for(Contract c : toRemove) PersistentObjectUtil.removeObject(instance, c);
@@ -120,7 +119,7 @@ public class ServerDatabase {
         ArrayList<Contract> toRemove = new ArrayList<>();
         for(Object contractObject : contractObjectList) {
             Contract c = (Contract) contractObject;
-            if(c.getUID().equals(contract.getUID())) toRemove.add(c);
+            if(c.getId() == contract.getId()) toRemove.add(c);
         }
         for(Contract c : toRemove) PersistentObjectUtil.removeObject(instance, c);
         PersistentObjectUtil.addObject(instance, contract);
@@ -135,7 +134,7 @@ public class ServerDatabase {
         ArrayList<Contract> toRemove = new ArrayList<>();
         for(Object contractObject : contractObjectList) {
             Contract c = (Contract) contractObject;
-            if(c.getUID().equals(contract.getUID())) toRemove.add(c);
+            if(c.getId() == contract.getId()) toRemove.add(c);
         }
         for(Contract c : toRemove) PersistentObjectUtil.removeObject(instance, c);
     }
@@ -164,6 +163,13 @@ public class ServerDatabase {
             if(contract.getClaimants().contains(playerData)) contracts.add(contract);
         }
         return contracts;
+    }
+
+    public static Contract getContractFromId(int contractId) {
+        for(Contract contract : getAllContracts()) {
+            if(contract.getId() == contractId) return contract;
+        }
+        return null;
     }
 
     /**
@@ -204,11 +210,15 @@ public class ServerDatabase {
                     contract.setTimer(contract.getTimer() + 1);
                     if(Contracts.getInstance().debugMode) {
                         DebugFile.log("[DEBUG]: Contract timer: " + contract.getTimer(), Contracts.getInstance());
-                        DebugFile.log("[DEBUG]: for contract " + contract.getUID(), Contracts.getInstance());
+                        DebugFile.log("[DEBUG]: for contract " + contract.getId(), Contracts.getInstance());
                     }
                 }
             }
         }.runTimer(Contracts.getInstance(), 1000);
+    }
+
+    public static void completeContract(Contract contract, PlayerData player) {
+        contract.setFinished(true);
     }
 
     /**
@@ -224,6 +234,10 @@ public class ServerDatabase {
         updateContract(contract);
         updatePlayerData(player);
         player.sendMail(contract.getContractor().getName(), "Contract Cancellation", contract.getContractor().getName() + " has cancelled your contract because you took too long!");
+    }
+
+    public static int getRandomId() {
+        return (new Random()).nextInt(9999 - 1000) + 1000;
     }
 
     /**
@@ -263,7 +277,7 @@ public class ServerDatabase {
         }
         int reward = (int) ((basePrice * amountInt) * 1.3);
 
-        Contract randomContract = new Contract(Contracts.getInstance().tradersFactionID, contractName, contractType, reward, UUID.randomUUID().toString(), target);
+        Contract randomContract = new Contract(Contracts.getInstance().tradersFactionID, contractName, contractType, reward, getRandomId(), target);
         addContract(randomContract);
     }
 
