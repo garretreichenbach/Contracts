@@ -9,7 +9,7 @@ import api.mod.StarMod;
 import api.mod.config.FileConfiguration;
 import api.mod.config.PersistentObjectUtil;
 import api.utils.StarRunnable;
-import api.utils.gui.ControlManagerHandler;
+import api.utils.gui.ModGUIHandler;
 import org.schema.game.client.view.gui.newgui.GUITopBar;
 import org.schema.schine.common.language.Lng;
 import org.schema.schine.graphicsengine.core.MouseEvent;
@@ -22,18 +22,24 @@ import thederpgamer.contracts.server.commands.ContractsCommand;
 import thederpgamer.contracts.gui.contract.contractlist.ContractsTab;
 
 /**
- * Contracts
  * Contracts mod main class.
  *
- * @since 09/25/2020
  * @author TheDerpGamer
+ * @since 09/25/2020
  */
 public class Contracts extends StarMod {
 
     //Instance
-    static Contracts instance;
-    public Contracts() { }
-    public static void main(String[] args) { }
+    private static Contracts instance;
+    public static Contracts getInstance() {
+        return instance;
+    }
+    public Contracts() {
+
+    }
+    public static void main(String[] args) {
+
+    }
 
     //Controller
     public PlayerContractsControlManager playerContractsControlManager;
@@ -71,7 +77,7 @@ public class Contracts extends StarMod {
                             GameClient.getClientState().getController().queueUIAudio("0022_menu_ui - enter");
                             if(playerContractsControlManager == null) {
                                 playerContractsControlManager = new PlayerContractsControlManager(event.getGuiTopBar().getState());
-                                ControlManagerHandler.registerNewControlManager(getSkeleton(), playerContractsControlManager);
+                                ModGUIHandler.registerNewControlManager(getSkeleton(), playerContractsControlManager);
                             }
                             playerContractsControlManager.setActive(true);
                         }
@@ -133,9 +139,5 @@ public class Contracts extends StarMod {
         autoSaveFrequency = config.getConfigurableLong("auto-save-frequency", 10000);
         contractTimerMax = config.getConfigurableInt("contract-timer-max", 30);
         tradersFactionID = config.getConfigurableInt("traders-faction-id", -10000000);
-    }
-
-    public static Contracts getInstance() {
-        return instance;
     }
 }
