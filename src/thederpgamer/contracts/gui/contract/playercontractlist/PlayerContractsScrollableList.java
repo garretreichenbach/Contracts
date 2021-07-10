@@ -22,21 +22,14 @@ import java.util.Set;
 public class PlayerContractsScrollableList extends ScrollableTableList<Contract> implements GUIActiveInterface {
 
     private PlayerState player;
-    private static PlayerContractsScrollableList inst;
     private float width;
     private float height;
-
-    public static PlayerContractsScrollableList getInst() {
-        if(inst != null) return inst;
-        return null;
-    }
 
     public PlayerContractsScrollableList(InputState state, float width, float height, GUIElement guiElement) {
         super(state, width, height, guiElement);
         this.player = GameClient.getClientPlayerState();
         this.width = width;
         this.height = height;
-        inst = this;
     }
 
     @Override
@@ -111,7 +104,6 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
 
     @Override
     public ArrayList<Contract> getElementList() {
-        inst = this;
         return ServerDatabase.getPlayerContracts(ServerDatabase.getPlayerData(player));
     }
 
@@ -273,6 +265,12 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
             this.highlightSelect = true;
             this.highlightSelectSimple = true;
             this.setAllwaysOneSelected(true);
+        }
+
+        @Override
+        public void clickedOnRow() {
+            super.clickedOnRow();
+            PlayerContractsScrollableList.this.setSelectedRow(this);
         }
     }
 }

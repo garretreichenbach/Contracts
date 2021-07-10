@@ -14,8 +14,9 @@ import thederpgamer.contracts.Contracts;
 import thederpgamer.contracts.data.contract.Contract;
 import thederpgamer.contracts.data.inventory.ItemStack;
 import thederpgamer.contracts.data.player.PlayerData;
-import thederpgamer.contracts.gui.contract.contractlist.ContractsScrollableList;
-import thederpgamer.contracts.gui.contract.playercontractlist.PlayerContractsScrollableList;
+import thederpgamer.contracts.gui.contract.playercontractlist.PlayerContractsControlManager;
+import thederpgamer.contracts.gui.contract.playercontractlist.PlayerContractsPanel;
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -136,7 +137,10 @@ public class ServerDatabase {
             Contract c = (Contract) contractObject;
             if(c.getId() == contract.getId()) toRemove.add(c);
         }
-        for(Contract c : toRemove) PersistentObjectUtil.removeObject(instance, c);
+        for(Contract c : toRemove) {
+            for(PlayerData playerData : c.getClaimants()) playerData.contracts.remove(c);
+            PersistentObjectUtil.removeObject(instance, c);
+        }
     }
 
     /**
@@ -176,13 +180,17 @@ public class ServerDatabase {
      * Updates the Contract List GUIs (ContractsScrollableList and PlayerContractsScrollableList) and redraws them.
      */
     public static void updateContractGUI() {
-        if(ContractsScrollableList.getInst() != null) {
-            ContractsScrollableList.getInst().clear();
-            ContractsScrollableList.getInst().handleDirty();
+        if(Contracts.getInstance().contractsTab != null && Contracts.getInstance().contractsTab.getContractList() != null) {
+            Contracts.getInstance().contractsTab.getContractList().flagDirty();
+            Contracts.getInstance().contractsTab.getContractList().handleDirty();
         }
-        if(PlayerContractsScrollableList.getInst() != null) {
-            PlayerContractsScrollableList.getInst().clear();
-            PlayerContractsScrollableList.getInst().handleDirty();
+        if(Contracts.getInstance().playerContractsControlManager != null) {
+            PlayerContractsControlManager controlManager = Contracts.getInstance().playerContractsControlManager;
+            PlayerContractsPanel playerContractsPanel = (PlayerContractsPanel) controlManager.getMenuPanel();
+            if(playerContractsPanel.getContractList() != null) {
+                playerContractsPanel.getContractList().flagDirty();
+                playerContractsPanel.getContractList().handleDirty();
+            }
         }
     }
 
@@ -286,7 +294,7 @@ public class ServerDatabase {
         ArrayList<ElementInformation> elementList = new ArrayList<>();
         ElementKeyMap.getCategoryHirarchy().getChild("Manufacturing").getInfoElementsRecursive(elementList);
         for(ElementInformation info : elementList) {
-            if(!info.isDeprecated() && info.isShoppable() && info.isInRecipe() && !info.getName().contains("Paint")) filter.add(info);
+            if(!info.isDeprecated() && info.isShoppable() && info.isInRecipe() && !info.getName().contains("Paint") && !info.getName().contains("Hardener") && !info.getName().contains("Scrap")) filter.add(info);
         }
         return filter;
     }

@@ -43,7 +43,7 @@ public class NewContractPanel extends GUIInputPanel implements BlockTypeSearchRu
     public NewContractPanel(InputState inputState, GUICallback guiCallback, Faction contractor) {
         super("NewContractPanel", inputState, guiCallback, "New Contract", "");
         this.contractor = contractor;
-        this.content = new GUIAncor(getState(), 350, 450);
+        this.content = new GUIAncor(getState(), 360, 450);
         this.guiCallback = guiCallback;
         this.curText = "";
     }
@@ -644,9 +644,7 @@ public class NewContractPanel extends GUIInputPanel implements BlockTypeSearchRu
         buttonPane.setPos(0, 0, 0);
         content.attach(buttonPane);
         getContent().attach(content);
-
-        float currentWidth = background.getWidth();
-        background.setWidth(currentWidth + 50);
+        background.setWidth(buttonPane.getWidth());
     }
 
     private ArrayList<ElementInformation> getResourcesFilter() {

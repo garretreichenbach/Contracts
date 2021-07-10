@@ -11,15 +11,14 @@ import api.mod.config.PersistentObjectUtil;
 import api.utils.StarRunnable;
 import api.utils.gui.ModGUIHandler;
 import org.schema.game.client.view.gui.newgui.GUITopBar;
-import org.schema.schine.common.language.Lng;
 import org.schema.schine.graphicsengine.core.MouseEvent;
 import org.schema.schine.graphicsengine.forms.gui.GUIActivationHighlightCallback;
 import org.schema.schine.graphicsengine.forms.gui.GUICallback;
 import org.schema.schine.graphicsengine.forms.gui.GUIElement;
 import org.schema.schine.input.InputState;
+import thederpgamer.contracts.gui.contract.contractlist.ContractsTab;
 import thederpgamer.contracts.gui.contract.playercontractlist.PlayerContractsControlManager;
 import thederpgamer.contracts.server.commands.ContractsCommand;
-import thederpgamer.contracts.gui.contract.contractlist.ContractsTab;
 
 /**
  * Contracts mod main class.
@@ -41,9 +40,6 @@ public class Contracts extends StarMod {
 
     }
 
-    //Controller
-    public PlayerContractsControlManager playerContractsControlManager;
-
     //Config
     private final String[] defaultConfig = {
             "debug-mode: false",
@@ -55,6 +51,10 @@ public class Contracts extends StarMod {
     public long autoSaveFrequency = 10000;
     public int contractTimerMax = 30;
     public int tradersFactionID = -10000000;
+
+    //GUI
+    public ContractsTab contractsTab;
+    public PlayerContractsControlManager playerContractsControlManager;
 
     @Override
     public void onEnable() {
@@ -109,8 +109,8 @@ public class Contracts extends StarMod {
         StarLoader.registerListener(MainWindowTabAddEvent.class, new Listener<MainWindowTabAddEvent>() {
             @Override
             public void onEvent(MainWindowTabAddEvent event) {
-                if(event.getTitle().equals(Lng.ORG_SCHEMA_GAME_CLIENT_VIEW_GUI_SHOP_SHOPNEW_SHOPPANELNEW_2)) {
-                    ContractsTab contractsTab = new ContractsTab(event.getWindow().getState(), event.getWindow());
+                if(event.getTitle().equals("SHOP")) {
+                    contractsTab = new ContractsTab(event.getWindow().getState(), event.getWindow());
                     contractsTab.onInit();
                     event.getWindow().getTabs().add(contractsTab);
                 }
