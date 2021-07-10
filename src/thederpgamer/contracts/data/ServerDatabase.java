@@ -141,6 +141,7 @@ public class ServerDatabase {
             for(PlayerData playerData : c.getClaimants()) playerData.contracts.remove(c);
             PersistentObjectUtil.removeObject(instance, c);
         }
+        PersistentObjectUtil.save(instance);
     }
 
     /**

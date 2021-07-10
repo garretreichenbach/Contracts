@@ -109,7 +109,7 @@ public class Contracts extends StarMod {
         StarLoader.registerListener(MainWindowTabAddEvent.class, new Listener<MainWindowTabAddEvent>() {
             @Override
             public void onEvent(MainWindowTabAddEvent event) {
-                if(event.getTitle().equals("SHOP")) {
+                if(event.getTitle().equals("SHOP") && contractsTab == null) {
                     contractsTab = new ContractsTab(event.getWindow().getState(), event.getWindow());
                     contractsTab.onInit();
                     event.getWindow().getTabs().add(contractsTab);

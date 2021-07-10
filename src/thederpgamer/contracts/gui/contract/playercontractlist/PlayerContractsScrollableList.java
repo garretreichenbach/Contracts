@@ -243,14 +243,14 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
                 GUIClippedRow rewardRowElement;
                 (rewardRowElement = new GUIClippedRow(this.getState())).attach(rewardTextElement);
 
-                final ContractListRow contractListRow = new ContractListRow(this.getState(), contract, nameRowElement, contractTypeRowElement, contractorRowElement, rewardRowElement);
+                PlayerContractListRow playerContractListRow = new PlayerContractListRow(this.getState(), contract, nameRowElement, contractTypeRowElement, contractorRowElement, rewardRowElement);
                 GUIAncor anchor = new GUIAncor(getState(), width, 28.0f);
                 anchor.attach(redrawButtonPane(contract, anchor));
-                contractListRow.expanded = new GUIElementList(getState());
-                contractListRow.expanded.add(new GUIListElement(anchor, getState()));
-                contractListRow.expanded.attach(anchor);
-                contractListRow.onInit();
-                guiElementList.add(contractListRow);
+                playerContractListRow.expanded = new GUIElementList(getState());
+                playerContractListRow.expanded.add(new GUIListElement(anchor, getState()));
+                playerContractListRow.expanded.attach(anchor);
+                playerContractListRow.onInit();
+                guiElementList.add(playerContractListRow);
             } catch(PlayerNotFountException e) {
                 e.printStackTrace();
             }
@@ -258,9 +258,9 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
         guiElementList.updateDim();
     }
 
-    public class ContractListRow extends ScrollableTableList<Contract>.Row {
+    public class PlayerContractListRow extends ScrollableTableList<Contract>.Row {
 
-        public ContractListRow(InputState inputState, Contract contract, GUIElement... guiElements) {
+        public PlayerContractListRow(InputState inputState, Contract contract, GUIElement... guiElements) {
             super(inputState, contract, guiElements);
             this.highlightSelect = true;
             this.highlightSelectSimple = true;
@@ -271,6 +271,8 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
         public void clickedOnRow() {
             super.clickedOnRow();
             PlayerContractsScrollableList.this.setSelectedRow(this);
+            setChanged();
+            notifyObservers();
         }
     }
 }

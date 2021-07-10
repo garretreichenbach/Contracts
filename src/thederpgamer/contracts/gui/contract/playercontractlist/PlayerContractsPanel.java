@@ -17,7 +17,7 @@ public class PlayerContractsPanel extends GUIMenuPanel {
     private PlayerContractsScrollableList playerContractsList;
 
     public PlayerContractsPanel(InputState inputState) {
-        super(inputState, "PlayerContractsPanel", 800, 500);
+        super(inputState, "PlayerContractsPanel", 750, 500);
     }
 
     public PlayerContractsScrollableList getContractList() {
@@ -32,7 +32,7 @@ public class PlayerContractsPanel extends GUIMenuPanel {
         GUIContentPane contractsPane = guiWindow.addTab("CONTRACTS");
         contractsPane.setTextBoxHeightLast(300);
 
-        playerContractsList = new PlayerContractsScrollableList(GameClient.getClientState(), 739, 300, contractsPane.getContent(0));
+        playerContractsList = new PlayerContractsScrollableList(GameClient.getClientState(), 700, 300, contractsPane.getContent(0));
         playerContractsList.onInit();
         contractsPane.getContent(0).attach(playerContractsList);
 
