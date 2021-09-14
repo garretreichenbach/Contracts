@@ -18,7 +18,10 @@ import org.schema.schine.graphicsengine.forms.gui.GUIElement;
 import org.schema.schine.input.InputState;
 import thederpgamer.contracts.gui.contract.contractlist.ContractsTab;
 import thederpgamer.contracts.gui.contract.playercontractlist.PlayerContractsControlManager;
-import thederpgamer.contracts.server.commands.ContractsCommand;
+import thederpgamer.contracts.server.commands.CompleteContractsCommand;
+import thederpgamer.contracts.server.commands.ListContractsCommand;
+import thederpgamer.contracts.server.commands.PurgeContractsCommand;
+import thederpgamer.contracts.server.commands.RandomContractsCommand;
 
 /**
  * Contracts mod main class.
@@ -33,24 +36,18 @@ public class Contracts extends StarMod {
     public static Contracts getInstance() {
         return instance;
     }
-    public Contracts() {
-
-    }
-    public static void main(String[] args) {
-
-    }
+    public Contracts() { }
+    public static void main(String[] args) { }
 
     //Config
     private final String[] defaultConfig = {
             "debug-mode: false",
             "auto-save-frequency: 10000",
-            "contract-timer-max: 30",
-            "traders-faction-id: -10000000",
+            "contract-timer-max: 30"
     };
     public boolean debugMode = false;
     public long autoSaveFrequency = 10000;
     public int contractTimerMax = 30;
-    public int tradersFactionID = -10000000;
 
     //GUI
     public ContractsTab contractsTab;
@@ -119,7 +116,10 @@ public class Contracts extends StarMod {
     }
 
     private void registerCommands() {
-        StarLoader.registerCommand(new ContractsCommand());
+        StarLoader.registerCommand(new RandomContractsCommand());
+        StarLoader.registerCommand(new PurgeContractsCommand());
+        StarLoader.registerCommand(new CompleteContractsCommand());
+        StarLoader.registerCommand(new ListContractsCommand());
     }
 
     private void registerRunners() {
@@ -138,6 +138,5 @@ public class Contracts extends StarMod {
         debugMode = config.getConfigurableBoolean("debug-mode", false);
         autoSaveFrequency = config.getConfigurableLong("auto-save-frequency", 10000);
         contractTimerMax = config.getConfigurableInt("contract-timer-max", 30);
-        tradersFactionID = config.getConfigurableInt("traders-faction-id", -10000000);
     }
 }

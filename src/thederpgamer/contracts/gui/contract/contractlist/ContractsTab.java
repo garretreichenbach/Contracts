@@ -16,15 +16,11 @@ import thederpgamer.contracts.gui.contract.newcontract.NewContractDialog;
 
 public class ContractsTab extends GUIContentPane {
 
-    private final int width;
-    private final int height;
     private GUIHorizontalButtonTablePane buttonPane;
     private ContractsScrollableList contractsScrollableList;
 
     public ContractsTab(InputState inputState, GUIWindowInterface guiWindowInterface) {
         super(inputState, guiWindowInterface, "CONTRACTS");
-        this.width = guiWindowInterface.getInnerWidth();
-        this.height = guiWindowInterface.getInnerHeigth();
     }
 
     @Override
@@ -38,14 +34,12 @@ public class ContractsTab extends GUIContentPane {
     }
 
     private void createTab() {
-        setTextBoxHeightLast(height - 82);
+        setTextBoxHeightLast(300);
 
-        contractsScrollableList = new ContractsScrollableList(getState(), width, height - 86, getContent(0));
-        contractsScrollableList.onInit();
+        (contractsScrollableList = new ContractsScrollableList(getState(), getContent(0).getWidth(), getContent(0).getHeight(), getContent(0))).onInit();
         final PlayerState player = GameClient.getClientPlayerState();
-        final InputState state = getState();
 
-        addNewTextBox(0, 22);
+        addNewTextBox(0, 21);
         (buttonPane = new GUIHorizontalButtonTablePane(getState(), 1, 1, getContent(1))).onInit();
 
         buttonPane.addButton(0, 0, "ADD CONTRACT", GUIHorizontalArea.HButtonColor.BLUE, new GUICallback() {
@@ -55,9 +49,7 @@ public class ContractsTab extends GUIContentPane {
                     if(player.getFactionId() != 0) {
                         getState().getController().queueUIAudio("0022_menu_ui - enter");
                         (new NewContractDialog(GameClient.getClientState(), player.getFactionId())).activate();
-                    } else {
-                        (new SimplePopup(getState(), "Cannot Add Contract", "You must be in a faction to add new contracts!")).activate();
-                    }
+                    } else (new SimplePopup(getState(), "Cannot Add Contract", "You must be in a faction to add new contracts!")).activate();
                 }
             }
 

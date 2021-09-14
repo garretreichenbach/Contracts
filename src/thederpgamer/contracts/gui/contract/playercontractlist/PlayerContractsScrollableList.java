@@ -108,7 +108,7 @@ public class PlayerContractsScrollableList extends ScrollableTableList<Contract>
     }
 
     public GUIHorizontalButtonTablePane redrawButtonPane(final Contract contract, GUIAncor anchor) throws PlayerNotFountException {
-        GUIHorizontalButtonTablePane buttonPane = new GUIHorizontalButtonTablePane(getState(), 1, 1, anchor);
+        GUIHorizontalButtonTablePane buttonPane = new GUIHorizontalButtonTablePane(getState(), 2, 1, anchor);
         buttonPane.onInit();
         final PlayerData playerData = ServerDatabase.getPlayerData(player);
 

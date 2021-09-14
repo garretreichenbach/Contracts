@@ -111,202 +111,50 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
     }
 
     public GUIHorizontalButtonTablePane redrawButtonPane(final Contract contract, GUIAncor anchor) {
-        GUIHorizontalButtonTablePane buttonPane = new GUIHorizontalButtonTablePane(getState(), 1, 1, anchor);
+        GUIHorizontalButtonTablePane buttonPane = new GUIHorizontalButtonTablePane(getState(), 3, 1, anchor);
         buttonPane.onInit();
         final PlayerData playerData = ServerDatabase.getPlayerData(player);
         final ArrayList<Contract> playerContracts = ServerDatabase.getPlayerContracts(playerData);
         int x = 0;
-        if(contract.getContractor().getIdFaction() == playerData.factionID) {
-            if(!playerContracts.contains(contract)) {
-                buttonPane.addButton(x, 0, "CLAIM CONTRACT", GUIHorizontalArea.HButtonColor.BLUE, new GUICallback() {
-                    @Override
-                    public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                        if(mouseEvent.pressedLeftMouse()) {
-                            boolean canClaim = true;
-                            if(contract.getContractor().getIdFaction() == player.getFactionId() && !player.isAdmin()) {
-                                (new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim your own contract!")).activate();
-                            } else {
-                                if((contract.getContractor().getEnemies().contains(GameCommon.getGameState().getFactionManager().getFaction(player.getFactionId())) || contract.getContractor().getPersonalEnemies().contains(player)) && !player.isAdmin()) {
-                                    (new SimplePopup(getState(), "Cannot Claim Contract", "You are enemies with the contractor!")).activate();
-                                    return;
-                                }
-                                if(contract.getContractType().equals(Contract.ContractType.BOUNTY)) {
-                                    PlayerData targetPlayer = (PlayerData) contract.getTarget();
-                                    int targetFaction = targetPlayer.factionID;
-                                    int playerFaction = player.getFactionId();
-                                    if(!player.isAdmin() && (targetPlayer.name.equals(player.getName()) || targetFaction == playerFaction || GameServer.getServerState().getFactionManager().getFaction(targetFaction).getFriends().contains(GameServer.getServerState().getFactionManager().getFaction(playerFaction)))) {
-                                        canClaim = false;
-                                    }
-                                }
-
-                                if(canClaim) {
-                                    if(playerContracts.size() >= 5) {
-                                        (new SimplePopup(getState(), "Cannot Claim Contract", "You have too many active contracts!")).activate();
-                                    } else {
-                                        getState().getController().queueUIAudio("0022_menu_ui - enter");
-                                        contract.setTimer(0);
-                                        contract.getClaimants().add(playerData);
-                                        playerData.contracts.add(contract);
-                                        ServerDatabase.updatePlayerData(playerData);
-                                        ServerDatabase.updateContract(contract);
-                                        ServerDatabase.startContractTimer(contract, playerData);
-                                        ServerDatabase.updateContractGUI();
-                                    }
-                                } else {
-                                    SimplePopup popup = new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim this bounty!");
-                                    popup.activate();
-                                }
-                            }
-                        }
-                    }
-
-                    @Override
-                    public boolean isOccluded() {
-                        return false;
-                    }
-                }, new GUIActivationCallback() {
-                    @Override
-                    public boolean isVisible(InputState inputState) {
-                        return true;
-                    }
-
-                    @Override
-                    public boolean isActive(InputState inputState) {
-                        return true;
-                    }
-                });
-                x ++;
-            } else {
-                buttonPane.addButton(x, 0, "CANCEL CLAIM", GUIHorizontalArea.HButtonColor.ORANGE, new GUICallback() {
-                    @Override
-                    public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                        if(mouseEvent.pressedLeftMouse()) {
-                            getState().getController().queueUIAudio("0022_menu_ui - back");
-                            contract.getClaimants().remove(playerData);
-                            playerData.contracts.remove(contract);
-                            ServerDatabase.updatePlayerData(playerData);
-                            ServerDatabase.updateContract(contract);
-                            ServerDatabase.updateContractGUI();
-                        }
-                    }
-
-                    @Override
-                    public boolean isOccluded() {
-                        return false;
-                    }
-                }, new GUIActivationCallback() {
-                    @Override
-                    public boolean isVisible(InputState inputState) {
-                        return true;
-                    }
-
-                    @Override
-                    public boolean isActive(InputState inputState) {
-                        return true;
-                    }
-                });
-                x ++;
-                GUICallback completeContractCallback = null;
-                if(contract.getContractType().equals(Contract.ContractType.MINING)) {
-                    completeContractCallback = new GUICallback() {
-                        @Override
-                        public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                            if(mouseEvent.pressedLeftMouse()) {
-                                boolean hasItems = true;
-                                ItemStack itemStack = (ItemStack) contract.getTarget();
-                                short id = itemStack.id;int amount = itemStack.count;
-                                if(InventoryUtils.getItemAmount(player.getInventory(), id) < amount) hasItems = false;
-
-                                if(hasItems || (player.isUseCreativeMode() && player.isAdmin())) {
-                                    getState().getController().queueUIAudio("0022_menu_ui - enter");
-                                    InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
-                                    player.setCredits(player.getCredits() + contract.getReward());
-                                    ServerDatabase.removeContract(contract);
-                                    ServerDatabase.updateContractGUI();
-                                } else {
-                                    (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
-                                }
-                            }
-                        }
-
-                        @Override
-                        public boolean isOccluded() {
-                            return false;
-                        }
-                    };
-                } else if(contract.getContractType().equals(Contract.ContractType.PRODUCTION)) {
-                    completeContractCallback = new GUICallback() {
-                        @Override
-                        public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
-                            if(mouseEvent.pressedLeftMouse()) {
-                                boolean hasItems = true;
-                                ItemStack itemStack = (ItemStack) contract.getTarget();
-                                short id = itemStack.id;
-                                int amount = itemStack.count;
-                                if(InventoryUtils.getItemAmount(player.getInventory(), id) < amount) hasItems = false;
-
-                                if(hasItems || (player.isUseCreativeMode() && player.isAdmin())) {
-                                    getState().getController().queueUIAudio("0022_menu_ui - enter");
-                                    InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
-                                    player.setCredits(player.getCredits() + contract.getReward());
-                                    ServerDatabase.removeContract(contract);
-                                    ServerDatabase.updateContractGUI();
-                                } else {
-                                    (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
-                                }
-                            }
-                        }
-
-                        @Override
-                        public boolean isOccluded() {
-                            return false;
-                        }
-                    };
-                }
-
-                if(completeContractCallback != null) {
-                    buttonPane.addButton(x, 0, "COMPLETE CONTRACT", GUIHorizontalArea.HButtonColor.GREEN, completeContractCallback, new GUIActivationCallback() {
-                        @Override
-                        public boolean isVisible(InputState inputState) {
-                            return true;
-                        }
-
-                        @Override
-                        public boolean isActive(InputState inputState) {
-                            return true;
-                        }
-                    });
-                    x ++;
-                }
-            }
-        } else if(player.isAdmin() || contract.getContractor().getIdFaction() != playerData.factionID) {
-            buttonPane.addButton(x, 0, "CANCEL CONTRACT", GUIHorizontalArea.HButtonColor.ORANGE, new GUICallback() {
+        if(!playerContracts.contains(contract) && (contract.getContractor().getIdFaction() != playerData.factionID || player.isAdmin())) {
+            buttonPane.addButton(x, 0, "CLAIM CONTRACT", GUIHorizontalArea.HButtonColor.BLUE, new GUICallback() {
                 @Override
                 public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
                     if(mouseEvent.pressedLeftMouse()) {
-                        if (player.getFactionId() == contract.getContractor().getIdFaction() || player.isAdmin()) {
-                            getState().getController().queueUIAudio("0022_menu_ui - enter");
-                            PlayerOkCancelInput confirmBox = new PlayerOkCancelInput("ConfirmBox", getState(), "Confirm Cancellation", "Are you sure you wish to cancel this contract? You won't get a refund...") {
-                                @Override
-                                public void onDeactivate() {
-                                }
-
-                                @Override
-                                public void pressedOK() {
-                                    getState().getController().queueUIAudio("0022_menu_ui - cancel");
-                                    ServerDatabase.removeContract(contract);
-                                    ServerDatabase.updateContractGUI();
-                                    deactivate();
-                                }
-                            };
-                            confirmBox.getInputPanel().onInit();
-                            confirmBox.getInputPanel().background.setPos(470.0F, 35.0F, 0.0F);
-                            confirmBox.getInputPanel().background.setWidth((float) (GLFrame.getWidth() - 435));
-                            confirmBox.getInputPanel().background.setHeight((float) (GLFrame.getHeight() - 70));
-                            confirmBox.activate();
+                        boolean canClaim = true;
+                        if(contract.getContractor().getIdFaction() == player.getFactionId() && !player.isAdmin()) {
+                            (new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim your own contract!")).activate();
                         } else {
-                            getState().getController().queueUIAudio("0022_menu_ui - error 1");
-                            (new SimplePopup(getState(), "Cannot Cancel Contract", "You cannot cancel this contract as you aren't the contractor!")).activate();
+                            if((contract.getContractor().getEnemies().contains(GameCommon.getGameState().getFactionManager().getFaction(player.getFactionId())) || contract.getContractor().getPersonalEnemies().contains(player)) && !player.isAdmin()) {
+                                (new SimplePopup(getState(), "Cannot Claim Contract", "You are enemies with the contractor!")).activate();
+                                return;
+                            }
+                            if(contract.getContractType().equals(Contract.ContractType.BOUNTY)) {
+                                PlayerData targetPlayer = (PlayerData) contract.getTarget();
+                                int targetFaction = targetPlayer.factionID;
+                                int playerFaction = player.getFactionId();
+                                if(!player.isAdmin() && (targetPlayer.name.equals(player.getName()) || targetFaction == playerFaction || GameServer.getServerState().getFactionManager().getFaction(targetFaction).getFriends().contains(GameServer.getServerState().getFactionManager().getFaction(playerFaction)))) {
+                                    canClaim = false;
+                                }
+                            }
+
+                            if(canClaim) {
+                                if(playerContracts.size() >= 5) {
+                                    (new SimplePopup(getState(), "Cannot Claim Contract", "You have too many active contracts!")).activate();
+                                } else {
+                                    getState().getController().queueUIAudio("0022_menu_ui - enter");
+                                    contract.setTimer(0);
+                                    contract.getClaimants().add(playerData);
+                                    playerData.contracts.add(contract);
+                                    ServerDatabase.updatePlayerData(playerData);
+                                    ServerDatabase.updateContract(contract);
+                                    ServerDatabase.startContractTimer(contract, playerData);
+                                    ServerDatabase.updateContractGUI();
+                                }
+                            } else {
+                                SimplePopup popup = new SimplePopup(getState(), "Cannot Claim Contract", "You can't claim this bounty!");
+                                popup.activate();
+                            }
                         }
                     }
                 }
@@ -327,6 +175,160 @@ public class ContractsScrollableList extends ScrollableTableList<Contract> imple
                 }
             });
             x ++;
+        } else if(playerContracts.contains(contract)) {
+            buttonPane.addButton(x, 0, "CANCEL CLAIM", GUIHorizontalArea.HButtonColor.ORANGE, new GUICallback() {
+                @Override
+                public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                    if (mouseEvent.pressedLeftMouse()) {
+                        getState().getController().queueUIAudio("0022_menu_ui - back");
+                        contract.getClaimants().remove(playerData);
+                        playerData.contracts.remove(contract);
+                        ServerDatabase.updatePlayerData(playerData);
+                        ServerDatabase.updateContract(contract);
+                        ServerDatabase.updateContractGUI();
+                    }
+                }
+
+                @Override
+                public boolean isOccluded() {
+                    return false;
+                }
+            }, new GUIActivationCallback() {
+                @Override
+                public boolean isVisible(InputState inputState) {
+                    return true;
+                }
+
+                @Override
+                public boolean isActive(InputState inputState) {
+                    return true;
+                }
+            });
+            x++;
+
+            GUICallback completeContractCallback = null;
+            if (contract.getContractType().equals(Contract.ContractType.MINING)) {
+                completeContractCallback = new GUICallback() {
+                    @Override
+                    public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                        if (mouseEvent.pressedLeftMouse()) {
+                            boolean hasItems = true;
+                            ItemStack itemStack = (ItemStack) contract.getTarget();
+                            short id = itemStack.id;
+                            int amount = itemStack.count;
+                            if (InventoryUtils.getItemAmount(player.getInventory(), id) < amount) hasItems = false;
+
+                            if (hasItems || (player.isUseCreativeMode() && player.isAdmin())) {
+                                getState().getController().queueUIAudio("0022_menu_ui - enter");
+                                InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
+                                player.setCredits(player.getCredits() + contract.getReward());
+                                ServerDatabase.removeContract(contract);
+                                ServerDatabase.updateContractGUI();
+                            } else {
+                                (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public boolean isOccluded() {
+                        return false;
+                    }
+                };
+            } else if (contract.getContractType().equals(Contract.ContractType.PRODUCTION)) {
+                completeContractCallback = new GUICallback() {
+                    @Override
+                    public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                        if (mouseEvent.pressedLeftMouse()) {
+                            boolean hasItems = true;
+                            ItemStack itemStack = (ItemStack) contract.getTarget();
+                            short id = itemStack.id;
+                            int amount = itemStack.count;
+                            if (InventoryUtils.getItemAmount(player.getInventory(), id) < amount) hasItems = false;
+
+                            if (hasItems || (player.isUseCreativeMode() && player.isAdmin())) {
+                                getState().getController().queueUIAudio("0022_menu_ui - enter");
+                                InventoryUtils.consumeItems(player.getInventory(), itemStack.id, itemStack.count);
+                                player.setCredits(player.getCredits() + contract.getReward());
+                                ServerDatabase.removeContract(contract);
+                                ServerDatabase.updateContractGUI();
+                            } else {
+                                (new SimplePopup(getState(), "Cannot Complete Contract", "You must have the contract items in your inventory!")).activate();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public boolean isOccluded() {
+                        return false;
+                    }
+                };
+            }
+
+            if (completeContractCallback != null) {
+                buttonPane.addButton(x, 0, "COMPLETE CONTRACT", GUIHorizontalArea.HButtonColor.GREEN, completeContractCallback, new GUIActivationCallback() {
+                    @Override
+                    public boolean isVisible(InputState inputState) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean isActive(InputState inputState) {
+                        return true;
+                    }
+                });
+                x++;
+            }
+
+            if (contract.getContractor().getIdFaction() == playerData.factionID || player.isAdmin()) {
+                buttonPane.addButton(x, 0, "CANCEL CONTRACT", GUIHorizontalArea.HButtonColor.ORANGE, new GUICallback() {
+                    @Override
+                    public void callback(GUIElement guiElement, MouseEvent mouseEvent) {
+                        if (mouseEvent.pressedLeftMouse()) {
+                            if (player.getFactionId() == contract.getContractor().getIdFaction() || player.isAdmin()) {
+                                getState().getController().queueUIAudio("0022_menu_ui - enter");
+                                PlayerOkCancelInput confirmBox = new PlayerOkCancelInput("ConfirmBox", getState(), "Confirm Cancellation", "Are you sure you wish to cancel this contract? You won't get a refund...") {
+                                    @Override
+                                    public void onDeactivate() {
+                                    }
+
+                                    @Override
+                                    public void pressedOK() {
+                                        getState().getController().queueUIAudio("0022_menu_ui - cancel");
+                                        ServerDatabase.removeContract(contract);
+                                        ServerDatabase.updateContractGUI();
+                                        deactivate();
+                                    }
+                                };
+                                confirmBox.getInputPanel().onInit();
+                                confirmBox.getInputPanel().background.setPos(470.0F, 35.0F, 0.0F);
+                                confirmBox.getInputPanel().background.setWidth((float) (GLFrame.getWidth() - 435));
+                                confirmBox.getInputPanel().background.setHeight((float) (GLFrame.getHeight() - 70));
+                                confirmBox.activate();
+                            } else {
+                                getState().getController().queueUIAudio("0022_menu_ui - error 1");
+                                (new SimplePopup(getState(), "Cannot Cancel Contract", "You cannot cancel this contract as you aren't the contractor!")).activate();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public boolean isOccluded() {
+                        return false;
+                    }
+                }, new GUIActivationCallback() {
+                    @Override
+                    public boolean isVisible(InputState inputState) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean isActive(InputState inputState) {
+                        return true;
+                    }
+                });
+                x++;
+            }
         }
         return buttonPane;
     }

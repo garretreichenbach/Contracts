@@ -9,6 +9,7 @@ import org.schema.game.common.data.element.ElementInformation;
 import org.schema.game.common.data.element.ElementKeyMap;
 import org.schema.game.common.data.player.PlayerState;
 import org.schema.game.common.data.player.faction.Faction;
+import org.schema.game.common.data.player.faction.FactionManager;
 import org.schema.game.server.data.PlayerNotFountException;
 import thederpgamer.contracts.Contracts;
 import thederpgamer.contracts.data.contract.Contract;
@@ -21,10 +22,8 @@ import java.util.ArrayList;
 import java.util.Random;
 
 /**
- * ServerDatabase.java
  * Manages server data and contains functions for saving and loading it from file.
  *
- * @since 03/10/2021
  * @author TheDerpGamer
  */
 public class ServerDatabase {
@@ -124,6 +123,7 @@ public class ServerDatabase {
         }
         for(Contract c : toRemove) PersistentObjectUtil.removeObject(instance, c);
         PersistentObjectUtil.addObject(instance, contract);
+        updateContractGUI();
     }
 
     /**
@@ -181,17 +181,11 @@ public class ServerDatabase {
      * Updates the Contract List GUIs (ContractsScrollableList and PlayerContractsScrollableList) and redraws them.
      */
     public static void updateContractGUI() {
-        if(Contracts.getInstance().contractsTab != null && Contracts.getInstance().contractsTab.getContractList() != null) {
-            Contracts.getInstance().contractsTab.getContractList().flagDirty();
-            Contracts.getInstance().contractsTab.getContractList().handleDirty();
-        }
+        if(Contracts.getInstance().contractsTab != null && Contracts.getInstance().contractsTab.getContractList() != null) Contracts.getInstance().contractsTab.getContractList().flagDirty();
         if(Contracts.getInstance().playerContractsControlManager != null) {
             PlayerContractsControlManager controlManager = Contracts.getInstance().playerContractsControlManager;
             PlayerContractsPanel playerContractsPanel = (PlayerContractsPanel) controlManager.getMenuPanel();
-            if(playerContractsPanel.getContractList() != null) {
-                playerContractsPanel.getContractList().flagDirty();
-                playerContractsPanel.getContractList().handleDirty();
-            }
+            if(playerContractsPanel.getContractList() != null) playerContractsPanel.getContractList().flagDirty();
         }
     }
 
@@ -234,7 +228,7 @@ public class ServerDatabase {
      * Removes a player's claim from a contract if they have not completed it before the contract's timer reaches 0.
      * @param contract The contract being removed.
      * @param player The player who claimed the contract.
-     * @throws PlayerNotFountException
+     * @throws PlayerNotFountException If the PlayerData is invalid.
      */
     public static void timeoutContract(Contract contract, PlayerData player) throws PlayerNotFountException {
         contract.getClaimants().remove(player);
@@ -286,7 +280,7 @@ public class ServerDatabase {
         }
         int reward = (int) ((basePrice * amountInt) * 1.3);
 
-        Contract randomContract = new Contract(Contracts.getInstance().tradersFactionID, contractName, contractType, reward, getRandomId(), target);
+        Contract randomContract = new Contract(FactionManager.TRAIDING_GUILD_ID, contractName, contractType, reward, getRandomId(), target);
         addContract(randomContract);
     }
 
